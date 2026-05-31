@@ -140,20 +140,9 @@ class AppSettings(context: Context) {
         get() = prefs.getBoolean(KEY_PAUSE_IGNORE_CASE, true)
         set(value) = prefs.edit().putBoolean(KEY_PAUSE_IGNORE_CASE, value).apply()
 
-    /**
-     * Reservado para uso futuro; el motor no bloquea por este switch.
-     */
+    /** Si true, grabber/scroll/clics/return solo con Amazon Flex en primer plano. */
     var flexOnlyWhenForeground: Boolean
-        get() {
-            if (!prefs.getBoolean(KEY_FOREGROUND_MOTOR_RESET, false)) {
-                prefs.edit()
-                    .putBoolean(KEY_FLEX_ONLY_FOREGROUND, false)
-                    .putBoolean(KEY_FOREGROUND_MOTOR_RESET, true)
-                    .apply()
-                return false
-            }
-            return prefs.getBoolean(KEY_FLEX_ONLY_FOREGROUND, false)
-        }
+        get() = prefs.getBoolean(KEY_FLEX_ONLY_FOREGROUND, true)
         set(value) = prefs.edit().putBoolean(KEY_FLEX_ONLY_FOREGROUND, value).apply()
 
     var debugLogEnabled: Boolean

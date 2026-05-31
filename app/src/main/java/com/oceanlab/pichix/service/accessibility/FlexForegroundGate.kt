@@ -1,0 +1,124 @@
+package com.oceanlab.pichix.service.accessibility
+
+import android.accessibilityservice.AccessibilityService
+import android.os.Build
+import android.util.Log
+import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityWindowInfo
+import com.oceanlab.pichix.data.AppSettings
+
+/**
+ * Decide si el motor (grabber, scroll, clics, return) puede actuar.
+ * Combina ventana activa, ventanas [isActive] y eventos recientes por si Flex no actualiza el foco.
+ */
+object FlexForegroundGate {
+
+    private const val TAG = "PichiXForeground"
+    private const val TARGET_EVENT_GRACE_MS = 900L
+    private const val OTHER_APP_BLOCK_MS = 350L
+
+    @Volatile
+    private var lastTargetWindowEventMs = 0L
+
+    @Volatile
+    private var lastOtherAppWindowEventMs = 0L
+
+    @Volatile
+    private var lastOtherAppPackage: String? = null
+
+    fun onAccessibilityEvent(event: AccessibilityEvent, monitoredTargets: Set<String>) {
+        if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
+        val pkg = event.packageName?.toString().orEmpty()
+        if (pkg.isEmpty()) return
+        val now = System.currentTimeMillis()
+        if (pkg in monitoredTargets) {
+            lastTargetWindowEventMs = now
+        } else {
+            lastOtherAppWindowEventMs = now
+            lastOtherAppPackage = pkg
+        }
+    }
+
+    fun allowMotor(
+        service: AccessibilityService,
+        settings: AppSettings,
+        targetPkg: String,
+    ): Boolean {
+        if (!settings.flexOnlyWhenForeground) return true
+        val verdict = probe(service, targetPkg, service.packageName)
+        val allowed = when (verdict) {
+            Verdict.TARGET_FOREGROUND -> true
+            Verdict.OTHER_FOREGROUND -> false
+            Verdict.UNCERTAIN -> uncertainAllowsTarget()
+        }
+        if (!allowed && settings.debugLogEnabled) {
+            Log.d(
+                TAG,
+                "Motor pausado (sin Flex primer plano): verdict=$verdict other=$lastOtherAppPackage",
+            )
+        }
+        return allowed
+    }
+
+    private fun uncertainAllowsTarget(): Boolean {
+        val now = System.currentTimeMillis()
+        return now - lastTargetWindowEventMs <= TARGET_EVENT_GRACE_MS &&
+            now - lastOtherAppWindowEventMs > OTHER_APP_BLOCK_MS
+    }
+
+    private enum class Verdict { TARGET_FOREGROUND, OTHER_FOREGROUND, UNCERTAIN }
+
+    private fun probe(
+        service: AccessibilityService,
+        targetPkg: String,
+        selfPkg: String,
+    ): Verdict {
+        val active = service.rootInActiveWindow
+        val activePkg = try {
+            active?.packageName?.toString()
+        } finally {
+            try {
+                active?.recycle()
+            } catch (_: Exception) {
+            }
+        }
+
+        when {
+            activePkg == targetPkg -> return Verdict.TARGET_FOREGROUND
+            activePkg != null && activePkg != selfPkg && activePkg != targetPkg ->
+                return Verdict.OTHER_FOREGROUND
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            var targetActive = false
+            var otherActive = false
+            for (win in service.windows ?: emptyList()) {
+                if (!win.isActive) continue
+                when (win.type) {
+                    AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY,
+                    AccessibilityWindowInfo.TYPE_INPUT_METHOD,
+                    AccessibilityWindowInfo.TYPE_SYSTEM -> continue
+                }
+                val root = win.root ?: continue
+                try {
+                    when (root.packageName?.toString()) {
+                        targetPkg -> targetActive = true
+                        selfPkg, null -> Unit
+                        else -> otherActive = true
+                    }
+                } finally {
+                    try {
+                        root.recycle()
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+            if (targetActive) return Verdict.TARGET_FOREGROUND
+            if (otherActive) return Verdict.OTHER_FOREGROUND
+        }
+
+        if (activePkg == selfPkg) return Verdict.OTHER_FOREGROUND
+
+        return Verdict.UNCERTAIN
+    }
+}

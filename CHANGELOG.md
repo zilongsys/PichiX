@@ -8,6 +8,17 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.20 (Mayo 2026)
+
+### Corregido
+- **Primer plano**: con «Solo con Flex en primer plano» activo, el motor (scroll, grabber, Refresh, return) se detiene al salir de Flex; cancela scroll pendiente.
+- **Config**: switches y toggles conservan scroll y foco (no salta a otra sección al pulsar una opción).
+
+### Actualizado
+- Detección de Flex al frente: ventana activa, ventanas `isActive` y eventos `WINDOW_STATE_CHANGED` (por si Flex no notifica el foco).
+
+---
+
 ## v0.1.19 (Mayo 2026)
 
 ### Añadido

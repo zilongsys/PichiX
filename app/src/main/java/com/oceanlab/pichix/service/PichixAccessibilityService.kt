@@ -18,6 +18,7 @@ import com.oceanlab.pichix.data.FlexTariffRulesStore
 import com.oceanlab.pichix.data.MonitorPackages
 import com.oceanlab.pichix.data.OfferLogger
 import com.oceanlab.pichix.data.OfferStatus
+import com.oceanlab.pichix.service.accessibility.FlexForegroundGate
 import com.oceanlab.pichix.service.accessibility.FlexListScroller
 import com.oceanlab.pichix.service.accessibility.FlexScreenReader
 import com.oceanlab.pichix.service.accessibility.FlexUiDumper
@@ -25,8 +26,8 @@ import com.oceanlab.pichix.ui.MainActivity
 
 /**
  * Motor Flex: Terminator-Grabber, scroll, observers, pausa/reanudación y timer.
- * El bucle de acción no usa filtros de primer plano (v0.1.7); los switches de Config
- * afectan alertas/notificaciones, no bloquean [runGrabberTick].
+ * Con [AppSettings.flexOnlyWhenForeground] (por defecto ON), el motor solo actúa si Flex
+ * está en primer plano ([FlexForegroundGate]).
  */
 class PichixAccessibilityService : AccessibilityService() {
 
@@ -77,6 +78,8 @@ class PichixAccessibilityService : AccessibilityService() {
 
     private val grabLoopRunnable = Runnable { runGrabberTick() }
     private val timerRunnable = Runnable { runFlexTimerTick() }
+    private var pendingScrollWasDown = true
+    private val scrollSettleRunnable = Runnable { finishScrollSettle() }
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -97,6 +100,7 @@ class PichixAccessibilityService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
         settings = AppSettings(this)
+        FlexForegroundGate.onAccessibilityEvent(event, MonitorPackages.resolve(this).toSet())
         val target = MonitorPackages.primaryTarget(this) ?: return
         val pkg = event.packageName?.toString().orEmpty()
         if (settings.debugLogEnabled && pkg == target) {
@@ -130,8 +134,8 @@ class PichixAccessibilityService : AccessibilityService() {
 
     private fun stopEngine() {
         handler.removeCallbacksAndMessages(null)
+        cancelPendingMotorActions()
         grabInFlight = false
-        scrollInFlight = false
         FlexState.resetScrollCycle()
         scrollSigsBefore = ""
         scrollingDown = true
@@ -156,6 +160,7 @@ class PichixAccessibilityService : AccessibilityService() {
 
     private fun runObservers() {
         settings = AppSettings(this)
+        if (!isMotorForegroundAllowed()) return
         val text = reader.readFullScreenText()
         val flags = reader.detectScreenFlags(text)
 
@@ -183,6 +188,7 @@ class PichixAccessibilityService : AccessibilityService() {
         settings = AppSettings(this)
         scheduleWork()
         if (!settings.isBotEnabled || pausedAfterAccept || grabInFlight) return
+        if (!isMotorForegroundAllowed()) return
         grabInFlight = true
         try {
             val text = reader.readFullScreenText()
@@ -286,6 +292,10 @@ class PichixAccessibilityService : AccessibilityService() {
         }
 
         handler.postDelayed({
+            if (!isMotorForegroundAllowed()) {
+                finishBlockTakeFlow()
+                return@postDelayed
+            }
             val details = reader.readBlockDetails()
             val station = offer.stationText.ifBlank { details["station"].orEmpty() }
             val screenText = reader.readFullScreenText()
@@ -372,40 +382,62 @@ class PichixAccessibilityService : AccessibilityService() {
 
     private fun maybeScrollList() {
         if (!settings.flexAutoScrollEnabled || scrollInFlight) return
+        if (!isMotorForegroundAllowed()) return
         val screen = reader.readFullScreenText()
         if (!reader.detectScreenFlags(screen).onOffersList) return
         performDirectionalScroll(scrollingDown)
     }
 
+    private fun isMotorForegroundAllowed(): Boolean {
+        val target = MonitorPackages.primaryTarget(this) ?: return false
+        val allowed = FlexForegroundGate.allowMotor(this, settings, target)
+        if (!allowed) cancelPendingMotorActions()
+        return allowed
+    }
+
+    private fun cancelPendingMotorActions() {
+        handler.removeCallbacks(scrollSettleRunnable)
+        scrollInFlight = false
+    }
+
     private fun performDirectionalScroll(down: Boolean) {
-        if (scrollInFlight) return
+        if (scrollInFlight || !isMotorForegroundAllowed()) return
         scrollInFlight = true
         FlexState.counterScroll++
         scrollSigsBefore = reader.offerListSignature()
+        pendingScrollWasDown = down
         val onScrollDone: (Boolean) -> Unit = { dispatched ->
             if (!dispatched) {
                 scrollInFlight = false
             } else {
-                handler.postDelayed({
-                    val after = reader.offerListSignature()
-                    val moved = scrollSigsBefore.isNotEmpty() && scrollSigsBefore != after
-                    if (!moved) {
-                        if (down) {
-                            scrollingDown = false
-                            postObserver("Fin de lista (abajo) → scroll arriba")
-                        } else {
-                            scrollingDown = true
-                            postObserver("Fin de lista (arriba) → scroll abajo")
-                        }
-                        FlexState.scrollNeeded = true
-                    } else {
-                        FlexState.scrollNeeded = false
-                    }
-                    scrollInFlight = false
-                }, FlexListScroller.SETTLE_MS)
+                handler.removeCallbacks(scrollSettleRunnable)
+                handler.postDelayed(scrollSettleRunnable, FlexListScroller.SETTLE_MS)
             }
         }
         if (down) reader.scrollDown(onFinished = onScrollDone) else reader.scrollUp(onFinished = onScrollDone)
+    }
+
+    private fun finishScrollSettle() {
+        if (!isMotorForegroundAllowed()) {
+            scrollInFlight = false
+            return
+        }
+        val down = pendingScrollWasDown
+        val after = reader.offerListSignature()
+        val moved = scrollSigsBefore.isNotEmpty() && scrollSigsBefore != after
+        if (!moved) {
+            if (down) {
+                scrollingDown = false
+                postObserver("Fin de lista (abajo) → scroll arriba")
+            } else {
+                scrollingDown = true
+                postObserver("Fin de lista (arriba) → scroll abajo")
+            }
+            FlexState.scrollNeeded = true
+        } else {
+            FlexState.scrollNeeded = false
+        }
+        scrollInFlight = false
     }
 
     private fun performScrollDown() = performDirectionalScroll(down = true)
@@ -413,8 +445,11 @@ class PichixAccessibilityService : AccessibilityService() {
     private fun performScrollUp() = performDirectionalScroll(down = false)
 
     private fun performReturnToOffers() {
+        if (!isMotorForegroundAllowed()) return
         repeat(2) { reader.clickBack() }
-        handler.postDelayed({ if (!pausedAfterAccept) runGrabberTick() }, 400)
+        handler.postDelayed({
+            if (!pausedAfterAccept && isMotorForegroundAllowed()) runGrabberTick()
+        }, 400)
     }
 
     private fun postObserver(message: String) {

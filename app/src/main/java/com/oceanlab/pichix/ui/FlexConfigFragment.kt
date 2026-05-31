@@ -196,10 +196,7 @@ class FlexConfigFragment : Fragment() {
         val markDirty: () -> Unit = { (requireActivity() as MainActivity).markDirty(1) }
         etPackage.onUserTextChanged(onDirty = { markDirty() })
         swShowNames.setOnCheckedChangeRetainingFocus(view) { markDirty() }
-        swAutoAccept.setOnCheckedChangeRetainingFocus(view) {
-            settings.flexAutoAccept = it
-            markDirty()
-        }
+        swAutoAccept.setOnCheckedChangeRetainingFocus(view) { markDirty() }
         swReturn2?.setOnCheckedChangeRetainingFocus(view) { checked ->
             if (suppressReturn2Sync) return@setOnCheckedChangeRetainingFocus
             settings.flexAutoReturnToOffers = checked
@@ -220,30 +217,23 @@ class FlexConfigFragment : Fragment() {
         }
         etPauseText.onUserTextChanged(onDirty = { markDirty() })
         etPauseMinutes.onUserTextChanged(onDirty = { markDirty() })
-        toggleClickMode.addOnButtonCheckedListener { _, checkedId, isChecked ->
-            if (!isChecked) return@addOnButtonCheckedListener
-            val smart = checkedId == R.id.btnClickModeSmart
+        toggleClickMode.addOnButtonCheckedRetainingFocus(view) {
+            val smart = toggleClickMode.checkedButtonId == R.id.btnClickModeSmart
             updateClickModeVisibility(layoutBasic, layoutSmart, smart)
             markDirty()
         }
         etBasicSec.onUserTextChanged(onDirty = { markDirty() })
         etSmartMin.onUserTextChanged(onDirty = { markDirty() })
         etSmartMax.onUserTextChanged(onDirty = { markDirty() })
-        swClickRefresh.setOnCheckedChangeRetainingFocus(view) {
-            settings.flexClickRefreshEnabled = it
-            markDirty()
-        }
-        swAutoScroll.setOnCheckedChangeRetainingFocus(view) {
-            settings.flexAutoScrollEnabled = it
-            markDirty()
-        }
+        swClickRefresh.setOnCheckedChangeRetainingFocus(view) { markDirty() }
+        swAutoScroll.setOnCheckedChangeRetainingFocus(view) { markDirty() }
         etRefreshBtn.onUserTextChanged(onDirty = { markDirty() })
         etClickScreen.onUserTextChanged(onDirty = { markDirty() })
-        toggleRefreshMode.addOnButtonCheckedListener { _, _, _ -> markDirty() }
+        toggleRefreshMode.addOnButtonCheckedRetainingFocus(view) { markDirty() }
         swRefreshIgnore.setOnCheckedChangeRetainingFocus(view) { markDirty() }
-        toggleScreenMode.addOnButtonCheckedListener { _, _, _ -> markDirty() }
+        toggleScreenMode.addOnButtonCheckedRetainingFocus(view) { markDirty() }
         swScreenIgnore.setOnCheckedChangeRetainingFocus(view) { markDirty() }
-        togglePauseMode.addOnButtonCheckedListener { _, _, _ -> markDirty() }
+        togglePauseMode.addOnButtonCheckedRetainingFocus(view) { markDirty() }
         swPauseIgnore.setOnCheckedChangeRetainingFocus(view) { markDirty() }
 
         refreshAccessibilityStatus()

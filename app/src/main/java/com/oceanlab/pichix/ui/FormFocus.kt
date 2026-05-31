@@ -30,6 +30,16 @@ fun View.setupFormFocus() {
     }
 }
 
+/** ScrollView o NestedScrollView ancestro (formularios Config/Tarifas). */
+fun View.findHostScrollView(): View? {
+    var current: View? = this
+    while (current != null) {
+        if (current is ScrollView || current is NestedScrollView) return current
+        current = current.parent as? View
+    }
+    return null
+}
+
 /** Vista raÃ­z del Ã¡rbol (activity / fragment) para restaurar foco tras cambios de UI. */
 fun View.focusRoot(): View {
     var current: View = this
@@ -88,8 +98,37 @@ inline fun SwitchMaterial.setOnCheckedChangeRetainingFocus(
     focusRoot: View,
     crossinline listener: (Boolean) -> Unit,
 ) {
-    setOnCheckedChangeListener { _, checked ->
-        focusRoot.runRetainingFocus { listener(checked) }
+    val scrollHost = focusRoot.findHostScrollView()
+    setOnCheckedChangeListener { switch, checked ->
+        val run: () -> Unit = { listener(checked) }
+        when (scrollHost) {
+            is ScrollView -> scrollHost.runRetainingScrollAndFocus(run)
+            is NestedScrollView -> scrollHost.runRetainingScrollAndFocus(run)
+            else -> focusRoot.runRetainingFocus(run)
+        }
+        switch.post {
+            if (switch.isShown && switch.isEnabled) {
+                switch.requestFocus()
+            }
+        }
+    }
+}
+
+/** Toggle Material: conserva scroll y foco al cambiar modo (Contiene/Exacto, Basic/Smart). */
+inline fun com.google.android.material.button.MaterialButtonToggleGroup
+    .addOnButtonCheckedRetainingFocus(
+    focusRoot: View,
+    crossinline listener: () -> Unit,
+) {
+    val scrollHost = focusRoot.findHostScrollView()
+    addOnButtonCheckedListener { _, _, isChecked ->
+        if (!isChecked) return@addOnButtonCheckedListener
+        val run = { listener() }
+        when (scrollHost) {
+            is ScrollView -> scrollHost.runRetainingScrollAndFocus(run)
+            is NestedScrollView -> scrollHost.runRetainingScrollAndFocus(run)
+            else -> focusRoot.runRetainingFocus(run)
+        }
     }
 }
 
