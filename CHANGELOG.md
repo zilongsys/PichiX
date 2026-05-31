@@ -8,6 +8,17 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.17 (Mayo 2026)
+
+### Corregido
+- **Solo refresh** ya no impide tomar bloques: tras Refresh el grabber evalúa ofertas (antes hacía `return` y nunca grababa).
+- Por defecto «Solo refresh» desactivado (migración automática).
+- Clic en oferta: sube desde `offer_pay` hasta `card` (ids `com.amazon.flex.rabbit`).
+- Reglas detalladas: $/h usa `durationHours` de la tarjeta.
+- Avisos en observador si reglas están en modo Clásico, lista vacía o ninguna oferta cumple.
+
+---
+
 ## v0.1.16 (Mayo 2026)
 
 ### Añadido

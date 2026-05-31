@@ -15,9 +15,10 @@ class FlexTariffEvaluator(private val settings: AppSettings) {
         }
         val pay = offer.payAmount ?: FlexGrabberEvaluator.parsePay(offer.payText)
             ?: return FlexGrabResult.SKIP
-        val hourly = offer.hourlyRate
-            ?: FlexGrabberEvaluator.hourlyFromPayAndTime(pay, offer.timeText)
-            ?: return FlexGrabResult.SKIP
+        val hourly = offer.hourlyRate ?: run {
+            offer.durationHours?.takeIf { it > 0 }?.let { pay / it }
+                ?: FlexGrabberEvaluator.hourlyFromPayAndTime(pay, offer.timeText, "")
+        } ?: return FlexGrabResult.SKIP
         return evaluateInternal(
             station = offer.stationText,
             pay = pay,

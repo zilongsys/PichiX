@@ -63,7 +63,7 @@
     <string name="config_refresh_button_text_label">Nombre exacto del botón a pulsar</string>
     <string name="config_click_screen_text_label">Texto que debe mostrar la pantalla</string>
     <string name="config_click_screen_text_hint">ej: Offers, ofertas (vacío = cualquier pantalla)</string>
-    <string name="config_bot_clicks_helper">Con «Solo refresh» en Tarifas, el bot pulsa ese botón. Smart click elige un tiempo nuevo al azar en cada ciclo.</string>
+    <string name="config_bot_clicks_helper">«Solo refresh» en Tarifas: además pulsa Refresh cada ciclo; el bot sigue evaluando y tomando ofertas válidas.</string>
 
     <string name="config_section_monitor_packages">APPS VIGILADAS (AVANZADO)</string>
     <string name="config_monitor_csv_hint">Paquete(s) Android — se guarda al pulsar Guardar</string>

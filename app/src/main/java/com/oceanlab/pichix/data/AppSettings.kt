@@ -48,8 +48,18 @@ class AppSettings(context: Context) {
         get() = prefs.getInt(KEY_MIN_START_HOUR, 6)
         set(value) = prefs.edit().putInt(KEY_MIN_START_HOUR, value.coerceIn(0, 23)).apply()
 
+    /** Si true, pulsa Refresh cada ciclo; el grabber sigue evaluando ofertas después. */
     var flexOnlyRefresh: Boolean
-        get() = prefs.getBoolean(KEY_ONLY_REFRESH, true)
+        get() {
+            if (!prefs.getBoolean(KEY_ONLY_REFRESH_GRAB_MIGRATION, false)) {
+                prefs.edit()
+                    .putBoolean(KEY_ONLY_REFRESH, false)
+                    .putBoolean(KEY_ONLY_REFRESH_GRAB_MIGRATION, true)
+                    .apply()
+                return false
+            }
+            return prefs.getBoolean(KEY_ONLY_REFRESH, false)
+        }
         set(value) = prefs.edit().putBoolean(KEY_ONLY_REFRESH, value).apply()
 
     var flexCancelBadBlocks: Boolean
@@ -250,6 +260,7 @@ class AppSettings(context: Context) {
         private const val KEY_MIN_BLOCK = "flex_min_block"
         private const val KEY_MIN_START_HOUR = "flex_min_start_hour"
         private const val KEY_ONLY_REFRESH = "flex_only_refresh"
+        private const val KEY_ONLY_REFRESH_GRAB_MIGRATION = "flex_only_refresh_grab_v16"
         private const val KEY_CANCEL_BAD_BLOCKS = "flex_cancel_bad_blocks"
         private const val KEY_GRAB_INTERVAL_MS = "flex_grab_interval_ms"
         private const val KEY_FLEX_CLICK_MODE = "flex_click_mode"

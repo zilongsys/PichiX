@@ -14,6 +14,7 @@ import com.oceanlab.pichix.analyzer.FlexGrabberEvaluator
 import com.oceanlab.pichix.data.AppSettings
 import com.oceanlab.pichix.data.PichiFileLog
 import com.oceanlab.pichix.data.FlexState
+import com.oceanlab.pichix.data.FlexTariffRulesStore
 import com.oceanlab.pichix.data.MonitorPackages
 import com.oceanlab.pichix.data.OfferLogger
 import com.oceanlab.pichix.data.OfferStatus
@@ -71,6 +72,7 @@ class PichixAccessibilityService : AccessibilityService() {
     private var scrollDownEnd = false
     private var scrollUpEnd = false
     private var lastReturnMs = 0L
+    private var lastGrabEvalLogMs = 0L
 
     private val grabLoopRunnable = Runnable { runGrabberTick() }
     private val timerRunnable = Runnable { runFlexTimerTick() }
@@ -184,16 +186,14 @@ class PichixAccessibilityService : AccessibilityService() {
         grabInFlight = true
         try {
             val text = reader.readFullScreenText()
-            if (settings.flexOnlyRefresh) {
-                if (!reader.screenMatchesForClick(
-                        settings.flexClickScreenText,
-                        text,
-                        settings.flexClickScreenMatchMode,
-                        settings.flexClickScreenIgnoreCase,
-                    )
-                ) {
-                    return
-                }
+            if (settings.flexOnlyRefresh &&
+                reader.screenMatchesForClick(
+                    settings.flexClickScreenText,
+                    text,
+                    settings.flexClickScreenMatchMode,
+                    settings.flexClickScreenIgnoreCase,
+                )
+            ) {
                 val target = MonitorPackages.primaryTarget(this)
                 val logUi = settings.debugLogEnabled || settings.fileLogEnabled
                 if (logUi) {
@@ -214,29 +214,11 @@ class PichixAccessibilityService : AccessibilityService() {
                         reader.withActiveRoot { root ->
                             FlexUiDumper.dumpOnRefreshClick(root, target, "despues")
                         }
-                        val afterText = reader.readFullScreenText()
-                        Log.i(
-                            FlexUiDumper.DEBUG_TAG,
-                            "Lectura tras Refresh (${afterText.length} chars), cambio visual no requerido",
-                        )
-                        PichiFileLog.uiFileOnly(
-                            FlexUiDumper.DEBUG_TAG,
-                            "POST_REFRESH (${afterText.length}): ${afterText.take(4000)}",
-                        )
-                        val parsed = reader.readOffersFromList()
-                        if (parsed.isNotEmpty()) {
-                            Log.i(FlexUiDumper.DEBUG_TAG, "Ofertas parseadas tras Refresh: ${parsed.size}")
-                            parsed.forEachIndexed { i, o ->
-                                Log.i(
-                                    FlexUiDumper.DEBUG_TAG,
-                                    "  [$i] ${o.stationText} | ${o.timeText} | ${o.durationHours}h | ${o.payText}",
-                                )
-                            }
-                        }
                     }, 450)
                 }
-                return
             }
+
+            warnIfTariffRulesMisconfigured()
 
             val flags = reader.detectScreenFlags(text)
             if (flags.captcha) return
@@ -251,6 +233,7 @@ class PichixAccessibilityService : AccessibilityService() {
                 }
             }
             if (offers.isEmpty()) {
+                logGrabEvalThrottled("Lista sin ofertas parseadas (revisa ids offer_pay)")
                 maybeScrollList()
                 return
             }
@@ -258,10 +241,18 @@ class PichixAccessibilityService : AccessibilityService() {
             for (offer in offers) {
                 when (FlexGrabberEvaluator.evaluateListRow(offer, settings, text)) {
                     FlexGrabResult.ACCEPT, FlexGrabResult.SIMULATED_ACCEPT -> {
+                        postObserver(
+                            "Tomando: ${offer.stationText} ${offer.payText} " +
+                                "(${offer.hourlyRate?.let { "%.1f".format(it) } ?: "?"} \$/h)",
+                        )
                         handleAccept(offer)
                         return
                     }
                     FlexGrabResult.REJECT -> {
+                        logGrabEvalThrottled(
+                            "No cumple regla: ${offer.stationText} ${offer.payText} " +
+                                "(${offer.hourlyRate?.let { "%.1f".format(it) } ?: "?"} \$/h)",
+                        )
                         if (settings.flexCancelBadBlocks) {
                             logger.log(
                                 pay = offer.payText,
@@ -271,7 +262,11 @@ class PichixAccessibilityService : AccessibilityService() {
                             )
                         }
                     }
-                    FlexGrabResult.SKIP -> Unit
+                    FlexGrabResult.SKIP -> {
+                        logGrabEvalThrottled(
+                            "Datos incompletos: ${offer.stationText} ${offer.payText}",
+                        )
+                    }
                 }
             }
 
@@ -352,6 +347,23 @@ class PichixAccessibilityService : AccessibilityService() {
     }
 
     /** Pausa el bot una vez tras abrir/aceptar un bloque (lista → detalle → Schedule opcional). */
+    private fun warnIfTariffRulesMisconfigured() {
+        val rules = FlexTariffRulesStore.load(settings)
+        if (rules.any { it.enabled } && !settings.usesFlexDetailedTariff()) {
+            logGrabEvalThrottled(
+                "Tienes reglas guardadas: activa Tarifas → modo Detallado (Reglas), no Clásico",
+            )
+        }
+    }
+
+    private fun logGrabEvalThrottled(message: String) {
+        val now = System.currentTimeMillis()
+        if (now - lastGrabEvalLogMs < 12_000L) return
+        lastGrabEvalLogMs = now
+        postObserver(message)
+        Log.d(TAG, message)
+    }
+
     private fun finishBlockTakeFlow() {
         pausedAfterAccept = true
         postBotPaused()

@@ -35,15 +35,21 @@ class FlexScreenReader(private val service: AccessibilityService) {
     private fun activeRoot(): AccessibilityNodeInfo? = service.rootInActiveWindow
 
     fun resolveId(suffix: String): String? {
-        for (cand in FlexIds.viewIdCandidates(suffix, appPackage)) {
-            val root = activeRoot() ?: continue
+        val candidates = FlexIds.viewIdCandidates(suffix, appPackage)
+        val root = activeRoot()
+        if (root != null) {
             try {
-                if (root.hasViewId(cand)) return cand
+                for (cand in candidates) {
+                    if (root.hasViewId(cand)) return cand
+                }
             } finally {
-                try { root.recycle() } catch (_: Exception) {}
+                try {
+                    root.recycle()
+                } catch (_: Exception) {
+                }
             }
         }
-        return FlexIds.viewIdCandidates(suffix, appPackage).firstOrNull()
+        return candidates.firstOrNull()
     }
 
     fun readFullScreenText(): String {
@@ -167,18 +173,64 @@ class FlexScreenReader(private val service: AccessibilityService) {
         }
     }
 
-    /** Abre la tarjeta de oferta en la lista (id/card), no el botón Schedule del detalle. */
+    /** Abre la tarjeta de la oferta: sube desde offer_pay#index hasta id/card (alineación fiable). */
     fun clickOfferCardAtIndex(index: Int): Boolean {
+        val payId = resolveId(FlexIds.OFFER_PAY) ?: return false
         val cardId = resolveId(FlexIds.OFFER_CARD) ?: return false
         val root = activeRoot() ?: return false
         return try {
-            root.useViewIdNodes(cardId) { cards ->
-                val card = cards.getOrNull(index) ?: cards.firstOrNull()
-                card?.performAction(AccessibilityNodeInfo.ACTION_CLICK) == true
+            root.useViewIdNodes(payId) { payNodes ->
+                val payNode = payNodes.getOrNull(index) ?: return@useViewIdNodes false
+                var cur: AccessibilityNodeInfo? = payNode
+                var depth = 0
+                while (cur != null && depth < 24) {
+                    if (cur.viewIdResourceName == cardId) {
+                        val clickable = if (cur.isClickable) cur else findClickableParent(cur)
+                        val ok = clickable?.performAction(AccessibilityNodeInfo.ACTION_CLICK) == true
+                        if (clickable != null && clickable !== cur) {
+                            try {
+                                clickable.recycle()
+                            } catch (_: Exception) {
+                            }
+                        }
+                        return@useViewIdNodes ok
+                    }
+                    val parent = cur.parent
+                    if (cur !== payNode) {
+                        try {
+                            cur.recycle()
+                        } catch (_: Exception) {
+                        }
+                    }
+                    cur = parent
+                    depth++
+                }
+                false
             }
         } finally {
-            try { root.recycle() } catch (_: Exception) {}
+            try {
+                root.recycle()
+            } catch (_: Exception) {
+            }
         }
+    }
+
+    private fun findClickableParent(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        var cur: AccessibilityNodeInfo? = node
+        var depth = 0
+        while (cur != null && depth < 12) {
+            if (cur.isClickable) return AccessibilityNodeInfo.obtain(cur)
+            val parent = cur.parent
+            if (cur !== node) {
+                try {
+                    cur.recycle()
+                } catch (_: Exception) {
+                }
+            }
+            cur = parent
+            depth++
+        }
+        return null
     }
 
     fun clickScheduleOnList(index: Int = 0): Boolean = clickOfferCardAtIndex(index)
