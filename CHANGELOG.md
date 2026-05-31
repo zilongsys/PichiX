@@ -8,6 +8,15 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.10 (Mayo 2026)
+
+### Corregido
+- Bot inactivo con **Flex en primer plano** y overlay flotante: ahora lee la ventana activa de Flex (`flagRetrieveInteractiveWindows`), no la de PichiX.
+- Modos de coincidencia antiguos (`screen_match_*`) se normalizan a `contains` / `exact`.
+- Modo solo Refresh: aviso en observador si el texto de pantalla no coincide (p. ej. mayúsculas).
+
+---
+
 ## v0.1.9 (Mayo 2026)
 
 ### Actualizado

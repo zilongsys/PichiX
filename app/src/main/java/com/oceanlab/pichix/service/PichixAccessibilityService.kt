@@ -18,6 +18,7 @@ import com.oceanlab.pichix.data.OfferLogger
 import com.oceanlab.pichix.data.OfferStatus
 import com.oceanlab.pichix.service.accessibility.FlexScreenReader
 import com.oceanlab.pichix.service.accessibility.FlexUiDumper
+import com.oceanlab.pichix.service.accessibility.FlexWindowRoots
 import com.oceanlab.pichix.ui.MainActivity
 
 /**
@@ -107,7 +108,6 @@ class PichixAccessibilityService : AccessibilityService() {
         }
         if (!settings.isBotEnabled || pausedAfterAccept) return
         if (pkg != target) return
-        if (!isFlexInForeground()) return
         when (event.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
@@ -119,16 +119,7 @@ class PichixAccessibilityService : AccessibilityService() {
 
     private fun isFlexInForeground(): Boolean {
         if (!settings.flexOnlyWhenForeground) return true
-        val target = MonitorPackages.primaryTarget(this) ?: return false
-        val active = rootInActiveWindow ?: return false
-        return try {
-            active.packageName?.toString() == target
-        } finally {
-            try {
-                active.recycle()
-            } catch (_: Exception) {
-            }
-        }
+        return FlexWindowRoots.isTargetInForeground(this)
     }
 
     private val observerRunnable = Runnable { runObservers() }
@@ -165,6 +156,7 @@ class PichixAccessibilityService : AccessibilityService() {
     }
 
     private fun runObservers() {
+        settings = AppSettings(this)
         if (!isFlexInForeground()) return
         val text = reader.readFullScreenText()
         val flags = reader.detectScreenFlags(text)
@@ -189,7 +181,10 @@ class PichixAccessibilityService : AccessibilityService() {
         }
     }
 
+    private var lastScreenMismatchAtMs = 0L
+
     private fun runGrabberTick() {
+        settings = AppSettings(this)
         scheduleWork()
         if (!settings.isBotEnabled || pausedAfterAccept || grabInFlight) return
         if (!isFlexInForeground()) return
@@ -197,21 +192,31 @@ class PichixAccessibilityService : AccessibilityService() {
         try {
             val text = reader.readFullScreenText()
             if (settings.flexOnlyRefresh) {
-                if (reader.screenMatchesForClick(
-                        settings.flexClickScreenText,
-                        text,
-                        settings.flexClickScreenMatchMode,
-                        settings.flexClickScreenIgnoreCase,
-                    )
-                ) {
-                    val clicked = reader.clickTargetButton(
-                        settings.flexRefreshButtonText,
-                        settings.flexRefreshButtonMatchMode,
-                        settings.flexRefreshButtonIgnoreCase,
-                    )
-                    if (!clicked) {
-                        postObserver("Clic: no se encontró «${settings.flexRefreshButtonText}»")
+                val screenOk = reader.screenMatchesForClick(
+                    settings.flexClickScreenText,
+                    text,
+                    settings.flexClickScreenMatchMode,
+                    settings.flexClickScreenIgnoreCase,
+                )
+                if (!screenOk) {
+                    val needle = settings.flexClickScreenText.trim()
+                    if (needle.isNotEmpty()) {
+                        val now = System.currentTimeMillis()
+                        if (now - lastScreenMismatchAtMs > 15_000L) {
+                            lastScreenMismatchAtMs = now
+                            val caseHint = if (settings.flexClickScreenIgnoreCase) "" else " (mayúsculas importan)"
+                            postObserver("Pantalla no coincide con «$needle»$caseHint")
+                        }
                     }
+                    return
+                }
+                val clicked = reader.clickTargetButton(
+                    settings.flexRefreshButtonText,
+                    settings.flexRefreshButtonMatchMode,
+                    settings.flexRefreshButtonIgnoreCase,
+                )
+                if (!clicked) {
+                    postObserver("Clic: no se encontró «${settings.flexRefreshButtonText}»")
                 }
                 return
             }

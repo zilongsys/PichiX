@@ -27,9 +27,15 @@ class FlexScreenReader(private val service: AccessibilityService) {
         get() = com.oceanlab.pichix.data.MonitorPackages.primaryTarget(service)
             ?: "com.amazon.rabbit"
 
+    /** Raíz del árbol de Flex (no la ventana del overlay ni de PichiX). */
+    private fun flexRoot(): AccessibilityNodeInfo? {
+        val onlyForeground = AppSettings(service).flexOnlyWhenForeground
+        return FlexWindowRoots.obtainTargetRoot(service, requireActiveWindow = onlyForeground)
+    }
+
     fun resolveId(suffix: String): String? {
         for (cand in FlexIds.viewIdCandidates(suffix, appPackage)) {
-            val root = service.rootInActiveWindow ?: continue
+            val root = flexRoot() ?: continue
             try {
                 if (root.hasViewId(cand)) return cand
             } finally {
@@ -40,7 +46,7 @@ class FlexScreenReader(private val service: AccessibilityService) {
     }
 
     fun readFullScreenText(): String {
-        val root = service.rootInActiveWindow ?: return ""
+        val root = flexRoot() ?: return ""
         return try {
             root.getAllText()
         } finally {
@@ -63,7 +69,7 @@ class FlexScreenReader(private val service: AccessibilityService) {
 
     private fun hasAnyOfferPay(): Boolean {
         val id = resolveId(FlexIds.OFFER_PAY) ?: return false
-        val root = service.rootInActiveWindow ?: return false
+        val root = flexRoot() ?: return false
         return try {
             root.hasViewId(id)
         } finally {
@@ -77,7 +83,7 @@ class FlexScreenReader(private val service: AccessibilityService) {
         val stationId = resolveId(FlexIds.LEFT_SECONDARY_LABEL)
             ?: resolveId(FlexIds.OFFER_STATION)
 
-        val root = service.rootInActiveWindow ?: return emptyList()
+        val root = flexRoot() ?: return emptyList()
         return try {
             root.useViewIdNodes(payId) { payNodes ->
                 payNodes.mapIndexed { index, payNode ->
@@ -109,7 +115,7 @@ class FlexScreenReader(private val service: AccessibilityService) {
 
     private fun findSiblingText(anchor: AccessibilityNodeInfo, fullId: String?, index: Int): String {
         if (fullId == null) return ""
-        val root = service.rootInActiveWindow ?: return ""
+        val root = flexRoot() ?: return ""
         return try {
             val texts = root.allTextsByViewId(fullId)
             texts.getOrElse(index) { texts.firstOrNull().orEmpty() }
@@ -126,7 +132,7 @@ class FlexScreenReader(private val service: AccessibilityService) {
             FlexIds.OFFER_TIME_WINDOW to "time_window",
             FlexIds.OFFER_DATE to "date",
         )
-        val root = service.rootInActiveWindow ?: return emptyMap()
+        val root = flexRoot() ?: return emptyMap()
         val out = linkedMapOf<String, String>()
         return try {
             for ((suffix, key) in fields) {
@@ -144,7 +150,7 @@ class FlexScreenReader(private val service: AccessibilityService) {
     }
 
     fun clickScheduleOnList(index: Int = 0): Boolean {
-        val root = service.rootInActiveWindow ?: return false
+        val root = flexRoot() ?: return false
         return try {
             val node = root.findClickableByText("Schedule")
                 ?: root.findClickableByText("Accept")
@@ -161,7 +167,7 @@ class FlexScreenReader(private val service: AccessibilityService) {
     }
 
     fun clickScheduleOnDetail(): Boolean {
-        val root = service.rootInActiveWindow ?: return false
+        val root = flexRoot() ?: return false
         return try {
             val id = resolveId(FlexIds.MERIDIAN_BUTTON_TEXT) ?: return false
             root.useViewIdNodes(id) { nodes ->
@@ -178,7 +184,7 @@ class FlexScreenReader(private val service: AccessibilityService) {
 
     private fun clickMeridianButton(index: Int): Boolean {
         val id = resolveId(FlexIds.MERIDIAN_BUTTON_TEXT) ?: return false
-        val root = service.rootInActiveWindow ?: return false
+        val root = flexRoot() ?: return false
         return try {
             root.useViewIdNodes(id) { nodes ->
                 val target = nodes.getOrNull(index) ?: nodes.firstOrNull()
@@ -205,7 +211,7 @@ class FlexScreenReader(private val service: AccessibilityService) {
         ignoreCase: Boolean = true,
     ): Boolean {
         if (buttonText.isBlank()) return false
-        val root = service.rootInActiveWindow ?: return false
+        val root = flexRoot() ?: return false
         return try {
             val node = when (matchMode) {
                 AppSettings.TEXT_MATCH_CONTAINS ->

@@ -86,8 +86,8 @@ class AppSettings(context: Context) {
 
     /** contains | exact — texto de la pantalla de ofertas. */
     var flexClickScreenMatchMode: String
-        get() = prefs.getString(KEY_FLEX_CLICK_SCREEN_MODE, TEXT_MATCH_CONTAINS) ?: TEXT_MATCH_CONTAINS
-        set(value) = prefs.edit().putString(KEY_FLEX_CLICK_SCREEN_MODE, value).apply()
+        get() = normalizeMatchMode(prefs.getString(KEY_FLEX_CLICK_SCREEN_MODE, TEXT_MATCH_CONTAINS))
+        set(value) = prefs.edit().putString(KEY_FLEX_CLICK_SCREEN_MODE, normalizeMatchMode(value)).apply()
 
     /** false = sensible a mayúsculas (por defecto en pantalla de ofertas). */
     var flexClickScreenIgnoreCase: Boolean
@@ -95,16 +95,16 @@ class AppSettings(context: Context) {
         set(value) = prefs.edit().putBoolean(KEY_FLEX_CLICK_SCREEN_IGNORE_CASE, value).apply()
 
     var flexRefreshButtonMatchMode: String
-        get() = prefs.getString(KEY_FLEX_REFRESH_BUTTON_MODE, TEXT_MATCH_EXACT) ?: TEXT_MATCH_EXACT
-        set(value) = prefs.edit().putString(KEY_FLEX_REFRESH_BUTTON_MODE, value).apply()
+        get() = normalizeMatchMode(prefs.getString(KEY_FLEX_REFRESH_BUTTON_MODE, TEXT_MATCH_EXACT))
+        set(value) = prefs.edit().putString(KEY_FLEX_REFRESH_BUTTON_MODE, normalizeMatchMode(value)).apply()
 
     var flexRefreshButtonIgnoreCase: Boolean
         get() = prefs.getBoolean(KEY_FLEX_REFRESH_BUTTON_IGNORE_CASE, true)
         set(value) = prefs.edit().putBoolean(KEY_FLEX_REFRESH_BUTTON_IGNORE_CASE, value).apply()
 
     var pauseByOverClicksMatchMode: String
-        get() = prefs.getString(KEY_PAUSE_MATCH_MODE, TEXT_MATCH_CONTAINS) ?: TEXT_MATCH_CONTAINS
-        set(value) = prefs.edit().putString(KEY_PAUSE_MATCH_MODE, value).apply()
+        get() = normalizeMatchMode(prefs.getString(KEY_PAUSE_MATCH_MODE, TEXT_MATCH_CONTAINS))
+        set(value) = prefs.edit().putString(KEY_PAUSE_MATCH_MODE, normalizeMatchMode(value)).apply()
 
     var pauseByOverClicksIgnoreCase: Boolean
         get() = prefs.getBoolean(KEY_PAUSE_IGNORE_CASE, true)
@@ -209,6 +209,13 @@ class AppSettings(context: Context) {
         set(value) = prefs.edit().putBoolean(KEY_VIBRATE_ON_ALERT, value).apply()
 
     fun usesFlexDetailedTariff(): Boolean = flexTariffMode == TARIFF_MODE_DETAILED
+
+    private fun normalizeMatchMode(raw: String?): String =
+        when (raw?.trim()?.lowercase()) {
+            TEXT_MATCH_EXACT, "screen_match_exact", "exact" -> TEXT_MATCH_EXACT
+            TEXT_MATCH_CONTAINS, "screen_match_contains", "contains", "partial" -> TEXT_MATCH_CONTAINS
+            else -> TEXT_MATCH_CONTAINS
+        }
 
     companion object {
         const val TARIFF_MODE_CLASSIC = "classic"
