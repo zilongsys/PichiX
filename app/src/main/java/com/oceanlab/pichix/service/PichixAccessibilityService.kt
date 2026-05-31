@@ -18,6 +18,7 @@ import com.oceanlab.pichix.data.FlexTariffRulesStore
 import com.oceanlab.pichix.data.MonitorPackages
 import com.oceanlab.pichix.data.OfferLogger
 import com.oceanlab.pichix.data.OfferStatus
+import com.oceanlab.pichix.service.accessibility.FlexListScroller
 import com.oceanlab.pichix.service.accessibility.FlexScreenReader
 import com.oceanlab.pichix.service.accessibility.FlexUiDumper
 import com.oceanlab.pichix.ui.MainActivity
@@ -68,9 +69,9 @@ class PichixAccessibilityService : AccessibilityService() {
     private val handler = Handler(Looper.getMainLooper())
     private var grabInFlight = false
     private var scrollInFlight = false
-    private var lastOfferSignature = ""
-    private var scrollDownEnd = false
-    private var scrollUpEnd = false
+    private var scrollSigsBefore = ""
+    /** Dirección actual del ciclo de scroll (estilo MakiX: invierte al llegar al fin). */
+    private var scrollingDown = true
     private var lastReturnMs = 0L
     private var lastGrabEvalLogMs = 0L
 
@@ -132,9 +133,8 @@ class PichixAccessibilityService : AccessibilityService() {
         grabInFlight = false
         scrollInFlight = false
         FlexState.resetScrollCycle()
-        lastOfferSignature = ""
-        scrollDownEnd = false
-        scrollUpEnd = false
+        scrollSigsBefore = ""
+        scrollingDown = true
     }
 
     private fun scheduleWork() {
@@ -371,53 +371,46 @@ class PichixAccessibilityService : AccessibilityService() {
     }
 
     private fun maybeScrollList() {
-        if (settings.flexDisableListScroll || scrollInFlight) return
-        val sig = reader.offerListSignature()
-        if (sig.isNotEmpty() && sig == lastOfferSignature) {
-            FlexState.scrollNeeded = true
-            when {
-                !scrollDownEnd -> performScrollDown()
-                !scrollUpEnd -> performScrollUp()
-                else -> {
-                    FlexState.resetScrollCycle()
-                    scrollDownEnd = false
-                    scrollUpEnd = false
-                    lastOfferSignature = ""
-                    postObserver("Ciclo de scroll completado — reiniciando")
-                }
-            }
-        } else {
-            lastOfferSignature = sig
-            FlexState.scrollNeeded = false
-        }
+        if (!settings.flexAutoScrollEnabled || scrollInFlight) return
+        val screen = reader.readFullScreenText()
+        if (!reader.detectScreenFlags(screen).onOffersList) return
+        performDirectionalScroll(scrollingDown)
     }
 
-    private fun performScrollDown() {
+    private fun performDirectionalScroll(down: Boolean) {
         if (scrollInFlight) return
         scrollInFlight = true
         FlexState.counterScroll++
-        val before = reader.offerListSignature()
-        reader.scrollDown()
-        handler.postDelayed({
-            val after = reader.offerListSignature()
-            scrollDownEnd = before.isNotEmpty() && before == after
-            if (scrollDownEnd) postObserver("Fin de lista (abajo)")
-            scrollInFlight = false
-        }, 700)
+        scrollSigsBefore = reader.offerListSignature()
+        val onScrollDone: (Boolean) -> Unit = { dispatched ->
+            if (!dispatched) {
+                scrollInFlight = false
+                return@onScrollDone
+            }
+            handler.postDelayed({
+                val after = reader.offerListSignature()
+                val moved = scrollSigsBefore.isNotEmpty() && scrollSigsBefore != after
+                if (!moved) {
+                    if (down) {
+                        scrollingDown = false
+                        postObserver("Fin de lista (abajo) → scroll arriba")
+                    } else {
+                        scrollingDown = true
+                        postObserver("Fin de lista (arriba) → scroll abajo")
+                    }
+                    FlexState.scrollNeeded = true
+                } else {
+                    FlexState.scrollNeeded = false
+                }
+                scrollInFlight = false
+            }, FlexListScroller.SETTLE_MS)
+        }
+        if (down) reader.scrollDown(onFinished = onScrollDone) else reader.scrollUp(onFinished = onScrollDone)
     }
 
-    private fun performScrollUp() {
-        if (scrollInFlight) return
-        scrollInFlight = true
-        val before = reader.offerListSignature()
-        reader.scrollUp()
-        handler.postDelayed({
-            val after = reader.offerListSignature()
-            scrollUpEnd = before.isNotEmpty() && before == after
-            if (scrollUpEnd) postObserver("Fin de lista (arriba)")
-            scrollInFlight = false
-        }, 700)
-    }
+    private fun performScrollDown() = performDirectionalScroll(down = true)
+
+    private fun performScrollUp() = performDirectionalScroll(down = false)
 
     private fun performReturnToOffers() {
         repeat(2) { reader.clickBack() }

@@ -53,13 +53,14 @@ class AppSettings(context: Context) {
         get() = prefs.getBoolean(KEY_CLICK_REFRESH_ENABLED, false)
         set(value) = prefs.edit().putBoolean(KEY_CLICK_REFRESH_ENABLED, value).apply()
 
-    /** Config → Clics: no hacer scroll en la lista de ofertas. */
-    var flexDisableListScroll: Boolean
-        get() = prefs.getBoolean(KEY_DISABLE_LIST_SCROLL, false)
-        set(value) = prefs.edit().putBoolean(KEY_DISABLE_LIST_SCROLL, value).apply()
+    /** Config → Clics: scroll automático en lista (gesto en zona, ping-pong arriba/abajo). */
+    var flexAutoScrollEnabled: Boolean
+        get() = prefs.getBoolean(KEY_AUTO_SCROLL_ENABLED, false)
+        set(value) = prefs.edit().putBoolean(KEY_AUTO_SCROLL_ENABLED, value).apply()
 
     init {
         migrateLegacyOnlyRefreshFlag()
+        migrateAutoScrollFromDisable()
     }
 
     private fun migrateLegacyOnlyRefreshFlag() {
@@ -69,6 +70,15 @@ class AppSettings(context: Context) {
             .putBoolean(KEY_CLICK_REFRESH_ENABLED, legacy)
             .putBoolean(KEY_DISABLE_LIST_SCROLL, legacy)
             .putBoolean(KEY_ONLY_REFRESH_SPLIT_MIGRATION, true)
+            .apply()
+    }
+
+    private fun migrateAutoScrollFromDisable() {
+        if (prefs.getBoolean(KEY_AUTO_SCROLL_MIGRATION, false)) return
+        val hadDisable = prefs.getBoolean(KEY_DISABLE_LIST_SCROLL, false)
+        prefs.edit()
+            .putBoolean(KEY_AUTO_SCROLL_ENABLED, !hadDisable)
+            .putBoolean(KEY_AUTO_SCROLL_MIGRATION, true)
             .apply()
     }
 
@@ -272,6 +282,8 @@ class AppSettings(context: Context) {
         private const val KEY_ONLY_REFRESH = "flex_only_refresh"
         private const val KEY_CLICK_REFRESH_ENABLED = "flex_click_refresh_enabled"
         private const val KEY_DISABLE_LIST_SCROLL = "flex_disable_list_scroll"
+        private const val KEY_AUTO_SCROLL_ENABLED = "flex_auto_scroll_enabled"
+        private const val KEY_AUTO_SCROLL_MIGRATION = "flex_auto_scroll_migrate_v19"
         private const val KEY_ONLY_REFRESH_SPLIT_MIGRATION = "flex_only_refresh_split_v18"
         private const val KEY_CANCEL_BAD_BLOCKS = "flex_cancel_bad_blocks"
         private const val KEY_GRAB_INTERVAL_MS = "flex_grab_interval_ms"

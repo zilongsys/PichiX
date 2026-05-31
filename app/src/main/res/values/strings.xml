@@ -66,8 +66,8 @@
     <string name="config_bot_clicks_helper">Clics del bot (Refresh, intervalo): independientes de Tarifas clásico o detallado. El grabber siempre evalúa reglas y puede tomar bloques.</string>
     <string name="config_click_refresh_title">Pulsar Refresh cada ciclo</string>
     <string name="config_click_refresh_hint">Al inicio de cada ciclo pulsa el botón Refresh de Flex (si el texto de pantalla coincide). Luego evalúa ofertas.</string>
-    <string name="config_disable_scroll_title">Sin scroll en la lista</string>
-    <string name="config_disable_scroll_hint">No desplaza la lista buscando más ofertas; solo lo visible en pantalla.</string>
+    <string name="config_auto_scroll_title">Scroll automático en la lista</string>
+    <string name="config_auto_scroll_hint">Cada ciclo desliza en la zona de ofertas (posición aleatoria, estilo MakiX). Al llegar abajo sube; al llegar arriba baja.</string>
 
     <string name="config_section_monitor_packages">APPS VIGILADAS (AVANZADO)</string>
     <string name="config_monitor_csv_hint">Paquete(s) Android — se guarda al pulsar Guardar</string>

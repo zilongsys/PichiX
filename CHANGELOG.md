@@ -8,6 +8,16 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.19 (Mayo 2026)
+
+### Añadido
+- **Scroll automático** (Config → Clics): gestos aleatorios dentro de la zona del `list_recycler` (principio MakiX). Al llegar al final de la lista sube; al llegar arriba baja de nuevo.
+
+### Actualizado
+- Sustituido «Sin scroll» por «Scroll automático en la lista» (migración invierte el flag anterior).
+
+---
+
 ## v0.1.18 (Mayo 2026)
 
 ### Actualizado

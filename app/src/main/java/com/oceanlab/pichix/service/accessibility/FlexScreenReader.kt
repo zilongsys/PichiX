@@ -1,10 +1,6 @@
 package com.oceanlab.pichix.service.accessibility
 
 import android.accessibilityservice.AccessibilityService
-import android.graphics.Path
-import android.accessibilityservice.GestureDescription
-import android.os.Build
-import android.util.DisplayMetrics
 import android.view.accessibility.AccessibilityNodeInfo
 import com.oceanlab.pichix.analyzer.FlexBlockOffer
 import com.oceanlab.pichix.analyzer.FlexGrabberEvaluator
@@ -330,22 +326,21 @@ class FlexScreenReader(private val service: AccessibilityService) {
         }
     }
 
-    fun scrollDown(): Boolean = scrollGesture(down = true)
+    private val listScroller by lazy { FlexListScroller(service, this) }
 
-    fun scrollUp(): Boolean = scrollGesture(down = false)
+    fun scrollDown(onFinished: ((Boolean) -> Unit)? = null): Boolean =
+        scrollInZone(down = true, onFinished)
 
-    private fun scrollGesture(down: Boolean): Boolean {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return false
-        val metrics: DisplayMetrics = service.resources.displayMetrics
-        val w = metrics.widthPixels.toFloat()
-        val h = metrics.heightPixels.toFloat()
-        val path = Path().apply {
-            moveTo(w * 0.5f, if (down) h * 0.72f else h * 0.28f)
-            lineTo(w * 0.5f, if (down) h * 0.28f else h * 0.72f)
+    fun scrollUp(onFinished: ((Boolean) -> Unit)? = null): Boolean =
+        scrollInZone(down = false, onFinished)
+
+    private fun scrollInZone(down: Boolean, onFinished: ((Boolean) -> Unit)?): Boolean {
+        var dispatched = false
+        listScroller.scrollInOfferZone(down) { ok ->
+            dispatched = ok
+            onFinished?.invoke(ok)
         }
-        val stroke = GestureDescription.StrokeDescription(path, 0, 280)
-        val gesture = GestureDescription.Builder().addStroke(stroke).build()
-        return service.dispatchGesture(gesture, null, null)
+        return dispatched
     }
 
     data class ScreenFlags(
