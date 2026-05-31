@@ -45,7 +45,10 @@
     <string name="config_basic_interval_label">Basic click — intervalo (segundos)</string>
     <string name="config_flex_foreground_title">Solo con Flex en primer plano</string>
     <string name="config_flex_foreground_hint">El bot no hace clics ni return mientras otra app está al frente.</string>
-    <string name="config_screen_match_mode_label">Coincidencia del texto de pantalla (sensible a mayúsculas)</string>
+    <string name="config_text_match_mode_label">Tipo de coincidencia</string>
+    <string name="config_screen_match_mode_label">Pantalla de ofertas — tipo de coincidencia</string>
+    <string name="config_screen_case_hint">Por defecto distingue mayúsculas (Offers ≠ offers). Activa «Ignorar mayúsculas» solo si lo necesitas.</string>
+    <string name="config_ignore_case_label">Ignorar mayúsculas</string>
     <string name="config_screen_match_contains">Parte del texto</string>
     <string name="config_screen_match_exact">Texto exacto</string>
     <string name="config_section_log">REGISTRO Y DEBUG</string>

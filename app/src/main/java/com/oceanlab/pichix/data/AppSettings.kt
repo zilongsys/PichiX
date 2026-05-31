@@ -84,10 +84,31 @@ class AppSettings(context: Context) {
         get() = prefs.getString(KEY_FLEX_CLICK_SCREEN_TEXT, "") ?: ""
         set(value) = prefs.edit().putString(KEY_FLEX_CLICK_SCREEN_TEXT, value.trim()).apply()
 
-    /** contains = parte del texto; exact = coincidencia exacta (sensible a mayúsculas). */
+    /** contains | exact — texto de la pantalla de ofertas. */
     var flexClickScreenMatchMode: String
-        get() = prefs.getString(KEY_FLEX_CLICK_SCREEN_MODE, SCREEN_MATCH_CONTAINS) ?: SCREEN_MATCH_CONTAINS
+        get() = prefs.getString(KEY_FLEX_CLICK_SCREEN_MODE, TEXT_MATCH_CONTAINS) ?: TEXT_MATCH_CONTAINS
         set(value) = prefs.edit().putString(KEY_FLEX_CLICK_SCREEN_MODE, value).apply()
+
+    /** false = sensible a mayúsculas (por defecto en pantalla de ofertas). */
+    var flexClickScreenIgnoreCase: Boolean
+        get() = prefs.getBoolean(KEY_FLEX_CLICK_SCREEN_IGNORE_CASE, false)
+        set(value) = prefs.edit().putBoolean(KEY_FLEX_CLICK_SCREEN_IGNORE_CASE, value).apply()
+
+    var flexRefreshButtonMatchMode: String
+        get() = prefs.getString(KEY_FLEX_REFRESH_BUTTON_MODE, TEXT_MATCH_EXACT) ?: TEXT_MATCH_EXACT
+        set(value) = prefs.edit().putString(KEY_FLEX_REFRESH_BUTTON_MODE, value).apply()
+
+    var flexRefreshButtonIgnoreCase: Boolean
+        get() = prefs.getBoolean(KEY_FLEX_REFRESH_BUTTON_IGNORE_CASE, true)
+        set(value) = prefs.edit().putBoolean(KEY_FLEX_REFRESH_BUTTON_IGNORE_CASE, value).apply()
+
+    var pauseByOverClicksMatchMode: String
+        get() = prefs.getString(KEY_PAUSE_MATCH_MODE, TEXT_MATCH_CONTAINS) ?: TEXT_MATCH_CONTAINS
+        set(value) = prefs.edit().putString(KEY_PAUSE_MATCH_MODE, value).apply()
+
+    var pauseByOverClicksIgnoreCase: Boolean
+        get() = prefs.getBoolean(KEY_PAUSE_IGNORE_CASE, true)
+        set(value) = prefs.edit().putBoolean(KEY_PAUSE_IGNORE_CASE, value).apply()
 
     /** Solo actuar cuando Amazon Flex está en primer plano. */
     var flexOnlyWhenForeground: Boolean
@@ -212,8 +233,13 @@ class AppSettings(context: Context) {
         private const val KEY_FLEX_CLICK_SCREEN_TEXT = "flex_click_screen_text"
         const val CLICK_MODE_BASIC = "basic"
         const val CLICK_MODE_SMART = "smart"
-        const val SCREEN_MATCH_CONTAINS = "contains"
-        const val SCREEN_MATCH_EXACT = "exact"
+        const val TEXT_MATCH_CONTAINS = "contains"
+        const val TEXT_MATCH_EXACT = "exact"
+        private const val KEY_FLEX_CLICK_SCREEN_IGNORE_CASE = "flex_click_screen_ignore_case"
+        private const val KEY_FLEX_REFRESH_BUTTON_MODE = "flex_refresh_button_mode"
+        private const val KEY_FLEX_REFRESH_BUTTON_IGNORE_CASE = "flex_refresh_button_ignore_case"
+        private const val KEY_PAUSE_MATCH_MODE = "pause_over_clicks_match_mode"
+        private const val KEY_PAUSE_IGNORE_CASE = "pause_over_clicks_ignore_case"
         const val DEFAULT_REFRESH_BUTTON = "Refresh"
         private const val KEY_FLEX_CLICK_SCREEN_MODE = "flex_click_screen_mode"
         private const val KEY_FLEX_ONLY_FOREGROUND = "flex_only_foreground"

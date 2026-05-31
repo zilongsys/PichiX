@@ -94,7 +94,12 @@ class FlexConfigFragment : Fragment() {
         val etSmartMax = view.findViewById<TextInputEditText>(R.id.etSmartClickMaxSec)
         val etRefreshBtn = view.findViewById<TextInputEditText>(R.id.etRefreshButtonText)
         val etClickScreen = view.findViewById<TextInputEditText>(R.id.etClickScreenText)
+        val toggleRefreshMode = view.findViewById<MaterialButtonToggleGroup>(R.id.toggleRefreshButtonMatchMode)
+        val swRefreshIgnore = view.findViewById<SwitchMaterial>(R.id.switchRefreshButtonIgnoreCase)
         val toggleScreenMode = view.findViewById<MaterialButtonToggleGroup>(R.id.toggleScreenMatchMode)
+        val swScreenIgnore = view.findViewById<SwitchMaterial>(R.id.switchScreenIgnoreCase)
+        val togglePauseMode = view.findViewById<MaterialButtonToggleGroup>(R.id.togglePauseMatchMode)
+        val swPauseIgnore = view.findViewById<SwitchMaterial>(R.id.switchPauseIgnoreCase)
         tvAccess = view.findViewById(R.id.tvAccessStatus)
         val btnAccess = view.findViewById<MaterialButton>(R.id.btnGoAccess)
         val btnSave = view.findViewById<MaterialButton>(R.id.btnSaveConfig)
@@ -119,13 +124,27 @@ class FlexConfigFragment : Fragment() {
         val smartMode = settings.flexClickMode == AppSettings.CLICK_MODE_SMART
         toggleClickMode.check(if (smartMode) R.id.btnClickModeSmart else R.id.btnClickModeBasic)
         updateClickModeVisibility(layoutBasic, layoutSmart, smartMode)
-        toggleScreenMode.check(
-            if (settings.flexClickScreenMatchMode == AppSettings.SCREEN_MATCH_EXACT) {
-                R.id.btnScreenMatchExact
-            } else {
-                R.id.btnScreenMatchContains
-            }
+        TextMatchUiHelper.setMatchMode(
+            toggleRefreshMode,
+            settings.flexRefreshButtonMatchMode,
+            R.id.btnRefreshMatchContains,
+            R.id.btnRefreshMatchExact,
         )
+        swRefreshIgnore.isChecked = settings.flexRefreshButtonIgnoreCase
+        TextMatchUiHelper.setMatchMode(
+            toggleScreenMode,
+            settings.flexClickScreenMatchMode,
+            R.id.btnScreenMatchContains,
+            R.id.btnScreenMatchExact,
+        )
+        swScreenIgnore.isChecked = settings.flexClickScreenIgnoreCase
+        TextMatchUiHelper.setMatchMode(
+            togglePauseMode,
+            settings.pauseByOverClicksMatchMode,
+            R.id.btnPauseMatchContains,
+            R.id.btnPauseMatchExact,
+        )
+        swPauseIgnore.isChecked = settings.pauseByOverClicksIgnoreCase
         refreshSoundLabels(view)
 
         btnAccess.setOnClickListener {
@@ -155,7 +174,8 @@ class FlexConfigFragment : Fragment() {
                 persistAllFields(
                     etPackage, swShowNames, swPauseOver, swForeground, swDebug, swFileLog,
                     etPauseText, etPauseMinutes, toggleClickMode, etBasicSec, etSmartMin, etSmartMax,
-                    etRefreshBtn, etClickScreen, toggleScreenMode,
+                    etRefreshBtn, etClickScreen, toggleRefreshMode, swRefreshIgnore,
+                    toggleScreenMode, swScreenIgnore, togglePauseMode, swPauseIgnore,
                 )
                 (requireActivity() as MainActivity).apply {
                     applyCategoryUi()
@@ -201,7 +221,12 @@ class FlexConfigFragment : Fragment() {
         etSmartMax.onUserTextChanged(onDirty = { markDirty() })
         etRefreshBtn.onUserTextChanged(onDirty = { markDirty() })
         etClickScreen.onUserTextChanged(onDirty = { markDirty() })
+        toggleRefreshMode.addOnButtonCheckedListener { _, _, _ -> markDirty() }
+        swRefreshIgnore.setOnCheckedChangeRetainingFocus(view) { markDirty() }
         toggleScreenMode.addOnButtonCheckedListener { _, _, _ -> markDirty() }
+        swScreenIgnore.setOnCheckedChangeRetainingFocus(view) { markDirty() }
+        togglePauseMode.addOnButtonCheckedListener { _, _, _ -> markDirty() }
+        swPauseIgnore.setOnCheckedChangeRetainingFocus(view) { markDirty() }
 
         refreshAccessibilityStatus()
     }
@@ -236,7 +261,12 @@ class FlexConfigFragment : Fragment() {
         etSmartMax: TextInputEditText,
         etRefreshBtn: TextInputEditText,
         etClickScreen: TextInputEditText,
+        toggleRefreshMode: MaterialButtonToggleGroup,
+        swRefreshIgnore: SwitchMaterial,
         toggleScreenMode: MaterialButtonToggleGroup,
+        swScreenIgnore: SwitchMaterial,
+        togglePauseMode: MaterialButtonToggleGroup,
+        swPauseIgnore: SwitchMaterial,
     ) {
         settings.monitorPackagesCsv = etPackage.text?.toString()?.trim().orEmpty()
         settings.showCategoryNames = swShowNames.isChecked
@@ -261,13 +291,16 @@ class FlexConfigFragment : Fragment() {
         settings.flexSmartClickMaxSec = maxOf(minSec, maxSec)
         settings.flexRefreshButtonText =
             etRefreshBtn.text?.toString()?.trim().orEmpty().ifBlank { AppSettings.DEFAULT_REFRESH_BUTTON }
+        settings.flexRefreshButtonMatchMode =
+            TextMatchUiHelper.readMatchMode(toggleRefreshMode, R.id.btnRefreshMatchExact)
+        settings.flexRefreshButtonIgnoreCase = swRefreshIgnore.isChecked
         settings.flexClickScreenText = etClickScreen.text?.toString()?.trim().orEmpty()
         settings.flexClickScreenMatchMode =
-            if (toggleScreenMode.checkedButtonId == R.id.btnScreenMatchExact) {
-                AppSettings.SCREEN_MATCH_EXACT
-            } else {
-                AppSettings.SCREEN_MATCH_CONTAINS
-            }
+            TextMatchUiHelper.readMatchMode(toggleScreenMode, R.id.btnScreenMatchExact)
+        settings.flexClickScreenIgnoreCase = swScreenIgnore.isChecked
+        settings.pauseByOverClicksMatchMode =
+            TextMatchUiHelper.readMatchMode(togglePauseMode, R.id.btnPauseMatchExact)
+        settings.pauseByOverClicksIgnoreCase = swPauseIgnore.isChecked
         if (!settings.pauseByOverClicksEnabled) {
             PauseByOverClicksController.cancelScheduledResume()
         }

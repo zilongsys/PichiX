@@ -321,6 +321,55 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
+                android:layout_marginTop="4dp"
+                android:text="@string/config_text_match_mode_label"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/toggleRefreshButtonMatchMode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="6dp"
+                app:singleSelection="true"
+                app:selectionRequired="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnRefreshMatchContains"
+                    style="@style/SparkThemeToggleButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_screen_match_contains" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnRefreshMatchExact"
+                    style="@style/SparkThemeToggleButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_screen_match_exact" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="@string/config_ignore_case_label" />
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchRefreshButtonIgnoreCase"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
                 android:text="@string/config_click_screen_text_label"
                 android:textColor="@color/text_secondary"
                 android:textSize="11sp" />
@@ -341,10 +390,20 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
-                android:layout_marginBottom="6dp"
+                android:layout_marginBottom="4dp"
                 android:text="@string/config_screen_match_mode_label"
                 android:textColor="@color/text_secondary"
                 android:textSize="11sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="6dp"
+                android:text="@string/config_screen_case_hint"
+                android:textColor="@color/text_hint"
+                android:textSize="10sp" />
 
             <com.google.android.material.button.MaterialButtonToggleGroup
                 android:id="@+id/toggleScreenMatchMode"
@@ -372,6 +431,18 @@
                     android:layout_weight="1"
                     android:text="@string/config_screen_match_exact" />
             </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="@string/config_ignore_case_label" />
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchScreenIgnoreCase"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="match_parent"
@@ -440,6 +511,45 @@
                 android:layout_marginBottom="8dp"
                 android:hint="@string/config_pause_over_clicks_match_hint"
                 android:inputType="text" />
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/togglePauseMatchMode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="6dp"
+                app:singleSelection="true"
+                app:selectionRequired="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPauseMatchContains"
+                    style="@style/SparkThemeToggleButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_screen_match_contains" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPauseMatchExact"
+                    style="@style/SparkThemeToggleButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_screen_match_exact" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="@string/config_ignore_case_label" />
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchPauseIgnoreCase"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="match_parent"

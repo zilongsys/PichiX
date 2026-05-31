@@ -33,6 +33,7 @@ import com.google.android.material.textfield.TextInputEditText
 import com.oceanlab.pichix.R
 import com.oceanlab.pichix.data.AppSettings
 import com.oceanlab.pichix.data.MonitorPackages
+import com.oceanlab.pichix.data.AppSettings
 import com.oceanlab.pichix.data.FlexAlertRule
 import com.oceanlab.pichix.data.FlexAlertRulesStore
 import com.oceanlab.pichix.service.FlexNotificationListenerService
@@ -56,6 +57,10 @@ class FlexAlertasFragment : Fragment() {
     private lateinit var scrollView: ScrollView
     private var draftSoundUri: String = ""
     private var draftMatchMode: String = FlexAlertRule.MATCH_ANY
+    private var draftTextMatchMode: String = AppSettings.TEXT_MATCH_CONTAINS
+    private var draftIgnoreCase: Boolean = true
+    private var draftTextMatchToggle: MaterialButtonToggleGroup? = null
+    private var swDraftIgnoreCase: SwitchMaterial? = null
     private var pickingRuleId: String? = null
     private var onSoundPicked: ((String) -> Unit)? = null
     private var ringtoneFocusRestore: View? = null
@@ -206,6 +211,53 @@ class FlexAlertasFragment : Fragment() {
                 ).apply { bottomMargin = dp(10) }
             }
             addView(matchModeToggle)
+            addView(smallText("Cómo comparar cada texto con la notificación:"))
+            draftTextMatchToggle = MaterialButtonToggleGroup(context).apply {
+                isSingleSelection = true
+                isSelectionRequired = true
+                val btnContains = MaterialButton(context, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                    id = View.generateViewId()
+                    text = "Contiene"
+                }
+                val btnExact = MaterialButton(context, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                    id = View.generateViewId()
+                    text = "Exacto"
+                }
+                addView(btnContains)
+                addView(btnExact)
+                check(btnContains.id)
+                addOnButtonCheckedListener { _, checkedId, isChecked ->
+                    if (!isChecked) return@addOnButtonCheckedListener
+                    draftTextMatchMode =
+                        if (checkedId == btnExact.id) AppSettings.TEXT_MATCH_EXACT
+                        else AppSettings.TEXT_MATCH_CONTAINS
+                }
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                ).apply { bottomMargin = dp(6) }
+            }
+            addView(draftTextMatchToggle)
+            val ignoreRow = LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                ).apply { bottomMargin = dp(10) }
+            }
+            ignoreRow.addView(TextView(context).apply {
+                text = getString(R.string.config_ignore_case_label)
+                textSize = 12f
+                setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            })
+            swDraftIgnoreCase = SwitchMaterial(context).apply {
+                isChecked = draftIgnoreCase
+                setOnCheckedChangeListener { _, checked -> draftIgnoreCase = checked }
+            }
+            ignoreRow.addView(swDraftIgnoreCase)
+            addView(ignoreRow)
             addView(label("Sonido"))
             tvSoundDraft = smallText(soundName(draftSoundUri))
             addView(tvSoundDraft)
@@ -305,6 +357,8 @@ class FlexAlertasFragment : Fragment() {
                 name = etName.text?.toString()?.trim().orEmpty(),
                 matchTexts = texts,
                 matchMode = draftMatchMode,
+                textMatchMode = draftTextMatchMode,
+                ignoreCase = draftIgnoreCase,
                 soundUri = draftSoundUri,
                 repeatCount = draftRepeatCount(),
             )
@@ -405,6 +459,8 @@ class FlexAlertasFragment : Fragment() {
                 android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
         }
         var editMatchMode = rule.matchMode
+        var editTextMatchMode = rule.textMatchMode
+        var editIgnoreCase = rule.ignoreCase
         val etEditRepeat = input("Veces que suena").apply {
             inputType = android.text.InputType.TYPE_CLASS_NUMBER
             setText(rule.repeatCount.toString())
@@ -445,6 +501,47 @@ class FlexAlertasFragment : Fragment() {
                 ).apply { bottomMargin = dp(8) }
             }
             addView(editModeGroup)
+            val editTextModeGroup = MaterialButtonToggleGroup(context).apply {
+                isSingleSelection = true
+                isSelectionRequired = true
+                val btnContains = MaterialButton(context, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                    id = View.generateViewId()
+                    text = "Contiene"
+                }
+                val btnExact = MaterialButton(context, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                    id = View.generateViewId()
+                    text = "Exacto"
+                }
+                addView(btnContains)
+                addView(btnExact)
+                check(if (editTextMatchMode == AppSettings.TEXT_MATCH_EXACT) btnExact.id else btnContains.id)
+                addOnButtonCheckedListener { _, checkedId, isChecked ->
+                    if (!isChecked) return@addOnButtonCheckedListener
+                    editTextMatchMode =
+                        if (checkedId == btnExact.id) AppSettings.TEXT_MATCH_EXACT
+                        else AppSettings.TEXT_MATCH_CONTAINS
+                }
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                ).apply { bottomMargin = dp(6) }
+            }
+            addView(editTextModeGroup)
+            val editIgnoreRow = LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+            }
+            editIgnoreRow.addView(TextView(context).apply {
+                text = getString(R.string.config_ignore_case_label)
+                textSize = 12f
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            })
+            val swEditIgnore = SwitchMaterial(context).apply {
+                isChecked = editIgnoreCase
+                setOnCheckedChangeListener { _, checked -> editIgnoreCase = checked }
+            }
+            editIgnoreRow.addView(swEditIgnore)
+            addView(editIgnoreRow)
             addView(label("Sonido"))
             addView(tvEditSound)
             addView(label("Veces que suena"))
@@ -500,6 +597,8 @@ class FlexAlertasFragment : Fragment() {
                             name = etEditName.text?.toString()?.trim().orEmpty(),
                             matchTexts = texts,
                             matchMode = editMatchMode,
+                            textMatchMode = editTextMatchMode,
+                            ignoreCase = editIgnoreCase,
                             soundUri = editSoundUri,
                             repeatCount = repeat,
                         )

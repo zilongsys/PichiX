@@ -1,6 +1,7 @@
 package com.oceanlab.pichix.data
 
 import com.oceanlab.pichix.util.MatchTextParser
+import com.oceanlab.pichix.util.TextMatcher
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
@@ -12,6 +13,8 @@ data class FlexAlertRule(
     /** Textos que deben aparecer en la notificación (OR o AND según [matchMode]). */
     val matchTexts: List<String> = emptyList(),
     val matchMode: String = MATCH_ANY,
+    val textMatchMode: String = AppSettings.TEXT_MATCH_CONTAINS,
+    val ignoreCase: Boolean = true,
     val soundUri: String = "",
     val repeatCount: Int = 2,
 ) {
@@ -28,16 +31,22 @@ data class FlexAlertRule(
         val patterns = effectiveMatchTexts()
         if (patterns.isEmpty()) return false
         return when (matchMode) {
-            MATCH_ALL -> patterns.all { text.contains(it, ignoreCase = true) }
-            else -> patterns.any { text.contains(it, ignoreCase = true) }
+            MATCH_ALL -> patterns.all { pattern ->
+                TextMatcher.matches(text, pattern, textMatchMode, ignoreCase)
+            }
+            else -> patterns.any { pattern ->
+                TextMatcher.matches(text, pattern, textMatchMode, ignoreCase)
+            }
         }
     }
 
     fun matchSummary(): String {
         val texts = effectiveMatchTexts()
         if (texts.isEmpty()) return "(sin textos)"
-        val mode = if (matchMode == MATCH_ALL) "todas" else "cualquiera"
-        return "${texts.joinToString(" · ")} ($mode)"
+        val comb = if (matchMode == MATCH_ALL) "todas" else "cualquiera"
+        val how = if (textMatchMode == AppSettings.TEXT_MATCH_EXACT) "exacto" else "contiene"
+        val case = if (ignoreCase) "sin distinguir mayúsculas" else "mayúsculas exactas"
+        return "${texts.joinToString(" · ")} ($comb, $how, $case)"
     }
 
     fun toJson(): JSONObject = JSONObject().apply {
@@ -45,6 +54,8 @@ data class FlexAlertRule(
         put("enabled", enabled)
         put("name", name)
         put("matchMode", matchMode)
+        put("textMatchMode", textMatchMode)
+        put("ignoreCase", ignoreCase)
         val arr = JSONArray()
         effectiveMatchTexts().forEach { arr.put(it) }
         put("matchTexts", arr)
@@ -74,6 +85,9 @@ data class FlexAlertRule(
                 name = o.optString("name", ""),
                 matchTexts = texts,
                 matchMode = o.optString("matchMode", MATCH_ANY).ifBlank { MATCH_ANY },
+                textMatchMode = o.optString("textMatchMode", AppSettings.TEXT_MATCH_CONTAINS)
+                    .ifBlank { AppSettings.TEXT_MATCH_CONTAINS },
+                ignoreCase = o.optBoolean("ignoreCase", true),
                 soundUri = o.optString("soundUri", ""),
                 repeatCount = o.optInt("repeatCount", DEFAULT_REPEAT_COUNT).coerceIn(1, 20),
             )

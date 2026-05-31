@@ -8,6 +8,7 @@ import android.util.Log
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.oceanlab.pichix.data.AppSettings
 import com.oceanlab.pichix.util.AlertManager
+import com.oceanlab.pichix.util.TextMatcher
 
 /**
  * Pausa el bot al detectar una notificación con texto configurado; reanuda tras N minutos.
@@ -24,7 +25,13 @@ object PauseByOverClicksController {
         if (!settings.isBotEnabled) return
         val needle = settings.pauseByOverClicksMatchText.trim()
         if (needle.isBlank()) return
-        if (!notificationText.contains(needle, ignoreCase = true)) return
+        if (!TextMatcher.matches(
+                notificationText,
+                needle,
+                settings.pauseByOverClicksMatchMode,
+                settings.pauseByOverClicksIgnoreCase,
+            )
+        ) return
         if (PichixAccessibilityService.pausedAfterAccept) {
             rescheduleResume(context, settings)
             return

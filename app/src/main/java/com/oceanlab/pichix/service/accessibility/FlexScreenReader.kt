@@ -192,17 +192,27 @@ class FlexScreenReader(private val service: AccessibilityService) {
     fun screenMatchesForClick(
         requiredScreenText: String,
         screenText: String? = null,
-        matchMode: String = AppSettings.SCREEN_MATCH_CONTAINS,
+        matchMode: String = AppSettings.TEXT_MATCH_CONTAINS,
+        ignoreCase: Boolean = false,
     ): Boolean {
         val text = screenText ?: readFullScreenText()
-        return ScreenTextMatcher.matches(text, requiredScreenText, matchMode)
+        return ScreenTextMatcher.matches(text, requiredScreenText, matchMode, ignoreCase)
     }
 
-    fun clickTargetButton(exactButtonText: String): Boolean {
-        if (exactButtonText.isBlank()) return false
+    fun clickTargetButton(
+        buttonText: String,
+        matchMode: String = AppSettings.TEXT_MATCH_EXACT,
+        ignoreCase: Boolean = true,
+    ): Boolean {
+        if (buttonText.isBlank()) return false
         val root = service.rootInActiveWindow ?: return false
         return try {
-            val node = root.findClickableByExactText(exactButtonText)
+            val node = when (matchMode) {
+                AppSettings.TEXT_MATCH_CONTAINS ->
+                    root.findClickableByText(buttonText, ignoreCase)
+                else ->
+                    root.findClickableByExactText(buttonText, ignoreCase)
+            }
             if (node != null) {
                 val ok = node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
                 try { node.recycle() } catch (_: Exception) {}

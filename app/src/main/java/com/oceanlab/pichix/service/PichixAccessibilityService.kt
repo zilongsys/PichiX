@@ -201,9 +201,14 @@ class PichixAccessibilityService : AccessibilityService() {
                         settings.flexClickScreenText,
                         text,
                         settings.flexClickScreenMatchMode,
+                        settings.flexClickScreenIgnoreCase,
                     )
                 ) {
-                    val clicked = reader.clickTargetButton(settings.flexRefreshButtonText)
+                    val clicked = reader.clickTargetButton(
+                        settings.flexRefreshButtonText,
+                        settings.flexRefreshButtonMatchMode,
+                        settings.flexRefreshButtonIgnoreCase,
+                    )
                     if (!clicked) {
                         postObserver("Clic: no se encontró «${settings.flexRefreshButtonText}»")
                     }

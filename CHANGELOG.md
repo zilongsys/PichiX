@@ -8,6 +8,14 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.9 (Mayo 2026)
+
+### Actualizado
+- Texto de **pantalla de ofertas**: distingue mayúsculas por defecto; opción «Ignorar mayúsculas» y Contiene/Exacto.
+- Botón Refresh, Pause by over clicks y **Alertas**: «Ignorar mayúsculas» activado por defecto; Contiene/Exacto configurable.
+
+---
+
 ## v0.1.8 (Mayo 2026)
 
 ### Añadido
