@@ -167,26 +167,32 @@ class FlexScreenReader(private val service: AccessibilityService) {
         }
     }
 
-    fun clickScheduleOnList(index: Int = 0): Boolean {
+    /** Abre la tarjeta de oferta en la lista (id/card), no el botón Schedule del detalle. */
+    fun clickOfferCardAtIndex(index: Int): Boolean {
+        val cardId = resolveId(FlexIds.OFFER_CARD) ?: return false
         val root = activeRoot() ?: return false
         return try {
-            val node = root.findClickableByText("Schedule")
-                ?: root.findClickableByText("Accept")
-            if (node != null) {
-                val ok = node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-                try { node.recycle() } catch (_: Exception) {}
-                ok
-            } else {
-                clickMeridianButton(index)
+            root.useViewIdNodes(cardId) { cards ->
+                val card = cards.getOrNull(index) ?: cards.firstOrNull()
+                card?.performAction(AccessibilityNodeInfo.ACTION_CLICK) == true
             }
         } finally {
             try { root.recycle() } catch (_: Exception) {}
         }
     }
 
+    fun clickScheduleOnList(index: Int = 0): Boolean = clickOfferCardAtIndex(index)
+
     fun clickScheduleOnDetail(): Boolean {
         val root = activeRoot() ?: return false
         return try {
+            val byText = root.findClickableByText("Schedule", ignoreCase = true)
+                ?: root.findClickableByText("Scheduled", ignoreCase = true)
+            if (byText != null) {
+                val ok = byText.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                try { byText.recycle() } catch (_: Exception) {}
+                if (ok) return true
+            }
             val id = resolveId(FlexIds.MERIDIAN_BUTTON_TEXT) ?: return false
             root.useViewIdNodes(id) { nodes ->
                 val schedule = nodes.firstOrNull { n ->

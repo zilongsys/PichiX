@@ -8,6 +8,17 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.16 (Mayo 2026)
+
+### Añadido
+- Config → **Aceptar automáticamente**: abre tarjeta de oferta, en Offer Details pulsa Schedule; si está off o modo simulación, solo abre detalle.
+- Tras tomar/revisar un bloque el bot **pausa siempre** una vez.
+
+### Corregido
+- Clic en oferta usa `card` de la lista (no buscaba Schedule en la lista).
+
+---
+
 ## v0.1.15 (Mayo 2026)
 
 ### Corregido

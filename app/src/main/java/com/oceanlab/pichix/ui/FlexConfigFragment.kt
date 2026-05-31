@@ -80,6 +80,7 @@ class FlexConfigFragment : Fragment() {
         val etPackage = view.findViewById<TextInputEditText>(R.id.etFlexPackage)
         val swShowNames = view.findViewById<SwitchMaterial>(R.id.switchShowCategoryNames)
         swReturn2 = view.findViewById(R.id.switchReturn2Offers)
+        val swAutoAccept = view.findViewById<SwitchMaterial>(R.id.switchFlexAutoAccept)
         val swPauseOver = view.findViewById<SwitchMaterial>(R.id.switchPauseOverClicks)
         val swForeground = view.findViewById<SwitchMaterial>(R.id.switchFlexOnlyForeground)
         val swDebug = view.findViewById<SwitchMaterial>(R.id.switchDebugLog)
@@ -107,6 +108,7 @@ class FlexConfigFragment : Fragment() {
         etPackage.setText(settings.monitorPackagesCsv)
         swShowNames.isChecked = settings.showCategoryNames
         swReturn2?.isChecked = settings.flexAutoReturnToOffers
+        swAutoAccept.isChecked = settings.flexAutoAccept
         swPauseOver.isChecked = settings.pauseByOverClicksEnabled
         swForeground.isChecked = settings.flexOnlyWhenForeground
         swDebug.isChecked = settings.debugLogEnabled
@@ -172,7 +174,7 @@ class FlexConfigFragment : Fragment() {
         btnSave.setOnClickListener {
             view.runRetainingFocus {
                 persistAllFields(
-                    etPackage, swShowNames, swPauseOver, swForeground, swDebug, swFileLog,
+                    etPackage, swShowNames, swAutoAccept, swPauseOver, swForeground, swDebug, swFileLog,
                     etPauseText, etPauseMinutes, toggleClickMode, etBasicSec, etSmartMin, etSmartMax,
                     etRefreshBtn, etClickScreen, toggleRefreshMode, swRefreshIgnore,
                     toggleScreenMode, swScreenIgnore, togglePauseMode, swPauseIgnore,
@@ -190,6 +192,10 @@ class FlexConfigFragment : Fragment() {
         val markDirty: () -> Unit = { (requireActivity() as MainActivity).markDirty(1) }
         etPackage.onUserTextChanged(onDirty = { markDirty() })
         swShowNames.setOnCheckedChangeRetainingFocus(view) { markDirty() }
+        swAutoAccept.setOnCheckedChangeRetainingFocus(view) {
+            settings.flexAutoAccept = it
+            markDirty()
+        }
         swReturn2?.setOnCheckedChangeRetainingFocus(view) { checked ->
             if (suppressReturn2Sync) return@setOnCheckedChangeRetainingFocus
             settings.flexAutoReturnToOffers = checked
@@ -249,6 +255,7 @@ class FlexConfigFragment : Fragment() {
     private fun persistAllFields(
         etPackage: TextInputEditText,
         swShowNames: SwitchMaterial,
+        swAutoAccept: SwitchMaterial,
         swPauseOver: SwitchMaterial,
         swForeground: SwitchMaterial,
         swDebug: SwitchMaterial,
@@ -271,6 +278,7 @@ class FlexConfigFragment : Fragment() {
         settings.monitorPackagesCsv = etPackage.text?.toString()?.trim().orEmpty()
         settings.showCategoryNames = swShowNames.isChecked
         settings.flexAutoReturnToOffers = swReturn2?.isChecked == true
+        settings.flexAutoAccept = swAutoAccept.isChecked
         settings.pauseByOverClicksEnabled = swPauseOver.isChecked
         settings.flexOnlyWhenForeground = swForeground.isChecked
         settings.debugLogEnabled = swDebug.isChecked

@@ -151,6 +151,14 @@ class AppSettings(context: Context) {
         get() = prefs.getBoolean(KEY_AUTO_PAUSE_ACCEPT, true)
         set(value) = prefs.edit().putBoolean(KEY_AUTO_PAUSE_ACCEPT, value).apply()
 
+    /**
+     * Si true: abre la oferta y en Offer Details pulsa Schedule.
+     * Si false (o modo simulación en Home): solo abre detalle y se detiene ahí.
+     */
+    var flexAutoAccept: Boolean
+        get() = prefs.getBoolean(KEY_FLEX_AUTO_ACCEPT, true)
+        set(value) = prefs.edit().putBoolean(KEY_FLEX_AUTO_ACCEPT, value).apply()
+
     var autoPauseOnReservedNotification: Boolean
         get() = prefs.getBoolean(KEY_AUTO_PAUSE_RESERVED, true)
         set(value) = prefs.edit().putBoolean(KEY_AUTO_PAUSE_RESERVED, value).apply()
@@ -266,6 +274,7 @@ class AppSettings(context: Context) {
         private const val KEY_FILE_LOG = "file_log"
         private const val KEY_AUTO_PAUSE_CAPTCHA = "auto_pause_captcha"
         private const val KEY_AUTO_PAUSE_ACCEPT = "auto_pause_accept"
+        private const val KEY_FLEX_AUTO_ACCEPT = "flex_auto_accept"
         private const val KEY_AUTO_PAUSE_RESERVED = "auto_pause_reserved"
         private const val KEY_AUTO_RETURN_OFFERS = "flex_auto_return_offers"
         private const val KEY_PAUSE_OVER_CLICKS = "pause_by_over_clicks"

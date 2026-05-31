@@ -24,6 +24,8 @@
     <string name="config_btn_accessibility">Abrir ajustes de accesibilidad</string>
     <string name="config_btn_overlay">Configurar botón flotante</string>
     <string name="config_btn_save">Guardar configuración</string>
+    <string name="config_auto_accept_title">Aceptar automáticamente</string>
+    <string name="config_auto_accept_hint">Activo: abre la oferta y pulsa Schedule en Offer Details. Inactivo o modo simulación (Home): solo abre el detalle y pausa.</string>
     <string name="config_return_2_offers_title">Return 2 offers</string>
     <string name="config_return_2_offers_hint">Macro return2offers: dos pulsaciones Atrás cuando no estás en la lista de ofertas (cada ~3 s).</string>
     <string name="config_pause_over_clicks_title">Pause by over clicks</string>

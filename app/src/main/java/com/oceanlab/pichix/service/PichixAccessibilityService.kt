@@ -258,7 +258,7 @@ class PichixAccessibilityService : AccessibilityService() {
             for (offer in offers) {
                 when (FlexGrabberEvaluator.evaluateListRow(offer, settings, text)) {
                     FlexGrabResult.ACCEPT, FlexGrabResult.SIMULATED_ACCEPT -> {
-                        handleAccept(offer, settings.dryRunMode)
+                        handleAccept(offer)
                         return
                     }
                     FlexGrabResult.REJECT -> {
@@ -281,44 +281,81 @@ class PichixAccessibilityService : AccessibilityService() {
         }
     }
 
-    private fun handleAccept(offer: FlexBlockOffer, dryRun: Boolean) {
-        if (dryRun) {
-            logger.log(
-                pay = offer.payText,
-                station = offer.stationText,
-                status = OfferStatus.SIMULATED,
-                note = "Simulación",
-            )
-            postObserver("SIMULADA: ${offer.stationText} ${offer.payText}")
+    private fun handleAccept(offer: FlexBlockOffer) {
+        val simulation = settings.dryRunMode
+        val shouldSchedule = settings.flexAutoAccept && !simulation
+
+        if (!reader.clickOfferCardAtIndex(offer.index)) {
+            postObserver("No se pudo abrir la oferta en la lista")
             return
         }
 
-        reader.clickScheduleOnList(offer.index)
         handler.postDelayed({
             val details = reader.readBlockDetails()
+            val station = offer.stationText.ifBlank { details["station"].orEmpty() }
+            val screenText = reader.readFullScreenText()
+
+            if (!shouldSchedule) {
+                val note = if (simulation) "Simulación — detalle sin Schedule" else "Detalle abierto — sin aceptar automático"
+                logger.log(
+                    pay = offer.payText,
+                    station = station,
+                    status = OfferStatus.SIMULATED,
+                    note = note,
+                )
+                postObserver(
+                    if (simulation) {
+                        "SIMULACIÓN: ${offer.stationText} ${offer.payText} (Offer Details, sin Schedule)"
+                    } else {
+                        "Detalle: ${offer.stationText} — revisa y pulsa Schedule manualmente"
+                    },
+                )
+                finishBlockTakeFlow()
+                return@postDelayed
+            }
+
             val detailResult = FlexGrabberEvaluator.evaluateDetailScreen(
                 payRangeText = details["pay_range"].orEmpty(),
                 timeWindowText = details["time_window"].orEmpty(),
                 settings = settings,
-                station = offer.stationText.ifBlank { details["station"].orEmpty() },
-                screenText = reader.readFullScreenText(),
+                station = station,
+                screenText = screenText,
             )
-            if (detailResult == FlexGrabResult.ACCEPT) {
-                reader.clickScheduleOnDetail()
+            if (detailResult != FlexGrabResult.ACCEPT) {
+                logger.log(
+                    pay = offer.payText,
+                    station = station,
+                    status = OfferStatus.REJECTED,
+                    note = "Detalle no cumple criterios",
+                )
+                postObserver("Rechazada en detalle: $station")
+                finishBlockTakeFlow()
+                return@postDelayed
             }
-            val accepted = detailResult == FlexGrabResult.ACCEPT
+
+            val scheduled = reader.clickScheduleOnDetail()
             logger.log(
                 pay = offer.payText,
-                station = offer.stationText.ifBlank { details["station"].orEmpty() },
-                status = if (accepted) OfferStatus.ACCEPTED else OfferStatus.REJECTED,
-                note = "Grabber detalle",
+                station = station,
+                status = if (scheduled) OfferStatus.ACCEPTED else OfferStatus.REJECTED,
+                note = if (scheduled) "Schedule pulsado" else "No se encontró Schedule",
             )
-            if (settings.autoPauseAfterAccept && accepted) {
-                pausedAfterAccept = true
-                postBotPaused()
-            }
-            broadcastState()
-        }, 600)
+            postObserver(
+                if (scheduled) {
+                    "ACEPTADA: $station ${offer.payText}"
+                } else {
+                    "Offer Details: no se encontró botón Schedule"
+                },
+            )
+            finishBlockTakeFlow()
+        }, 650)
+    }
+
+    /** Pausa el bot una vez tras abrir/aceptar un bloque (lista → detalle → Schedule opcional). */
+    private fun finishBlockTakeFlow() {
+        pausedAfterAccept = true
+        postBotPaused()
+        broadcastState()
     }
 
     private fun maybeScrollList() {
