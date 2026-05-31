@@ -56,7 +56,8 @@ object PichiFileLog {
     fun uiLogFileForToday(): File? = logFile(Channel.UI, dayFmt.format(Date()))
     fun crashFile(): File? = logsDir()?.let { File(it, CRASH_FILE) }
 
-    fun ui(tag: String, msg: String) = i(tag, msg, Channel.UI)
+    /** Solo archivo (evita duplicar cada línea en Logcat cuando FlexUiDumper ya hace Log.i). */
+    fun uiFileOnly(tag: String, msg: String) = enqueue(Channel.UI, tag, "I", msg)
 
     fun e(tag: String, msg: String, t: Throwable, channel: Channel = Channel.BOT, force: Boolean = false) {
         Log.e(tag, msg, t)

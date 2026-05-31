@@ -93,8 +93,8 @@ class FlexScreenReader(private val service: AccessibilityService) {
     fun readOffersFromList(): List<FlexBlockOffer> {
         val payId = resolveId(FlexIds.OFFER_PAY) ?: return emptyList()
         val timeId = resolveId(FlexIds.OFFER_TIME)
-        val stationId = resolveId(FlexIds.LEFT_SECONDARY_LABEL)
-            ?: resolveId(FlexIds.OFFER_STATION)
+        val stationId = resolveId(FlexIds.OFFER_STATION)
+        val durationId = resolveId(FlexIds.LEFT_SECONDARY_LABEL)
 
         val root = activeRoot() ?: return emptyList()
         return try {
@@ -104,7 +104,12 @@ class FlexScreenReader(private val service: AccessibilityService) {
                     val pay = FlexGrabberEvaluator.parsePay(payText)
                     val timeText = findSiblingText(payNode, timeId, index)
                     val stationText = findSiblingText(payNode, stationId, index)
-                    val hourly = pay?.let { FlexGrabberEvaluator.hourlyFromPayAndTime(it, timeText) }
+                    val durationText = findSiblingText(payNode, durationId, index)
+                    val durationHours = FlexGrabberEvaluator.parseDurationHours(timeText)
+                        ?: FlexGrabberEvaluator.parseDurationFromLabel(durationText)
+                    val hourly = pay?.let {
+                        FlexGrabberEvaluator.hourlyFromPayAndTime(it, timeText, durationText)
+                    }
                     FlexBlockOffer(
                         index = index,
                         payText = payText,
@@ -112,7 +117,7 @@ class FlexScreenReader(private val service: AccessibilityService) {
                         stationText = stationText,
                         payAmount = pay,
                         startHour = FlexGrabberEvaluator.parseStartHour(timeText),
-                        durationHours = FlexGrabberEvaluator.parseDurationHours(timeText),
+                        durationHours = durationHours,
                         hourlyRate = hourly,
                     ).also { offer ->
                         FlexState.putOfferField("$payId#$index", payText)
@@ -233,6 +238,9 @@ class FlexScreenReader(private val service: AccessibilityService) {
         if (buttonText.isBlank()) return false
         val root = activeRoot() ?: return false
         return try {
+            if (buttonText.equals("Refresh", ignoreCase = true) && clickPrimaryFooterButton(root)) {
+                return true
+            }
             var node = root.findClickableByExactText(buttonText, ignoreCase = true)
                 ?: root.findClickableByText(buttonText, ignoreCase = true)
             if (node != null) {
@@ -242,6 +250,15 @@ class FlexScreenReader(private val service: AccessibilityService) {
             } else false
         } finally {
             try { root.recycle() } catch (_: Exception) {}
+        }
+    }
+
+    /** Footer Flex: primaryButton → meridian_button_text_view "Refresh". */
+    private fun clickPrimaryFooterButton(root: AccessibilityNodeInfo): Boolean {
+        val primaryId = resolveId(FlexIds.PRIMARY_BUTTON) ?: return false
+        return root.useViewIdNodes(primaryId) { nodes ->
+            val target = nodes.firstOrNull { it.isClickable } ?: nodes.firstOrNull()
+            target?.performAction(AccessibilityNodeInfo.ACTION_CLICK) == true
         }
     }
 

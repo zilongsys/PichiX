@@ -8,6 +8,16 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.15 (Mayo 2026)
+
+### Corregido
+- Lista de ofertas Rabbit: estación desde `offer_station` (antes usaba `left_secondary_label` = duración).
+- $/h con duración «3 hr 30 min» / «4 hr» desde `left_secondary_label`.
+- Clic Refresh: prioriza `primaryButton` del footer Flex.
+- Logcat: sin líneas duplicadas (archivo UI separado de Log.i).
+
+---
+
 ## v0.1.14 (Mayo 2026)
 
 ### Actualizado

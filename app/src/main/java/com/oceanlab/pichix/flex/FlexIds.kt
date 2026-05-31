@@ -16,6 +16,9 @@ object FlexIds {
     const val OFFER_TIME_WINDOW = "offer_time_window"
     const val OFFER_DATE = "offer_date"
     const val MERIDIAN_BUTTON_TEXT = "meridian_button_text_view"
+    const val PRIMARY_BUTTON = "primaryButton"
+    const val OFFER_CARD = "card"
+    const val LIST_RECYCLER = "list_recycler"
     const val FILTER_OFFER_COUNT = "filter_offer_count"
 
     val ALL_SUFFIXES = listOf(

@@ -219,10 +219,20 @@ class PichixAccessibilityService : AccessibilityService() {
                             FlexUiDumper.DEBUG_TAG,
                             "Lectura tras Refresh (${afterText.length} chars), cambio visual no requerido",
                         )
-                        PichiFileLog.ui(
+                        PichiFileLog.uiFileOnly(
                             FlexUiDumper.DEBUG_TAG,
                             "POST_REFRESH (${afterText.length}): ${afterText.take(4000)}",
                         )
+                        val parsed = reader.readOffersFromList()
+                        if (parsed.isNotEmpty()) {
+                            Log.i(FlexUiDumper.DEBUG_TAG, "Ofertas parseadas tras Refresh: ${parsed.size}")
+                            parsed.forEachIndexed { i, o ->
+                                Log.i(
+                                    FlexUiDumper.DEBUG_TAG,
+                                    "  [$i] ${o.stationText} | ${o.timeText} | ${o.durationHours}h | ${o.payText}",
+                                )
+                            }
+                        }
                     }, 450)
                 }
                 return
@@ -232,6 +242,14 @@ class PichixAccessibilityService : AccessibilityService() {
             if (flags.captcha) return
 
             val offers = reader.readOffersFromList()
+            if (settings.debugLogEnabled && offers.isNotEmpty()) {
+                offers.forEachIndexed { i, o ->
+                    Log.i(
+                        FlexUiDumper.DEBUG_TAG,
+                        "Oferta[$i] ${o.stationText} | ${o.timeText} | ${o.durationHours ?: "?"}h | ${o.payText} | \$${o.hourlyRate ?: 0}/h",
+                    )
+                }
+            }
             if (offers.isEmpty()) {
                 maybeScrollList()
                 return

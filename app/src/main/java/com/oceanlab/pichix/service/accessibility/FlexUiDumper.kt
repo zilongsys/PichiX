@@ -47,8 +47,8 @@ object FlexUiDumper {
         Log.i(DEBUG_TAG, "═══════════════════════════════════════════════════════")
         Log.i(DEBUG_TAG, header)
         Log.i(DEBUG_TAG, "TEXTO_PANTALLA (${fullText.length} chars): ${fullText.take(MAX_SCREEN_CHARS_LOG)}")
-        PichiFileLog.ui(DEBUG_TAG, header)
-        PichiFileLog.ui(DEBUG_TAG, "TEXTO_PANTALLA (${fullText.length}): ${fullText.take(MAX_SCREEN_CHARS_LOG)}")
+        PichiFileLog.uiFileOnly(DEBUG_TAG, header)
+        PichiFileLog.uiFileOnly(DEBUG_TAG, "TEXTO_PANTALLA (${fullText.length}): ${fullText.take(MAX_SCREEN_CHARS_LOG)}")
         try {
             dumpNode(root, 0)
         } catch (e: Exception) {
@@ -79,7 +79,7 @@ object FlexUiDumper {
         }
         val line = "$indent${parts.joinToString(" · ")}$click"
         Log.i(DEBUG_TAG, line)
-        PichiFileLog.ui(DEBUG_TAG, line)
+        PichiFileLog.uiFileOnly(DEBUG_TAG, line)
         for (i in 0 until node.childCount) {
             val child = node.getChild(i) ?: continue
             try {

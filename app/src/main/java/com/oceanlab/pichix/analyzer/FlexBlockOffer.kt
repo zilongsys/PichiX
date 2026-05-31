@@ -61,7 +61,21 @@ object FlexGrabberEvaluator {
         return h
     }
 
+    /** Duración en tarjeta de lista: "3 hr 30 min", "4 hr". */
+    fun parseDurationFromLabel(label: String): Double? {
+        if (label.isBlank()) return null
+        val hrMin = Regex("""(\d+)\s*hr\s*(\d+)\s*min""", RegexOption.IGNORE_CASE).find(label)
+        if (hrMin != null) {
+            val h = hrMin.groupValues[1].toDoubleOrNull() ?: 0.0
+            val m = hrMin.groupValues[2].toDoubleOrNull() ?: 0.0
+            return h + m / 60.0
+        }
+        val hrOnly = Regex("""(\d+(?:\.\d+)?)\s*hr""", RegexOption.IGNORE_CASE).find(label)
+        return hrOnly?.groupValues?.get(1)?.toDoubleOrNull()
+    }
+
     fun parseDurationHours(timeText: String): Double? {
+        parseDurationFromLabel(timeText)?.let { return it }
         val range = hourRangeRegex.find(timeText) ?: return null
         val h1 = range.groupValues[1].toIntOrNull() ?: return null
         val m1 = range.groupValues[2].toIntOrNull() ?: 0
@@ -73,8 +87,10 @@ object FlexGrabberEvaluator {
         return (end - start).coerceAtLeast(0.25)
     }
 
-    fun hourlyFromPayAndTime(pay: Double, timeText: String): Double? {
-        val hours = parseDurationHours(timeText) ?: return null
+    fun hourlyFromPayAndTime(pay: Double, timeText: String, durationLabel: String = ""): Double? {
+        val hours = parseDurationHours(timeText)
+            ?: parseDurationFromLabel(durationLabel)
+            ?: return null
         if (hours <= 0) return null
         return pay / hours
     }
