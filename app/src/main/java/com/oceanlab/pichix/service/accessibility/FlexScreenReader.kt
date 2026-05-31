@@ -11,6 +11,7 @@ import com.oceanlab.pichix.analyzer.FlexGrabberEvaluator
 import com.oceanlab.pichix.data.FlexState
 import com.oceanlab.pichix.flex.FlexIds
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.allTextsByViewId
+import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.findClickableByExactText
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.findClickableByText
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.firstTextByViewId
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.getAllText
