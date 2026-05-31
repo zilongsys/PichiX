@@ -32,9 +32,8 @@ import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.textfield.TextInputEditText
 import com.oceanlab.pichix.R
 import com.oceanlab.pichix.data.AppSettings
-import com.oceanlab.pichix.data.MonitorPackages
-import com.oceanlab.pichix.data.AppSettings
 import com.oceanlab.pichix.data.FlexAlertRule
+import com.oceanlab.pichix.data.MonitorPackages
 import com.oceanlab.pichix.data.FlexAlertRulesStore
 import com.oceanlab.pichix.service.FlexNotificationListenerService
 import com.oceanlab.pichix.util.AlertManager
