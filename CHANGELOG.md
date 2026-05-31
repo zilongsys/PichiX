@@ -8,6 +8,14 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.14 (Mayo 2026)
+
+### Actualizado
+- Log UI: volcado **sin throttle** en cada clic Refresh (antes + 450 ms después), con `TEXTO_PANTALLA` y todos los nodos (clase, bounds, text, desc).
+- Lectura de pantalla incluye `contentDescription` y se repite tras Refresh aunque la UI no cambie visualmente.
+
+---
+
 ## v0.1.13 (Mayo 2026)
 
 ### Corregido

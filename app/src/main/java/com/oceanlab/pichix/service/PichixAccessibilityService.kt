@@ -12,6 +12,7 @@ import com.oceanlab.pichix.analyzer.FlexGrabResult
 import com.oceanlab.pichix.analyzer.FlexBlockOffer
 import com.oceanlab.pichix.analyzer.FlexGrabberEvaluator
 import com.oceanlab.pichix.data.AppSettings
+import com.oceanlab.pichix.data.PichiFileLog
 import com.oceanlab.pichix.data.FlexState
 import com.oceanlab.pichix.data.MonitorPackages
 import com.oceanlab.pichix.data.OfferLogger
@@ -98,7 +99,7 @@ class PichixAccessibilityService : AccessibilityService() {
         if (settings.debugLogEnabled && pkg == target) {
             rootInActiveWindow?.let { root ->
                 try {
-                    FlexUiDumper.maybeDump(root, pkg)
+                    FlexUiDumper.maybeDumpPeriodic(root, pkg)
                 } finally {
                     try {
                         root.recycle()
@@ -182,36 +183,47 @@ class PichixAccessibilityService : AccessibilityService() {
         if (!settings.isBotEnabled || pausedAfterAccept || grabInFlight) return
         grabInFlight = true
         try {
-            if (settings.debugLogEnabled) {
-                val target = MonitorPackages.primaryTarget(this)
-                rootInActiveWindow?.let { root ->
-                    try {
-                        FlexUiDumper.maybeDump(root, target)
-                    } finally {
-                        try {
-                            root.recycle()
-                        } catch (_: Exception) {
-                        }
-                    }
-                }
-            }
             val text = reader.readFullScreenText()
             if (settings.flexOnlyRefresh) {
-                if (reader.screenMatchesForClick(
+                if (!reader.screenMatchesForClick(
                         settings.flexClickScreenText,
                         text,
                         settings.flexClickScreenMatchMode,
                         settings.flexClickScreenIgnoreCase,
                     )
                 ) {
-                    val clicked = reader.clickTargetButton(
-                        settings.flexRefreshButtonText,
-                        settings.flexRefreshButtonMatchMode,
-                        settings.flexRefreshButtonIgnoreCase,
-                    )
-                    if (!clicked) {
-                        postObserver("Clic: no se encontró «${settings.flexRefreshButtonText}»")
+                    return
+                }
+                val target = MonitorPackages.primaryTarget(this)
+                val logUi = settings.debugLogEnabled || settings.fileLogEnabled
+                if (logUi) {
+                    reader.withActiveRoot { root ->
+                        FlexUiDumper.dumpOnRefreshClick(root, target, "antes")
                     }
+                }
+                val clicked = reader.clickTargetButton(
+                    settings.flexRefreshButtonText,
+                    settings.flexRefreshButtonMatchMode,
+                    settings.flexRefreshButtonIgnoreCase,
+                )
+                if (!clicked) {
+                    postObserver("Clic: no se encontró «${settings.flexRefreshButtonText}»")
+                }
+                if (logUi) {
+                    handler.postDelayed({
+                        reader.withActiveRoot { root ->
+                            FlexUiDumper.dumpOnRefreshClick(root, target, "despues")
+                        }
+                        val afterText = reader.readFullScreenText()
+                        Log.i(
+                            FlexUiDumper.DEBUG_TAG,
+                            "Lectura tras Refresh (${afterText.length} chars), cambio visual no requerido",
+                        )
+                        PichiFileLog.ui(
+                            FlexUiDumper.DEBUG_TAG,
+                            "POST_REFRESH (${afterText.length}): ${afterText.take(4000)}",
+                        )
+                    }, 450)
                 }
                 return
             }

@@ -54,7 +54,7 @@
     <string name="config_screen_match_exact">Texto exacto</string>
     <string name="config_section_log">REGISTRO Y DEBUG</string>
     <string name="config_debug_log_title">Modo debug (volcar UI Flex)</string>
-    <string name="config_debug_log_hint">Logcat: filtro «PichiXDebug», nivel Info. Volcado cada ~3 s con Flex abierto y el bot activo.</string>
+    <string name="config_debug_log_hint">Logcat tag PichiXDebug (Info). En cada clic Refresh: volcado completo antes y después + TEXTO_PANTALLA aunque no cambie la vista.</string>
     <string name="config_file_log_title">Guardar log en archivo</string>
     <string name="config_btn_share_logs">Compartir diagnóstico PichiX</string>
     <string name="config_smart_click_range_label">Smart click — espera aleatoria (segundos mín. y máx.)</string>

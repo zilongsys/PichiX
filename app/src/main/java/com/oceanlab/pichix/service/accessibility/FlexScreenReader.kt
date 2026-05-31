@@ -17,6 +17,7 @@ import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.findClic
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.findClickableByText
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.firstTextByViewId
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.getAllText
+import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.getAllVisibleText
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.hasViewId
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.recycleNodes
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.useViewIdNodes
@@ -48,9 +49,21 @@ class FlexScreenReader(private val service: AccessibilityService) {
     fun readFullScreenText(): String {
         val root = activeRoot() ?: return ""
         return try {
-            root.getAllText()
+            root.getAllVisibleText()
         } finally {
             try { root.recycle() } catch (_: Exception) {}
+        }
+    }
+
+    fun withActiveRoot(block: (AccessibilityNodeInfo) -> Unit) {
+        val root = activeRoot() ?: return
+        try {
+            block(root)
+        } finally {
+            try {
+                root.recycle()
+            } catch (_: Exception) {
+            }
         }
     }
 

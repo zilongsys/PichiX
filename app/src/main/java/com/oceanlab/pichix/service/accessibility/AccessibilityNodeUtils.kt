@@ -100,13 +100,19 @@ object AccessibilityNodeUtils {
         }
     }
 
-    fun AccessibilityNodeInfo.getAllText(): String {
+    fun AccessibilityNodeInfo.getAllText(): String = getAllVisibleText()
+
+    /** Texto + contentDescription de todos los nodos (aunque la pantalla no cambie de aspecto). */
+    fun AccessibilityNodeInfo.getAllVisibleText(): String {
         val sb = StringBuilder()
+        val seen = linkedSetOf<String>()
         withAllObtainedNodes { nodes ->
             for (n in nodes) {
-                n.text?.toString()?.trim()?.takeIf { it.isNotEmpty() }?.let {
+                for (raw in listOf(n.text?.toString(), n.contentDescription?.toString())) {
+                    val part = raw?.trim()?.takeIf { it.isNotEmpty() } ?: continue
+                    if (!seen.add(part)) continue
                     if (sb.isNotEmpty()) sb.append(' ')
-                    sb.append(it)
+                    sb.append(part)
                 }
             }
         }
