@@ -8,6 +8,16 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.13 (Mayo 2026)
+
+### Corregido
+- Log UI Flex en Logcat: líneas en nivel **Info** (tag `PichiXDebug`) y volcado también en cada tick del bot con debug activo.
+
+### Actualizado
+- Textos Config: qué filtros afectan al motor vs alertas; «solo primer plano» marcado como reservado.
+
+---
+
 ## v0.1.12 (Mayo 2026)
 
 ### Corregido

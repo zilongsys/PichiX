@@ -182,6 +182,19 @@ class PichixAccessibilityService : AccessibilityService() {
         if (!settings.isBotEnabled || pausedAfterAccept || grabInFlight) return
         grabInFlight = true
         try {
+            if (settings.debugLogEnabled) {
+                val target = MonitorPackages.primaryTarget(this)
+                rootInActiveWindow?.let { root ->
+                    try {
+                        FlexUiDumper.maybeDump(root, target)
+                    } finally {
+                        try {
+                            root.recycle()
+                        } catch (_: Exception) {
+                        }
+                    }
+                }
+            }
             val text = reader.readFullScreenText()
             if (settings.flexOnlyRefresh) {
                 if (reader.screenMatchesForClick(

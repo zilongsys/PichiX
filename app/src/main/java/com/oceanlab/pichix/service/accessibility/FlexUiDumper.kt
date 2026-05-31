@@ -30,8 +30,8 @@ object FlexUiDumper {
     fun dumpHierarchy(root: AccessibilityNodeInfo, packageName: String?) {
         dumpUiNodeCount = 0
         val header = "DUMP UI Flex (paquete: $packageName)"
-        Log.d(DEBUG_TAG, "═══════════════════════════════════════════════════════")
-        Log.d(DEBUG_TAG, header)
+        Log.i(DEBUG_TAG, "═══════════════════════════════════════════════════════")
+        Log.i(DEBUG_TAG, header)
         PichiFileLog.ui(DEBUG_TAG, header)
         try {
             dumpNode(root, 0)
@@ -39,7 +39,8 @@ object FlexUiDumper {
             Log.e(DEBUG_TAG, "Error dump: ${e.message}")
             PichiFileLog.e(DEBUG_TAG, "dumpUiHierarchy", e, PichiFileLog.Channel.UI)
         }
-        Log.d(DEBUG_TAG, "═══════════════════════════════════════════════════════")
+        Log.i(DEBUG_TAG, "Fin volcado: $dumpUiNodeCount nodos (tag $DEBUG_TAG, nivel Info)")
+        Log.i(DEBUG_TAG, "═══════════════════════════════════════════════════════")
     }
 
     private fun dumpNode(node: AccessibilityNodeInfo?, depth: Int) {
@@ -60,7 +61,7 @@ object FlexUiDumper {
             if (desc.isNotEmpty()) parts.add("desc=\"${desc.take(80)}\"")
             if (b.width() > 0) parts.add("bounds=${b.left},${b.top}-${b.right},${b.bottom}")
             val line = "$indent${parts.joinToString(" · ")}$click"
-            Log.d(DEBUG_TAG, line)
+            Log.i(DEBUG_TAG, line)
             PichiFileLog.ui(DEBUG_TAG, line)
         }
         for (i in 0 until node.childCount) {
