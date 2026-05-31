@@ -110,9 +110,20 @@ class AppSettings(context: Context) {
         get() = prefs.getBoolean(KEY_PAUSE_IGNORE_CASE, true)
         set(value) = prefs.edit().putBoolean(KEY_PAUSE_IGNORE_CASE, value).apply()
 
-    /** Solo actuar cuando Amazon Flex está en primer plano. */
+    /**
+     * Reservado para uso futuro; el motor no bloquea por este switch.
+     */
     var flexOnlyWhenForeground: Boolean
-        get() = prefs.getBoolean(KEY_FLEX_ONLY_FOREGROUND, true)
+        get() {
+            if (!prefs.getBoolean(KEY_FOREGROUND_MOTOR_RESET, false)) {
+                prefs.edit()
+                    .putBoolean(KEY_FLEX_ONLY_FOREGROUND, false)
+                    .putBoolean(KEY_FOREGROUND_MOTOR_RESET, true)
+                    .apply()
+                return false
+            }
+            return prefs.getBoolean(KEY_FLEX_ONLY_FOREGROUND, false)
+        }
         set(value) = prefs.edit().putBoolean(KEY_FLEX_ONLY_FOREGROUND, value).apply()
 
     var debugLogEnabled: Boolean
@@ -250,6 +261,7 @@ class AppSettings(context: Context) {
         const val DEFAULT_REFRESH_BUTTON = "Refresh"
         private const val KEY_FLEX_CLICK_SCREEN_MODE = "flex_click_screen_mode"
         private const val KEY_FLEX_ONLY_FOREGROUND = "flex_only_foreground"
+        private const val KEY_FOREGROUND_MOTOR_RESET = "flex_foreground_motor_reset_v12"
         private const val KEY_DEBUG_LOG = "debug_log"
         private const val KEY_FILE_LOG = "file_log"
         private const val KEY_AUTO_PAUSE_CAPTCHA = "auto_pause_captcha"

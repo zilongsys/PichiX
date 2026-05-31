@@ -8,6 +8,17 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.12 (Mayo 2026)
+
+### Corregido
+- **Regresión v0.1.8+:** el motor vuelve al comportamiento de **v0.1.7** (`rootInActiveWindow`, sin bloqueo por «solo primer plano»).
+- Eliminado `FlexWindowRoots` (rompía lectura/clic en muchos móviles).
+- Filtro de texto en pantalla para Refresh: el motor usa siempre Contiene + ignora mayúsculas (los toggles de Config siguen para alertas; el motor no se queda mudo).
+- Clic en botón Refresh: exacto o parcial, siempre sin distinguir mayúsculas.
+- Migración: desactiva «Solo con Flex en primer plano» guardado en `true` (ese filtro bloqueaba el bucle).
+
+---
+
 ## v0.1.11 (Mayo 2026)
 
 ### Corregido
