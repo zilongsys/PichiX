@@ -1,0 +1,110 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+def versionPropsFile = file('version.properties')
+
+def readVersionProps() {
+    def props = new Properties()
+    if (versionPropsFile.exists()) {
+        versionPropsFile.withInputStream { props.load(it) }
+    } else {
+        props['VERSION_MAJOR'] = '0'
+        props['VERSION_MIDDLE'] = '1'
+        props['VERSION_PATCH'] = '0'
+        props['VERSION_CODE'] = '1'
+    }
+    return props
+}
+
+def writeVersionProps(Properties props) {
+    versionPropsFile.withWriter { w ->
+        props.store(w, 'PichiX — PATCH 0-100, al llegar a 100 sube MIDDLE y PATCH=0')
+    }
+}
+
+def bumpVersionProps(Properties props) {
+    int major = (props['VERSION_MAJOR'] ?: '0').toString().toInteger()
+    int middle = (props['VERSION_MIDDLE'] ?: '0').toString().toInteger()
+    int patch = (props['VERSION_PATCH'] ?: '0').toString().toInteger()
+    int code = (props['VERSION_CODE'] ?: '1').toString().toInteger() + 1
+
+    if (patch < 100) {
+        patch++
+    } else {
+        patch = 0
+        if (middle < 100) {
+            middle++
+        } else {
+            middle = 0
+            major++
+        }
+    }
+
+    props['VERSION_MAJOR'] = major.toString()
+    props['VERSION_MIDDLE'] = middle.toString()
+    props['VERSION_PATCH'] = patch.toString()
+    props['VERSION_CODE'] = code.toString()
+}
+
+def requestedTasks = gradle.startParameter.taskNames
+def shouldAutoBump = requestedTasks.any { task ->
+    task.contains('assemble') || task.contains('compile') && task.contains('Kotlin')
+            || task.contains('install') || task.contains('bundle')
+}
+
+if (shouldAutoBump) {
+    def props = readVersionProps()
+    bumpVersionProps(props)
+    writeVersionProps(props)
+}
+
+def versionProps = readVersionProps()
+def pichixVersionName = "${versionProps['VERSION_MAJOR']}.${versionProps['VERSION_MIDDLE']}.${versionProps['VERSION_PATCH']}"
+def pichixVersionCode = (versionProps['VERSION_CODE'] ?: '1').toString().toInteger()
+
+android {
+    namespace 'com.oceanlab.pichix'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.oceanlab.pichix"
+        minSdk 26
+        targetSdk 34
+        versionCode pichixVersionCode
+        versionName pichixVersionName
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.viewpager2:viewpager2:1.0.0'
+    implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.1.0'
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.fragment:fragment-ktx:1.6.2'
+}

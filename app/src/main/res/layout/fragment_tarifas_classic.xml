@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:scrollbars="none"
+    android:fillViewport="true"
+    android:clipToPadding="false"
+    android:background="@color/bg_page"
+    android:focusable="false"
+    android:focusableInTouchMode="false">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <LinearLayout style="@style/SectionLabelRow" android:layout_marginTop="4dp">
+            <ImageView
+                style="@style/SectionLabelIcon"
+                android:src="@drawable/ic_tarifa_pickup"
+                app:tint="@color/text_hint"
+                android:contentDescription="@null"/>
+            <TextView style="@style/SectionLabelText"
+                android:text="PICKUP — TARIFAS POR RANGO"/>
+        </LinearLayout>
+
+        <LinearLayout style="@style/Card">
+
+            <LinearLayout style="@style/RowPickupRate">
+                <TextView
+                    android:id="@+id/badgeRate1015"
+                    style="@style/TarifaRangeBadge"
+                    android:text="$10–$15"
+                    android:background="@drawable/badge_green"
+                    android:textColor="@color/badge_green_text"/>
+                <ImageView
+                    style="@style/TarifaPickupRateIcon"
+                    android:src="@drawable/ic_tarifa_rate"
+                    app:tint="@color/text_secondary"
+                    android:contentDescription="@null"/>
+                <TextView style="@style/TarifaMinMiLabel" android:text="Min. $/mi"/>
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"/>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etRate1015"
+                    style="@style/SmallInputPickup"
+                    android:inputType="numberDecimal"
+                    android:hint="2.00"/>
+                <TextView style="@style/UnitPickup" android:text="$/mi"/>
+            </LinearLayout>
+            <TextView android:id="@+id/tvHint1015" style="@style/TarifaMaxHint"
+                android:text="Mín sugerido: $20.00"/>
+
+            <View style="@style/DividerFull"/>
+
+            <LinearLayout style="@style/RowPickupRate">
+                <TextView
+                    android:id="@+id/badgeRate1520"
+                    style="@style/TarifaRangeBadge"
+                    android:text="$15–$20"
+                    android:background="@drawable/badge_amber"
+                    android:textColor="@color/badge_amber_text"/>
+                <ImageView
+                    style="@style/TarifaPickupRateIcon"
+                    android:src="@drawable/ic_tarifa_rate"
+                    app:tint="@color/text_secondary"
+                    android:contentDescription="@null"/>
+                <TextView style="@style/TarifaMinMiLabel" android:text="Min. $/mi"/>
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"/>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etRate1520"
+                    style="@style/SmallInputPickup"
+                    android:inputType="numberDecimal"
+                    android:hint="1.80"/>
+                <TextView style="@style/UnitPickup" android:text="$/mi"/>
+            </LinearLayout>
+            <TextView android:id="@+id/tvHint1520" style="@style/TarifaMaxHint"
+                android:text="Mín sugerido: $27.00"/>
+
+            <View style="@style/DividerFull"/>
+
+            <LinearLayout style="@style/RowPickupRate">
+                <TextView
+                    android:id="@+id/badgeRate20Plus"
+                    style="@style/TarifaRangeBadge"
+                    android:text="$20+"
+                    android:background="@drawable/badge_coral"
+                    android:textColor="@color/badge_coral_text"/>
+                <ImageView
+                    style="@style/TarifaPickupRateIcon"
+                    android:src="@drawable/ic_tarifa_rate"
+                    app:tint="@color/text_secondary"
+                    android:contentDescription="@null"/>
+                <TextView style="@style/TarifaMinMiLabel" android:text="Min. $/mi"/>
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"/>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etRate20Plus"
+                    style="@style/SmallInputPickup"
+                    android:inputType="numberDecimal"
+                    android:hint="1.50"/>
+                <TextView style="@style/UnitPickup" android:text="$/mi"/>
+            </LinearLayout>
+            <TextView android:id="@+id/tvHint20Plus" style="@style/TarifaMaxHint"
+                android:text="Mín sugerido: $30.00"/>
+
+            <View style="@style/DividerFull"/>
+
+            <LinearLayout style="@style/RowCompact">
+                <ImageView
+                    style="@style/TarifaRowIcon"
+                    android:src="@drawable/ic_tarifa_pickup"
+                    app:tint="@color/text_secondary"
+                    android:contentDescription="@null"/>
+                <TextView style="@style/RowLabelMoneyMin" android:text="$ Mínimo Pickup"/>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etMinPricePickup" style="@style/SmallInput"
+                    android:inputType="numberDecimal" android:hint="10.00"/>
+                <TextView style="@style/Unit" android:text="$"/>
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout style="@style/SectionLabelRow">
+            <ImageView
+                style="@style/SectionLabelIcon"
+                android:src="@drawable/ic_tarifa_shopping"
+                app:tint="@color/text_hint"
+                android:contentDescription="@null"/>
+            <TextView style="@style/SectionLabelText"
+                android:text="SHOPPING (COMPRAS EN TIENDA)"/>
+        </LinearLayout>
+
+        <LinearLayout style="@style/Card">
+
+            <LinearLayout style="@style/RowCompact">
+                <ImageView
+                    style="@style/TarifaRowIcon"
+                    android:src="@drawable/ic_tarifa_rate"
+                    app:tint="@color/text_secondary"
+                    android:contentDescription="@null"/>
+                <TextView style="@style/RowLabel" android:text="Min. $/mi"/>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etRateShopping" style="@style/SmallInput"
+                    android:inputType="numberDecimal" android:hint="1.50"/>
+                <TextView style="@style/Unit" android:text="$/mi"/>
+            </LinearLayout>
+            <TextView android:id="@+id/tvHintShopping" style="@style/TarifaMaxHint"
+                android:text="Ingresa tarifa para ver millas máximas"/>
+
+            <View style="@style/DividerFull"/>
+
+            <LinearLayout style="@style/RowCompact">
+                <ImageView
+                    style="@style/TarifaRowIcon"
+                    android:src="@drawable/ic_tarifa_shopping"
+                    app:tint="@color/text_secondary"
+                    android:contentDescription="@null"/>
+                <TextView style="@style/RowLabelMoneyMin" android:text="$ Mínimo Shopping"/>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etMinPriceShopping" style="@style/SmallInput"
+                    android:inputType="numberDecimal" android:hint="12.00"/>
+                <TextView style="@style/Unit" android:text="$"/>
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout style="@style/SectionLabelRow">
+            <ImageView
+                style="@style/SectionLabelIcon"
+                android:src="@drawable/ic_tarifa_multistop"
+                app:tint="@color/text_hint"
+                android:contentDescription="@null"/>
+            <TextView style="@style/SectionLabelText"
+                android:text="MULTI-PARADAS"/>
+        </LinearLayout>
+
+        <LinearLayout style="@style/Card">
+
+            <LinearLayout style="@style/RowCompact">
+                <ImageView
+                    style="@style/TarifaRowIcon"
+                    android:src="@drawable/ic_tarifa_multistop"
+                    app:tint="@color/text_secondary"
+                    android:contentDescription="@null"/>
+                <TextView style="@style/RowLabel" android:text="Activar Tarifa Multi-Paradas"
+                    android:maxLines="1" android:ellipsize="end"/>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchMultiStop"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    app:thumbTint="@color/header_switch_thumb"
+                    app:trackTint="@color/switch_track_selector"
+                    android:checked="false"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layoutMultiStopFields"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+            <View style="@style/DividerFull"/>
+
+            <LinearLayout style="@style/RowCompact">
+                <ImageView
+                    style="@style/TarifaRowIcon"
+                    android:src="@drawable/ic_tarifa_stops"
+                    app:tint="@color/text_secondary"
+                    android:contentDescription="@null"/>
+                <TextView style="@style/RowLabel" android:text="Mínimo De Stops"/>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etMultiStopMinStops" style="@style/SmallInput"
+                    android:inputType="number" android:hint="4"/>
+                <TextView style="@style/Unit" android:text="stops"/>
+            </LinearLayout>
+
+            <View style="@style/DividerFull"/>
+
+            <LinearLayout style="@style/RowCompact">
+                <ImageView
+                    style="@style/TarifaRowIcon"
+                    android:src="@drawable/ic_tarifa_rate"
+                    app:tint="@color/text_secondary"
+                    android:contentDescription="@null"/>
+                <TextView style="@style/RowLabel" android:text="Min. $/mi"/>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etMultiStopRate" style="@style/SmallInput"
+                    android:inputType="numberDecimal" android:hint="1.20"/>
+                <TextView style="@style/Unit" android:text="$/mi"/>
+            </LinearLayout>
+            <TextView android:id="@+id/tvHintMultiStop" style="@style/TarifaMaxHint"
+                android:text="Ingresa tarifa y mínimo para ver millas máximas"/>
+
+            <View style="@style/DividerFull"/>
+
+            <LinearLayout style="@style/RowCompact">
+                <ImageView
+                    style="@style/TarifaRowIcon"
+                    android:src="@drawable/ic_tarifa_route"
+                    app:tint="@color/text_secondary"
+                    android:contentDescription="@null"/>
+                <TextView style="@style/RowLabelMoneyMinCompact" android:text="$ Mínimo Multi-Stops"/>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etMultiStopMinPrice" style="@style/SmallInput"
+                    android:inputType="numberDecimal" android:hint="15.00"/>
+                <TextView style="@style/Unit" android:text="$"/>
+            </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSaveTarifas"
+            style="@style/SparkButtonPrimary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:text="Guardar tarifas"/>
+
+    </LinearLayout>
+</ScrollView>

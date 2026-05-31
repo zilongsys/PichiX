@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tema claro (por defecto): fondos blancos, texto oscuro -->
+
+    <color name="colorPrimary">#FFFFFF</color>
+    <color name="colorPrimaryDark">#FFFFFF</color>
+    <color name="colorAccent">#3B82F6</color>
+
+    <color name="brand_m">#3B82F6</color>
+    <color name="brand_akix">#0F172A</color>
+
+    <color name="header_bg">#FFFFFF</color>
+    <color name="header_bg_top">#FFFFFF</color>
+    <color name="header_bg_bottom">#FFFFFF</color>
+
+    <color name="bg_page">#FFFFFF</color>
+    <color name="bg_card">#FFFFFF</color>
+    <color name="bg_secondary">#F1F5F9</color>
+    <color name="bg_stat_chip">#F1F5F9</color>
+    <color name="bg_input">#FFFFFF</color>
+
+    <color name="text_primary">#0F172A</color>
+    <color name="text_secondary">#475569</color>
+    <color name="text_hint">#94A3B8</color>
+    <color name="text_on_dark">#FFFFFF</color>
+    <color name="text_on_dark_muted">#E2E8F0</color>
+
+    <color name="accent_teal">#3B82F6</color>
+    <color name="accent_teal_dark">#2563EB</color>
+    <color name="accent_teal_bg">#EFF6FF</color>
+
+    <color name="green_400">#10B981</color>
+    <color name="green_bg">#D1FAE5</color>
+    <color name="red_400">#EF4444</color>
+    <color name="amber_400">#F59E0B</color>
+    <color name="amber_bg">#FEF3C7</color>
+    <color name="coral_600">#EF4444</color>
+    <color name="teal_500">#3B82F6</color>
+    <color name="coral_bg">#FEE2E2</color>
+    <color name="blue_400">#3B82F6</color>
+    <color name="blue_bg">#EFF6FF</color>
+
+    <color name="rate_min_money">#059669</color>
+    <color name="rate_max_hint_bg">#EFF6FF</color>
+    <color name="rate_max_hint_border">#BFDBFE</color>
+    <color name="rate_max_hint_accent_line">#3B82F6</color>
+
+    <color name="badge_green_text">#059669</color>
+    <color name="badge_amber_text">#D97706</color>
+    <color name="badge_coral_text">#DC2626</color>
+    <color name="badge_blue_text">#2563EB</color>
+
+    <color name="border_subtle">#E2E8F0</color>
+    <color name="border_input">#CBD5E1</color>
+    <color name="divider">#E8ECF4</color>
+
+    <color name="sidebar_active_bg">#EFF6FF</color>
+    <color name="sidebar_active_border">#93C5FD</color>
+    <color name="sidebar_ripple">#1A3B82F6</color>
+
+    <color name="button_primary_bg">#3B82F6</color>
+    <color name="button_primary_text">#FFFFFF</color>
+    <color name="tab_active_bg">#3B82F6</color>
+
+    <color name="switch_track_on">#93C5FD</color>
+    <color name="switch_track_off">#CBD5E1</color>
+    <color name="switch_thumb_on">#FFFFFF</color>
+    <color name="switch_thumb_off">#FFFFFF</color>
+
+    <color name="white">#FFFFFF</color>
+    <color name="transparent">#00000000</color>
+    <color name="shadow_soft">#14000000</color>
+
+    <!-- Historial: botones de acción (fondo sólido, texto blanco) -->
+    <color name="hist_action_csv_bg">#0D9488</color>
+    <color name="hist_action_txt_bg">#7C3AED</color>
+    <color name="hist_action_today_bg">#D97706</color>
+    <color name="hist_action_all_bg">#DC2626</color>
+
+    <!-- Tipos de bloque Flex (iconos en reglas) -->
+    <color name="flex_block_whole_foods_bg">#2D6A4F</color>
+    <color name="flex_block_whole_foods_icon">#FFFFFF</color>
+    <color name="flex_block_amazon_bg">#FF9900</color>
+    <color name="flex_block_amazon_icon">#232F3E</color>
+    <color name="flex_block_sub_same_day_bg">#2563EB</color>
+    <color name="flex_block_sub_same_day_icon">#FFFFFF</color>
+    <color name="flex_block_other_bg">#64748B</color>
+    <color name="flex_block_other_icon">#FFFFFF</color>
+    <color name="flex_block_all_bg">#7C3AED</color>
+    <color name="flex_block_all_icon">#FFFFFF</color>
+</resources>

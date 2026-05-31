@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_page"
+    android:padding="16dp"
+    android:fillViewport="true"
+    android:scrollbars="none"
+    android:focusable="false"
+    android:focusableInTouchMode="false">
+
+    <LinearLayout
+        android:id="@+id/filtrosScrollContent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:focusable="false"
+        android:focusableInTouchMode="false">
+
+        <TextView
+            android:id="@+id/tvFiltrosTariffHint"
+            style="@style/InfoBox"
+            android:layout_marginBottom="8dp"
+            android:text="Tarifa clásica: tiendas, keywords y tipos de orden de esta pestaña. Tarifa detallada: configúralos en cada regla de Tarifas."/>
+
+        <LinearLayout
+            android:id="@+id/blockFiltrosClassicStores"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="6dp">
+            <ImageView
+                style="@style/SectionLabelIcon"
+                android:src="@drawable/ic_filtro_stores"
+                app:tint="@color/text_hint"
+                android:contentDescription="@null"/>
+            <TextView
+                style="@style/SectionLabelText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="TIENDAS PERMITIDAS"/>
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchStoresEnabled"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:layout_marginEnd="4dp"
+                app:thumbTint="@color/header_switch_thumb"
+                app:trackTint="@color/switch_track_selector"/>
+        </LinearLayout>
+
+        <LinearLayout style="@style/Card">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:padding="16dp">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="Solo aceptar ofertas de estas tiendas. Si está vacío, acepta de todas."
+                    android:textColor="@color/text_hint" android:textSize="12sp"/>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp" android:orientation="horizontal">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etAddStore"
+                        android:layout_width="0dp" android:layout_height="42dp"
+                        android:layout_weight="1" android:hint="ej: #819 o Cape Coral"
+                        android:textSize="13sp" android:paddingLeft="12dp" android:paddingRight="12dp"
+                        android:background="@drawable/input_bg" android:inputType="text"
+                        android:maxLines="1"/>
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAddStore"
+                        style="@style/OutlinedButton"
+                        android:layout_width="wrap_content" android:layout_height="42dp"
+                        android:layout_marginStart="8dp" android:text="+ Agregar"
+                        android:textSize="12sp"
+                        android:minWidth="0dp"
+                        android:paddingLeft="14dp"
+                        android:paddingRight="14dp"/>
+                </LinearLayout>
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroupStores"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:focusable="false"
+                    android:focusableInTouchMode="false"
+                    android:descendantFocusability="afterDescendants"
+                    app:chipSpacingHorizontal="6dp"
+                    app:chipStyle="@style/DarkChip"
+                    app:chipSpacingVertical="6dp"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/blockFiltrosClassicKeywords"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="6dp">
+            <ImageView
+                style="@style/SectionLabelIcon"
+                android:src="@drawable/ic_filtro_keywords"
+                app:tint="@color/text_hint"
+                android:contentDescription="@null"/>
+            <TextView
+                style="@style/SectionLabelText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="KEYWORDS EXCLUIDOS"/>
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchKeywordsEnabled"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:layout_marginEnd="4dp"
+                app:thumbTint="@color/header_switch_thumb"
+                app:trackTint="@color/switch_track_selector"/>
+        </LinearLayout>
+
+        <LinearLayout style="@style/Card">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:padding="16dp">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="Rechaza automáticamente órdenes que contengan estas palabras."
+                    android:textColor="@color/text_hint" android:textSize="12sp"/>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp" android:orientation="horizontal">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etAddKeyword"
+                        android:layout_width="0dp" android:layout_height="42dp"
+                        android:layout_weight="1" android:hint="ej: Alcohol, Pharmacy"
+                        android:textSize="13sp" android:paddingLeft="12dp" android:paddingRight="12dp"
+                        android:background="@drawable/input_bg" android:inputType="text"
+                        android:maxLines="1"/>
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAddKeyword"
+                        style="@style/OutlinedButton"
+                        android:layout_width="wrap_content" android:layout_height="42dp"
+                        android:layout_marginStart="8dp" android:text="+ Agregar"
+                        android:textSize="12sp"
+                        android:minWidth="0dp"
+                        android:paddingLeft="14dp"
+                        android:paddingRight="14dp"/>
+                </LinearLayout>
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroupKeywords"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:focusable="false"
+                    android:focusableInTouchMode="false"
+                    android:descendantFocusability="afterDescendants"
+                    app:chipSpacingHorizontal="6dp"
+                    app:chipStyle="@style/DarkChip"
+                    app:chipSpacingVertical="6dp"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/blockFiltrosClassicOrderTypes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+        <LinearLayout style="@style/SectionLabelRow" android:layout_marginTop="12dp">
+            <ImageView
+                style="@style/SectionLabelIcon"
+                android:src="@drawable/ic_filtro_order_types"
+                app:tint="@color/text_hint"
+                android:contentDescription="@null"/>
+            <TextView
+                style="@style/SectionLabelText"
+                android:text="TIPOS DE ORDEN HABILITADOS"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvFiltrosClassicInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/InfoBox"
+            android:layout_marginBottom="8dp"
+            android:text="Tiendas permitidas, keywords excluidos y tipos de orden: solo con tarifa clásica. En detallada, usa keywords en cada regla."/>
+
+        <LinearLayout style="@style/Card">
+            <LinearLayout style="@style/Row">
+                <ImageView
+                    style="@style/TarifaRowIcon"
+                    android:src="@drawable/ic_tarifa_pickup"
+                    app:tint="@color/text_secondary"
+                    android:contentDescription="@null"/>
+                <TextView style="@style/RowLabel" android:text="Pickup"
+                    android:layout_width="0dp" android:layout_weight="1"/>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchPickup"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    app:thumbTint="@color/header_switch_thumb"
+                    app:trackTint="@color/switch_track_selector"/>
+            </LinearLayout>
+            <LinearLayout style="@style/Row">
+                <ImageView
+                    style="@style/TarifaRowIcon"
+                    android:src="@drawable/ic_tarifa_shopping"
+                    app:tint="@color/text_secondary"
+                    android:contentDescription="@null"/>
+                <TextView style="@style/RowLabel" android:text="Shopping"
+                    android:layout_width="0dp" android:layout_weight="1"/>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchShopping"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    app:thumbTint="@color/header_switch_thumb"
+                    app:trackTint="@color/switch_track_selector"/>
+            </LinearLayout>
+            <LinearLayout style="@style/Row">
+                <ImageView
+                    style="@style/TarifaRowIcon"
+                    android:src="@drawable/ic_filtro_return"
+                    app:tint="@color/text_secondary"
+                    android:contentDescription="@null"/>
+                <TextView style="@style/RowLabel" android:text="Returns"
+                    android:layout_width="0dp" android:layout_weight="1"/>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchReturns"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="false"
+                    app:thumbTint="@color/header_switch_thumb"
+                    app:trackTint="@color/switch_track_selector"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout style="@style/SectionLabelRow" android:layout_marginTop="16dp">
+            <ImageView
+                style="@style/SectionLabelIcon"
+                android:src="@drawable/ic_filtro_revision"
+                app:tint="@color/text_hint"
+                android:contentDescription="@null"/>
+            <TextView
+                style="@style/SectionLabelText"
+                android:text="REVISIÓN DETALLADA DE OFERTA"/>
+        </LinearLayout>
+
+        <LinearLayout style="@style/Card">
+
+            <!-- Switch habilitar -->
+            <LinearLayout style="@style/RowCompact">
+                <ImageView
+                    style="@style/TarifaRowIcon"
+                    android:layout_marginEnd="8dp"
+                    android:src="@drawable/ic_filtro_revision"
+                    app:tint="@color/text_secondary"
+                    android:contentDescription="@null"/>
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Habilitar revisión detallada"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="MakiX abre el detalle de la oferta y evalúa las direcciones antes de aceptar"
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchDetailedCheck"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:checked="false"
+                    app:thumbTint="@color/header_switch_thumb"
+                    app:trackTint="@color/switch_track_selector"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layoutDetailDependent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+            <View style="@style/Divider"/>
+
+            <!-- Modo exclusivo/inclusivo -->
+            <LinearLayout style="@style/RowCompact">
+                <ImageView
+                    style="@style/TarifaRowIcon"
+                    android:layout_marginEnd="8dp"
+                    android:src="@drawable/ic_filtro_swap_mode"
+                    app:tint="@color/text_secondary"
+                    android:contentDescription="@null"/>
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Modo: Exclusivo (ON) / Inclusivo (OFF)"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:id="@+id/tvDetailModeHint"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:minLines="3"
+                        android:text="Exclusivo: rechaza si alguna dirección contiene el keyword"
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchDetailExclusive"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:checked="true"
+                    app:thumbTint="@color/header_switch_thumb"
+                    app:trackTint="@color/switch_track_selector"/>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <!-- Quedarse en pantalla de detalle al rechazar -->
+            <LinearLayout style="@style/RowCompact">
+                <ImageView
+                    style="@style/TarifaRowIcon"
+                    android:layout_marginEnd="8dp"
+                    android:src="@drawable/ic_filtro_stay_detail"
+                    app:tint="@color/text_secondary"
+                    android:contentDescription="@null"/>
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Quedarse en detalle al rechazar"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="ON: MakiX se queda en la pantalla de detalle. OFF: vuelve a buscar automáticamente."
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchStayOnDetail"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:checked="false"
+                    app:thumbTint="@color/header_switch_thumb"
+                    app:trackTint="@color/switch_track_selector"/>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <!-- Keywords/zipcodes -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingLeft="14dp" android:paddingRight="14dp"
+                android:paddingTop="10dp" android:paddingBottom="12dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Zipcodes / palabras clave para las direcciones"
+                    android:textSize="13sp" android:textColor="@color/text_primary"
+                    android:textStyle="bold"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="Separa con coma. No distingue mayúsculas. Modo Exclusivo: rechaza si aparece. Modo Inclusivo: solo acepta si TODAS las paradas los contienen."
+                    android:textSize="11sp" android:textColor="@color/text_hint"
+                    android:layout_marginTop="4dp" android:layout_marginBottom="8dp"/>
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etDetailKeyword"
+                        android:layout_width="0dp" android:layout_height="44dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/input_bg"
+                        android:inputType="text"
+                        android:hint="ej: 72701 ó alcohol"
+                        android:textSize="13sp" android:textColor="@color/text_primary"
+                        android:paddingLeft="12dp" android:paddingRight="12dp"/>
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAddDetailKeyword"
+                        style="@style/SparkButtonCompact"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="+ Agregar"
+                        android:minWidth="0dp"/>
+                </LinearLayout>
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroupDetailKeywords"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:focusable="false"
+                    android:focusableInTouchMode="false"
+                    android:descendantFocusability="afterDescendants"/>
+            </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSaveFiltros"
+            style="@style/SparkButtonPrimary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:text="Guardar filtros"/>
+
+    </LinearLayout>
+</ScrollView>

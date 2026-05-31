@@ -1,0 +1,1112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:fillViewport="true"
+    android:scrollbars="none"
+    android:background="@color/bg_page"
+    android:focusable="false"
+    android:focusableInTouchMode="false">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- ══════════ 1. SISTEMA Y PERMISOS ══════════ -->
+        <TextView style="@style/SectionLabelCompact"
+            android:text="SISTEMA Y PERMISOS"
+            android:layout_marginTop="2dp"/>
+
+        <LinearLayout style="@style/Card">
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Permiso de accesibilidad"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:id="@+id/tvAccessStatus"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="Verificando..."
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnGoAccess"
+                    style="@style/SparkIconButton"
+                    app:icon="@drawable/ic_btn_accessibility"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:contentDescription="@string/config_btn_accessibility"/>
+            </LinearLayout>
+            <View style="@style/Divider"/>
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Modo debug (volcar UI)"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="Imprime los IDs y textos de Spark en Logcat (tag SparkDebug)"
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchDebug"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:checked="false"/>
+            </LinearLayout>
+            <View style="@style/Divider"/>
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Mostrar nombre de categoría"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="Activo: icono + texto en el menú lateral. Desactivado: solo iconos más grandes."
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchShowCategoryNames"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    app:thumbTint="@color/header_switch_thumb"
+                    app:trackTint="@color/switch_track_selector"
+                    android:checked="true"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ══════════ 2. AUTOMATIZACIÓN ══════════ -->
+        <TextView style="@style/SectionLabelCompact" android:text="AUTOMATIZACIÓN"/>
+
+        <LinearLayout style="@style/Card">
+
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Modo del bot (Simple / Avanzado)"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:id="@+id/tvBotFlowModeHint"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="Simple: Spark al frente, eventos + scroll clásico. Avanzado: más opciones."
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <Spinner android:id="@+id/spinnerBotFlowMode"
+                    android:popupBackground="@color/bg_card"
+                    android:layout_width="130dp" android:layout_height="38dp"
+                    android:background="@drawable/input_bg"
+                    android:paddingLeft="8dp" android:paddingRight="8dp"/>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <!-- Aceptar automáticamente -->
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Aceptar automáticamente"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:id="@+id/tvAutoHint"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="MakiX tomará la oferta sin que toques la pantalla."
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchAutoAccept"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:checked="true"/>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <!-- Rechazar automáticamente -->
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Rechazar automáticamente"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="Si no cumple tarifas, MakiX rechaza la oferta automáticamente"
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchAutoReject"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:checked="false"/>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <!-- Respetar tiempos configurados -->
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Respetar tiempos configurados"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="OFF = MakiX actúa lo más rápido posible ignorando intervalos"
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchTimingEnabled"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:checked="true"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/rowTimingJitter"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <View style="@style/Divider"/>
+                <LinearLayout style="@style/RowCompact">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Variación ±% en scroll"
+                            android:textSize="14sp" android:textColor="@color/text_primary"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Solo con tiempos humanos ON. Aleatoriza el intervalo de scroll."
+                            android:textSize="11sp" android:textColor="@color/text_hint"
+                            android:layout_marginTop="2dp"/>
+                    </LinearLayout>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etTimingJitter"
+                        style="@style/SmallInput"
+                        android:inputType="number" android:hint="25"/>
+                    <TextView style="@style/Unit" android:text="%"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <!-- Pestaña por defecto al activar el bot -->
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Pestaña al activar el bot"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="Navega automáticamente a esta sección al activar MakiX"
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <Spinner android:id="@+id/spinnerDefaultTab"
+                    android:layout_width="140dp" android:layout_height="38dp"
+                    android:background="@drawable/input_bg"
+                    android:popupBackground="@color/bg_card"
+                    android:paddingLeft="8dp" android:paddingRight="8dp"/>
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ══════════ 3. ESTIRAR HOJA (Spark) — solo modo Avanzado ══════════ -->
+        <LinearLayout
+            android:id="@+id/blockSheetStretch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+        <TextView style="@style/SectionLabelCompact" android:text="ESTIRAR HOJA (SPARK)"/>
+
+        <LinearLayout style="@style/Card">
+
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Estirar hoja de ofertas"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="OFF por defecto (comportamiento clásico). ON: timer para estirar la hoja."
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchSheetStretch"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:checked="false"/>
+            </LinearLayout>
+
+            <LinearLayout android:id="@+id/rowSheetStretchExtra"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <View style="@style/Divider"/>
+                <LinearLayout style="@style/RowCompact">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Modo de agarre"
+                            android:textSize="14sp" android:textColor="@color/text_primary"/>
+                        <TextView android:id="@+id/tvSheetStretchModeHint"
+                            android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:text="Automático: detecta el texto en pantalla."
+                            android:textSize="11sp" android:textColor="@color/text_hint"
+                            android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                    </LinearLayout>
+                    <Spinner android:id="@+id/spinnerSheetStretchMode"
+                        android:layout_width="150dp" android:layout_height="38dp"
+                        android:background="@drawable/input_bg"
+                        android:popupBackground="@color/bg_card"
+                        android:paddingLeft="8dp" android:paddingRight="8dp"/>
+                </LinearLayout>
+                <View style="@style/Divider"/>
+                <LinearLayout android:id="@+id/rowSheetStretchCoords"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <LinearLayout style="@style/RowCompact">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="X agarre (px)"
+                            android:textSize="14sp" android:textColor="@color/text_primary"/>
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etSheetStretchX"
+                            style="@style/SmallInput"
+                            android:inputType="number" android:hint="540"/>
+                    </LinearLayout>
+                    <LinearLayout style="@style/RowCompact">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Y agarre (px)"
+                            android:textSize="14sp" android:textColor="@color/text_primary"/>
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etSheetStretchY"
+                            style="@style/SmallInput"
+                            android:inputType="number" android:hint="1225"/>
+                    </LinearLayout>
+                    <TextView style="@style/InfoBox"
+                        android:text="ⓘ  Inicio del arrastre ↑. En logcat: «Arrastre hoja ↑ x=… y=…»."
+                        android:layout_margin="12dp"/>
+                </LinearLayout>
+                <View style="@style/Divider"/>
+                <LinearLayout style="@style/RowCompact">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Revisar cada"
+                            android:textSize="14sp" android:textColor="@color/text_primary"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Solo cada 15–45 s. Modo fijo: sirve sin «Get offers until»."
+                            android:textSize="11sp" android:textColor="@color/text_hint"
+                            android:layout_marginTop="2dp"/>
+                    </LinearLayout>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etSheetStretchInterval"
+                        style="@style/SmallInput"
+                        android:inputType="number" android:hint="30"/>
+                    <TextView style="@style/Unit" android:text="s"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView style="@style/InfoBox"
+                android:text="ⓘ  Desactivado por defecto. El scroll de ofertas está abajo; aquí solo la hoja gris (experimental)."
+                android:layout_margin="12dp"/>
+
+        </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ══════════ 4. SCROLL Y LECTURA ══════════ -->
+        <TextView style="@style/SectionLabelCompact" android:text="SCROLL Y LECTURA"/>
+
+        <LinearLayout style="@style/Card">
+
+            <!-- Scroll automático -->
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Scroll automático"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="Solo hace scroll si hay ofertas visibles."
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchScrollEnabled"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:checked="true"/>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <LinearLayout
+                android:id="@+id/rowUltraFastRead"
+                style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Modo ultra rápido"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:id="@+id/tvUltraFastReadHint"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="OFF (recomendado): lee cuando Spark notifica. ON: bucle cada X ms (experimental)."
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchUltraFastRead"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:checked="false"/>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <LinearLayout
+                android:id="@+id/rowUltraFastReadExtra"
+                android:visibility="gone"
+                style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Intervalo lectura (ultra)"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Menor = más lecturas por segundo (100–2000 ms)."
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp"/>
+                </LinearLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etUltraFastReadMs" style="@style/SmallInput"
+                    android:inputType="number" android:hint="300"/>
+                <TextView style="@style/Unit" android:text="ms"/>
+            </LinearLayout>
+
+            <View
+                android:id="@+id/dividerAfterUltraFast"
+                style="@style/Divider"/>
+
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Intervalo de scroll"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:id="@+id/tvScrollIntervalHint"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Pausa entre scrolls automáticos de la lista."
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp"/>
+                </LinearLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etInterval" style="@style/SmallInput"
+                    android:inputType="number" android:hint="800"/>
+                <TextView style="@style/Unit" android:text="ms"/>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <LinearLayout
+                android:id="@+id/rowScrollModeSpinner"
+                style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Modo de scroll"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:id="@+id/tvScrollModeHint"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="Automático: invierte cuando llega al final."
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <Spinner android:id="@+id/spinnerScrollMode"
+                    android:popupBackground="@color/bg_card"
+                    android:layout_width="130dp" android:layout_height="38dp"
+                    android:background="@drawable/input_bg"
+                    android:paddingLeft="8dp" android:paddingRight="8dp"/>
+            </LinearLayout>
+
+            <LinearLayout android:id="@+id/rowMaxScrolls"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <View style="@style/Divider"/>
+                <LinearLayout style="@style/RowCompact">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Scrolls antes de invertir"
+                            android:textSize="14sp" android:textColor="@color/text_primary"/>
+                        <TextView android:id="@+id/tvMaxScrollsHint"
+                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Solo aplica en modo por cantidad"
+                            android:textSize="11sp" android:textColor="@color/text_hint"
+                            android:layout_marginTop="2dp"/>
+                    </LinearLayout>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etMaxScrolls" style="@style/SmallInput"
+                        android:inputType="number" android:hint="15"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <LinearLayout
+                android:id="@+id/rowReviewAllBeforeRejectBlock"
+                style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Revisar todo antes de cancelar"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:id="@+id/tvReviewAllHint"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="ON + scroll: recorre toda la lista antes de cancelar. OFF + scroll: un scroll y cancela visible. OFF sin scroll: solo pantalla actual."
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchReviewAllBeforeReject"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:checked="false"/>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <TextView style="@style/InfoBox"
+                android:text="ⓘ  300–600 ms es más rápido pero más detectable por Spark."
+                android:layout_margin="12dp"/>
+
+        </LinearLayout>
+
+        <!-- ══════════ 4. TRAS ACEPTAR ══════════ -->
+        <TextView style="@style/SectionLabelCompact" android:text="TRAS ACEPTAR UNA OFERTA"/>
+
+        <LinearLayout style="@style/Card">
+
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Pausar MakiX tras aceptar"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="MakiX se detiene al tomar una oferta. Reanuda con el botón ▶ de abajo."
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchPauseAfterAccept"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:enabled="false"/>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Delay antes de pausar (ms)"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="0 = pausa inmediata tras aceptar."
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPauseDelay"
+                    android:layout_width="70dp" android:layout_height="40dp"
+                    android:background="@drawable/input_bg"
+                    android:inputType="number" android:text="0"
+                    android:textSize="13sp" android:gravity="center"
+                    android:paddingLeft="8dp" android:paddingRight="8dp"
+                    android:layout_marginStart="12dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="ms" android:textSize="11sp" android:textColor="@color/text_hint"
+                    android:layout_marginStart="4dp"/>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Verificar oferta tomada"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="Si no se tomó, la marca como PERDIDA. Mín recomendado: 4000 ms."
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etVerifyDelay"
+                    android:layout_width="70dp" android:layout_height="40dp"
+                    android:background="@drawable/input_bg"
+                    android:inputType="number" android:text="5000"
+                    android:textSize="13sp" android:gravity="center"
+                    android:paddingLeft="8dp" android:paddingRight="8dp"
+                    android:layout_marginEnd="6dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="ms" android:textSize="11sp" android:textColor="@color/text_hint"
+                    android:layout_marginEnd="6dp"/>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchVerifyAccept"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:checked="false"/>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Ocultar botón flotante al aceptar"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="El botón flotante desaparece cuando MakiX toma una oferta."
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchOverlayHideOnAccept"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:checked="false"/>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Mostrar botón flotante al activar bot"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="Aparece automáticamente al activar MakiX."
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchAutoShowOverlay"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:checked="false"/>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="12dp"
+                android:gravity="center">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnResumePausedBot"
+                    style="@style/SparkIconButton"
+                    app:icon="@drawable/ic_btn_play"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:contentDescription="@string/config_btn_resume"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnConfigureOverlay"
+                    style="@style/SparkIconButton"
+                    app:icon="@drawable/ic_btn_overlay"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:contentDescription="@string/config_btn_overlay"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ══════════ APPS VIGILADAS (AVANZADO) ══════════ -->
+        <TextView style="@style/SectionLabelCompact"
+            android:text="@string/config_section_monitor_packages"/>
+
+        <LinearLayout style="@style/Card">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_marginEnd="14dp"
+                android:layout_marginTop="10dp"
+                android:hint="@string/config_monitor_csv_hint"
+                app:helperText="@string/config_monitor_csv_helper"
+                app:placeholderText="com.ejemplo.app"
+                app:helperTextEnabled="true">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etMonitorPackagesCsv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:maxLines="3"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_marginEnd="14dp"
+                android:layout_marginTop="8dp"
+                android:hint="@string/config_monitor_url_hint"
+                app:helperText="@string/config_monitor_url_helper"
+                app:helperTextEnabled="true">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etMonitorPackagesUrl"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textUri"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_marginEnd="14dp"
+                android:layout_marginTop="10dp"
+                android:text="@string/config_monitor_file_label"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary"/>
+
+            <TextView
+                android:id="@+id/tvMonitorPackagesFilePath"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_marginEnd="14dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="4dp"
+                android:textIsSelectable="true"
+                android:textSize="11sp"
+                android:textColor="@color/text_hint"
+                android:fontFamily="monospace"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_marginEnd="14dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/config_monitor_privacy_note"
+                android:textSize="11sp"
+                android:textColor="@color/text_hint"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:paddingBottom="8dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCopyMonitorPath"
+                    style="@style/SparkButtonSecondary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_btn_copy_monitor_path"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCreateMonitorFile"
+                    style="@style/SparkButtonSecondary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/config_btn_create_monitor_file"/>
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRefreshMonitorPackages"
+                style="@style/SparkButtonSecondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_marginEnd="14dp"
+                android:layout_marginBottom="12dp"
+                android:text="@string/config_btn_refresh_packages"/>
+
+        </LinearLayout>
+
+        <!-- ══════════ 5. ALERTAS Y SONIDOS ══════════ -->
+        <TextView style="@style/SectionLabelCompact" android:text="ALERTAS Y SONIDOS"/>
+
+        <LinearLayout style="@style/Card">
+
+            <LinearLayout style="@style/RowCompact">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Vibrar al aceptar oferta"
+                    android:textSize="14sp" android:textColor="@color/text_primary"/>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchVibrate"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:checked="true"/>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Volumen de alerta"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="0 = silencio, 100 = máximo"
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp"/>
+                </LinearLayout>
+                <SeekBar android:id="@+id/seekVolume"
+                    android:layout_width="110dp" android:layout_height="wrap_content"
+                    android:max="100" android:progress="80"/>
+                <TextView android:id="@+id/tvVolume"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="80%" android:minWidth="40dp"
+                    android:textSize="12sp" android:textColor="@color/text_hint"
+                    android:layout_marginStart="6dp"/>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <!-- Sonido al aceptar -->
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Sonido al aceptar"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:id="@+id/tvSoundName"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="Sonido por defecto del sistema"
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp"
+                        android:singleLine="true" android:ellipsize="end"
+                        android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchAcceptSound"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:checked="true"/>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPickSound"
+                    style="@style/SparkIconButton"
+                    app:icon="@drawable/ic_btn_music"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="6dp"
+                    android:contentDescription="@string/config_btn_pick_sound"/>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <!-- Sonido al rechazar -->
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Sonido al rechazar"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:id="@+id/tvRejectSoundName"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="Sonido por defecto"
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp"
+                        android:singleLine="true" android:ellipsize="end"
+                        android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchRejectSound"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:checked="true"/>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPickRejectSound"
+                    style="@style/SparkIconButton"
+                    app:icon="@drawable/ic_btn_music"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="6dp"
+                    android:contentDescription="@string/config_btn_pick_reject_sound"/>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <!-- Repeticiones -->
+            <LinearLayout style="@style/RowCompact">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Repeticiones del sonido (0 = infinito)"
+                    android:textSize="13sp" android:textColor="@color/text_primary"/>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etSoundRepeat"
+                    android:layout_width="60dp" android:layout_height="40dp"
+                    android:background="@drawable/input_bg"
+                    android:inputType="number" android:text="3"
+                    android:textSize="14sp" android:textColor="@color/text_primary"
+                    android:gravity="center"
+                    android:paddingLeft="8dp" android:paddingRight="8dp"
+                    android:layout_marginStart="12dp"/>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:paddingTop="4dp"
+                android:paddingBottom="8dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnStopSound"
+                    style="@style/SparkIconButtonDestructive"
+                    app:icon="@drawable/ic_btn_stop"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:contentDescription="@string/config_btn_stop_sound"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ══════════ 5. LLAMADA AL ACEPTAR ══════════ -->
+        <TextView style="@style/SectionLabelCompact" android:text="LLAMADA AL ACEPTAR"/>
+
+        <LinearLayout style="@style/Card">
+
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Llamar al tomar oferta"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Útil para avisarte por teléfono"
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp"/>
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchCallOnAccept"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:checked="false"/>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingLeft="14dp" android:paddingRight="14dp"
+                android:paddingTop="10dp" android:paddingBottom="12dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Número de teléfono"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" android:layout_marginBottom="4dp"/>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etCallNumber"
+                    style="@style/MediumInput"
+                    android:inputType="phone"
+                    android:hint="+1 555 123 4567"/>
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ══════════ RECHAZO — TIEMPOS ══════════ -->
+        <TextView style="@style/SectionLabelCompact" android:text="RECHAZO — TIEMPOS Y CONFIRMACIÓN"/>
+
+        <LinearLayout style="@style/Card">
+
+            <TextView style="@style/InfoBox"
+                android:text="Activa «Rechazar automáticamente» en Automatización."
+                android:layout_margin="12dp"/>
+
+            <View style="@style/Divider"/>
+
+            <!-- Delay ALEATORIO — primer click rechazar -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:paddingLeft="14dp" android:paddingRight="14dp"
+                android:paddingTop="10dp" android:paddingBottom="8dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Delay 1er rechazo (ms) — aleatorio entre mín y máx"
+                    android:textSize="13sp" android:textColor="@color/text_primary" android:textStyle="bold"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="Tiempo aleatorio antes del primer click en REJECT. Recomendado: 500–1500ms."
+                    android:textSize="11sp" android:textColor="@color/text_hint" android:layout_marginTop="2dp"/>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="8dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Mín" android:textSize="12sp" android:textColor="@color/text_hint"
+                        android:minWidth="30dp"/>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etRejectDelay1Min"
+                        android:layout_width="75dp" android:layout_height="40dp"
+                        android:background="@drawable/input_bg" android:inputType="number"
+                        android:text="500" android:textSize="13sp" android:gravity="center"
+                        android:paddingLeft="8dp" android:paddingRight="8dp" android:layout_marginStart="8dp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Máx" android:textSize="12sp" android:textColor="@color/text_hint"
+                        android:layout_marginStart="12dp" android:minWidth="30dp"/>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etRejectDelay1Max"
+                        android:layout_width="75dp" android:layout_height="40dp"
+                        android:background="@drawable/input_bg" android:inputType="number"
+                        android:text="1500" android:textSize="13sp" android:gravity="center"
+                        android:paddingLeft="8dp" android:paddingRight="8dp" android:layout_marginStart="8dp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="ms" android:textSize="12sp" android:textColor="@color/text_hint"
+                        android:layout_marginStart="4dp"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <!-- Delay ALEATORIO — 2da ventana confirmación -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:paddingLeft="14dp" android:paddingRight="14dp"
+                android:paddingTop="8dp" android:paddingBottom="10dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Delay 2ª confirmación (ms) — aleatorio entre mín y máx"
+                    android:textSize="13sp" android:textColor="@color/text_primary" android:textStyle="bold"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="Tiempo aleatorio antes de confirmar en la 2ª ventana. Rango 300–2000ms (la ventana expira ~3-4s)."
+                    android:textSize="11sp" android:textColor="@color/text_hint" android:layout_marginTop="2dp"/>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="8dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Mín" android:textSize="12sp" android:textColor="@color/text_hint"
+                        android:minWidth="30dp"/>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etRejectDelay2Min"
+                        android:layout_width="75dp" android:layout_height="40dp"
+                        android:background="@drawable/input_bg" android:inputType="number"
+                        android:text="500" android:textSize="13sp" android:gravity="center"
+                        android:paddingLeft="8dp" android:paddingRight="8dp" android:layout_marginStart="8dp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Máx" android:textSize="12sp" android:textColor="@color/text_hint"
+                        android:layout_marginStart="12dp" android:minWidth="30dp"/>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etRejectDelay2Max"
+                        android:layout_width="75dp" android:layout_height="40dp"
+                        android:background="@drawable/input_bg" android:inputType="number"
+                        android:text="1500" android:textSize="13sp" android:gravity="center"
+                        android:paddingLeft="8dp" android:paddingRight="8dp" android:layout_marginStart="8dp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="ms" android:textSize="12sp" android:textColor="@color/text_hint"
+                        android:layout_marginStart="4dp"/>
+                </LinearLayout>
+            </LinearLayout>
+            <!-- hidden etRejectTimeout for backwards compat -->
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etRejectTimeout"
+                android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+
+            <View style="@style/Divider"/>
+
+            <!-- Timeout pantalla de detalle de oferta -->
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Timeout pantalla de detalle (ms)"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="Tiempo máx. esperando que cargue el detalle de la oferta. Si expira, acepta sin revisar. Recomendado: 1000–2000."
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp" android:layout_marginEnd="12dp"/>
+                </LinearLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etDetailTimeout"
+                    android:layout_width="70dp" android:layout_height="40dp"
+                    android:background="@drawable/input_bg"
+                    android:inputType="number" android:text="2000"
+                    android:textSize="13sp" android:textColor="@color/text_primary"
+                    android:gravity="center"
+                    android:paddingLeft="8dp" android:paddingRight="8dp"
+                    android:layout_marginStart="12dp"/>
+            </LinearLayout>
+
+            <View style="@style/Divider"/>
+
+            <!-- Textos de la 2ª ventana de cancelar -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingLeft="14dp" android:paddingRight="14dp"
+                android:paddingTop="10dp" android:paddingBottom="12dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Textos de la 2ª ventana de cancelar (opcional)"
+                    android:textSize="13sp" android:textColor="@color/text_primary"
+                    android:textStyle="bold"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="Si la cancelación automática falla, agrega el texto exacto que aparece en la 2ª ventana de Spark. Separa múltiples textos con |. No importan mayúsculas."
+                    android:textSize="11sp" android:textColor="@color/text_hint"
+                    android:layout_marginTop="4dp" android:layout_marginBottom="8dp"/>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etRejectConfirmTexts"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:background="@drawable/input_bg"
+                    android:inputType="text"
+                    android:hint="ej: Are you sure|Confirm rejection"
+                    android:textSize="12sp" android:textColor="@color/text_primary"
+                    android:paddingLeft="12dp" android:paddingRight="12dp"
+                    android:paddingTop="10dp" android:paddingBottom="10dp"/>
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ══════════ REGISTRO ══════════ -->
+        <TextView style="@style/SectionLabelCompact" android:text="REGISTRO"/>
+
+        <LinearLayout style="@style/Card">
+            <LinearLayout style="@style/RowCompact">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Ventana de deduplicación"
+                        android:textSize="14sp" android:textColor="@color/text_primary"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="No vuelve a loggear la misma oferta en ese tiempo"
+                        android:textSize="11sp" android:textColor="@color/text_hint"
+                        android:layout_marginTop="2dp"/>
+                </LinearLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etDedupMinutes" style="@style/SmallInput"
+                    android:inputType="number" android:hint="5"/>
+                <TextView style="@style/Unit" android:text="min"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:layout_marginBottom="14dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSaveConfig"
+                style="@style/SparkIconButtonPrimary"
+                app:icon="@drawable/ic_btn_save"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center_horizontal"
+                android:contentDescription="@string/config_btn_save"/>
+
+        </FrameLayout>
+
+    </LinearLayout>
+</ScrollView>

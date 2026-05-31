@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_page"
+    android:clipToPadding="false"
+    android:fillViewport="true"
+    android:padding="14dp"
+    android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            style="@style/SectionLabel"
+            android:layout_marginTop="4dp"
+            android:text="CRITERIOS (GRABBER)" />
+
+        <LinearLayout style="@style/Card">
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:text="Mínimo por hora ($)" />
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etMinHourly"
+                    style="@style/SmallInput"
+                    android:layout_width="76dp"
+                    android:layout_height="38dp"
+                    android:inputType="numberDecimal" />
+            </LinearLayout>
+
+            <View style="@style/DividerFull" />
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:text="Mínimo por bloque ($)" />
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etMinBlock"
+                    style="@style/SmallInput"
+                    android:layout_width="76dp"
+                    android:layout_height="38dp"
+                    android:inputType="numberDecimal" />
+            </LinearLayout>
+
+            <View style="@style/DividerFull" />
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:text="Hora mínima de inicio (0–23)" />
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etMinStartHour"
+                    style="@style/SmallInput"
+                    android:layout_width="76dp"
+                    android:layout_height="38dp"
+                    android:inputType="number" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            style="@style/SectionLabel"
+            android:text="COMPORTAMIENTO" />
+
+        <LinearLayout style="@style/Card">
+
+            <LinearLayout style="@style/Row">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        style="@style/RowLabel"
+                        android:layout_width="match_parent"
+                        android:layout_weight="0"
+                        android:text="Solo refrescar (sin scroll)" />
+                    <TextView
+                        style="@style/RowHint"
+                        android:text="Equivalente a lv_FLX1-OnlyRefresh" />
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchOnlyRefresh"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <View style="@style/DividerFull" />
+
+            <LinearLayout style="@style/Row">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        style="@style/RowLabel"
+                        android:layout_width="match_parent"
+                        android:layout_weight="0"
+                        android:text="Cancelar bloques malos" />
+                    <TextView
+                        style="@style/RowHint"
+                        android:text="Equivalente a lv_FLX1-CBB" />
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchCancelBadBlocks"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSaveTarifas"
+            style="@style/SparkButtonPrimary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/config_btn_save" />
+
+        <TextView
+            style="@style/InfoBox"
+            android:layout_marginTop="12dp"
+            android:text="@string/tarifas_flex_phase_note" />
+
+    </LinearLayout>
+</ScrollView>

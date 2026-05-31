@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_page"
+    android:padding="10dp">
+
+    <!-- ── STAT CARDS ROW ── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+
+        <LinearLayout android:id="@+id/cardAccepted"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+            android:background="@drawable/stat_card" android:padding="6dp"
+            android:layout_marginEnd="2dp" android:clickable="true" android:focusable="true">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="✅" android:textSize="14sp" android:gravity="center"/>
+            <TextView android:id="@+id/tvHistAccepted"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="0" android:textSize="13sp" android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:textColor="@color/green_400" android:gravity="center" android:singleLine="true"/>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/cardRejected"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+            android:background="@drawable/stat_card" android:padding="6dp"
+            android:layout_marginEnd="2dp" android:layout_marginStart="2dp"
+            android:clickable="true" android:focusable="true">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="❌" android:textSize="14sp" android:gravity="center"/>
+            <TextView android:id="@+id/tvHistRejected"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="0" android:textSize="13sp" android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:textColor="@color/coral_600" android:gravity="center" android:singleLine="true"/>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/cardCancelled"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+            android:background="@drawable/stat_card" android:padding="6dp"
+            android:layout_marginEnd="2dp" android:layout_marginStart="2dp"
+            android:clickable="true" android:focusable="true">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="🚫" android:textSize="14sp" android:gravity="center"/>
+            <TextView android:id="@+id/tvHistCancelled"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="0" android:textSize="13sp" android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:textColor="@color/coral_600" android:gravity="center" android:singleLine="true"/>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/cardSimulated"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+            android:background="@drawable/stat_card" android:padding="6dp"
+            android:layout_marginEnd="2dp" android:layout_marginStart="2dp"
+            android:clickable="true" android:focusable="true">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="🧪" android:textSize="14sp" android:gravity="center"/>
+            <TextView android:id="@+id/tvHistSimulated"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="0" android:textSize="13sp" android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:textColor="@color/amber_400" android:gravity="center" android:singleLine="true"/>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/cardMiss"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+            android:background="@drawable/stat_card" android:padding="6dp"
+            android:layout_marginEnd="2dp" android:layout_marginStart="2dp"
+            android:clickable="true" android:focusable="true">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="💨" android:textSize="14sp" android:gravity="center"/>
+            <TextView android:id="@+id/tvHistMiss"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="0" android:textSize="13sp" android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:textColor="@color/text_hint" android:gravity="center" android:singleLine="true"/>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/cardSeen"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+            android:background="@drawable/stat_card" android:padding="6dp"
+            android:layout_marginStart="2dp"
+            android:clickable="true" android:focusable="true">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="👁" android:textSize="14sp" android:gravity="center"/>
+            <TextView android:id="@+id/tvHistSeen"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="0" android:textSize="13sp" android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:textColor="@color/text_primary" android:gravity="center" android:singleLine="true"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- ── PANEL: OFERTAS ── -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1" android:orientation="vertical">
+
+        <LinearLayout style="@style/Card"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginBottom="6dp">
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvOffers"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:scrollbars="vertical"
+                android:fadeScrollbars="true"/>
+        </LinearLayout>
+
+        <!-- Ruta TXT -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="4dp">
+            <TextView
+                android:id="@+id/tvTxtSavePath"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Sin ruta configurada"
+                android:textSize="9sp"
+                android:textColor="@color/text_hint"
+                android:ellipsize="middle"
+                android:maxLines="1"/>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnConfigSavePath"
+                style="@style/SparkButtonCompact"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                android:text="Ruta"
+                android:textSize="11sp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:paddingLeft="12dp"
+                android:paddingRight="14dp"
+                app:icon="@drawable/ic_hist_folder"
+                app:iconGravity="textStart"
+                app:iconPadding="6dp"
+                app:iconSize="18dp"
+                app:iconTint="@color/colorAccent"/>
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDayLog"
+            style="@style/SparkButtonPrimary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="Historial detallado diario"
+            android:textSize="13sp"
+            app:icon="@drawable/ic_hist_calendar"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+            app:iconTint="@color/button_primary_text"/>
+
+        <!-- 2×2 rectangular, celdas iguales -->
+        <android.widget.GridLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:columnCount="2"
+            android:rowCount="2"
+            android:alignmentMode="alignBounds"
+            android:columnOrderPreserved="false"
+            android:useDefaultMargins="false">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnExportCsv"
+                style="@style/HistorialActionButton"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/hist_action_btn_height"
+                android:layout_columnWeight="1"
+                android:layout_row="0"
+                android:layout_column="0"
+                android:layout_marginEnd="3dp"
+                android:layout_marginBottom="3dp"
+                android:backgroundTint="@color/hist_action_csv_bg"
+                android:contentDescription="Exportar CSV"
+                android:text="CSV"
+                app:icon="@drawable/ic_hist_csv"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnExportTxt"
+                style="@style/HistorialActionButton"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/hist_action_btn_height"
+                android:layout_columnWeight="1"
+                android:layout_row="0"
+                android:layout_column="1"
+                android:layout_marginStart="3dp"
+                android:layout_marginBottom="3dp"
+                android:backgroundTint="@color/hist_action_txt_bg"
+                android:contentDescription="Guardar TXT"
+                android:text="TXT"
+                app:icon="@drawable/ic_hist_txt"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnResetToday"
+                style="@style/HistorialActionButton"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/hist_action_btn_height"
+                android:layout_columnWeight="1"
+                android:layout_row="1"
+                android:layout_column="0"
+                android:layout_marginEnd="3dp"
+                android:layout_marginTop="3dp"
+                android:backgroundTint="@color/hist_action_today_bg"
+                android:contentDescription="Borrar datos de hoy"
+                android:text="Hoy"
+                app:icon="@drawable/ic_hist_trash_today"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnClearHistory"
+                style="@style/HistorialActionButton"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/hist_action_btn_height"
+                android:layout_columnWeight="1"
+                android:layout_row="1"
+                android:layout_column="1"
+                android:layout_marginStart="3dp"
+                android:layout_marginTop="3dp"
+                android:backgroundTint="@color/hist_action_all_bg"
+                android:contentDescription="Borrar todo el historial"
+                android:text="Todo"
+                app:icon="@drawable/ic_hist_trash_all"/>
+        </android.widget.GridLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

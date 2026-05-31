@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_page"
+    android:scrollbars="none"
+    android:padding="14dp"
+    android:fillViewport="true"
+    android:clipToPadding="false"
+    android:focusable="false"
+    android:focusableInTouchMode="false">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SIMULADOR DE OFERTAS"
+            android:textColor="@color/text_hint"
+            android:textSize="10sp"
+            android:textAllCaps="true"
+            android:letterSpacing="0.10"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="8dp"
+            android:layout_marginTop="2dp"/>
+
+        <LinearLayout style="@style/CardElevated">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:padding="16dp" android:orientation="vertical">
+
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Probá una oferta hipotética"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp" android:textStyle="bold"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="Misma lógica que el bot. Detallada: solo keywords globales + reglas. Clásica: keywords, tiendas y tarifa. Chips en «palabras de la orden»."
+                    android:textColor="@color/text_hint"
+                    android:textSize="12sp"
+                    android:layout_marginTop="4dp" android:layout_marginBottom="14dp"/>
+
+                <!-- Precio + Millas -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:layout_marginBottom="10dp">
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:orientation="vertical" android:layout_marginEnd="6dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="PRECIO" android:textColor="@color/text_hint"
+                            android:textSize="10sp" android:textStyle="bold"
+                            android:letterSpacing="0.08" android:layout_marginBottom="4dp"/>
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:orientation="horizontal" android:gravity="center_vertical"
+                            android:background="@drawable/input_bg"
+                            android:paddingLeft="12dp" android:paddingRight="12dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="$" android:textColor="@color/text_hint"
+                                android:textSize="16sp" android:textStyle="bold"/>
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etSimPrice"
+                                android:layout_width="0dp" android:layout_height="44dp"
+                                android:layout_weight="1"
+                                android:inputType="numberDecimal" android:hint="14.00"
+                                android:textSize="16sp" android:textStyle="bold"
+                                android:textColor="@color/text_primary"
+                                android:background="@android:color/transparent"
+                                android:gravity="center_vertical"
+                                android:paddingLeft="6dp" android:maxLines="1"/>
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:orientation="vertical" android:layout_marginStart="6dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="DISTANCIA" android:textColor="@color/text_hint"
+                            android:textSize="10sp" android:textStyle="bold"
+                            android:letterSpacing="0.08" android:layout_marginBottom="4dp"/>
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:orientation="horizontal" android:gravity="center_vertical"
+                            android:background="@drawable/input_bg"
+                            android:paddingLeft="12dp" android:paddingRight="12dp">
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etSimMiles"
+                                android:layout_width="0dp" android:layout_height="44dp"
+                                android:layout_weight="1"
+                                android:inputType="numberDecimal" android:hint="5.0"
+                                android:textSize="16sp" android:textStyle="bold"
+                                android:textColor="@color/text_primary"
+                                android:background="@android:color/transparent"
+                                android:gravity="center_vertical" android:maxLines="1"/>
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="mi" android:textColor="@color/text_hint" android:textSize="13sp"/>
+                        </LinearLayout>
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- Tienda -->
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="TIENDA / TEXTO DE LA ORDEN"
+                    android:textColor="@color/text_hint" android:textSize="10sp"
+                    android:textStyle="bold" android:letterSpacing="0.08"
+                    android:layout_marginBottom="4dp"/>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etSimStore"
+                    android:layout_width="match_parent" android:layout_height="44dp"
+                    android:background="@drawable/input_bg"
+                    android:paddingLeft="12dp" android:paddingRight="12dp"
+                    android:inputType="text"
+                    android:hint="ej: Walmart #819 Cape Coral"
+                    android:textSize="14sp" android:textColor="@color/text_primary"
+                    android:maxLines="1" android:layout_marginBottom="10dp"/>
+
+                <!-- Tipo -->
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="TIPO DE ORDEN"
+                    android:textColor="@color/text_hint" android:textSize="10sp"
+                    android:textStyle="bold" android:letterSpacing="0.08"
+                    android:layout_marginBottom="4dp"/>
+                <Spinner android:id="@+id/spinnerSimType"
+                    android:popupBackground="@color/bg_card"
+                    android:layout_width="match_parent" android:layout_height="44dp"
+                    android:background="@drawable/input_bg"
+                    android:paddingLeft="8dp" android:paddingRight="8dp"
+                    android:layout_marginBottom="10dp"/>
+
+                <LinearLayout
+                    android:id="@+id/layoutSimStops"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    android:layout_marginBottom="10dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="NÚMERO DE PARADAS"
+                        android:textColor="@color/text_hint" android:textSize="10sp"
+                        android:textStyle="bold" android:letterSpacing="0.08"
+                        android:layout_marginBottom="4dp"/>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etSimStops"
+                        android:layout_width="match_parent" android:layout_height="44dp"
+                        android:background="@drawable/input_bg"
+                        android:paddingLeft="12dp" android:paddingRight="12dp"
+                        android:inputType="number"
+                        android:hint="4"
+                        android:text="4"
+                        android:textSize="14sp" android:textColor="@color/text_primary"
+                        android:maxLines="1"/>
+                </LinearLayout>
+
+                <!-- Keywords -->
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="PALABRAS QUE CONTIENE LA ORDEN (OPCIONAL)"
+                    android:textColor="@color/text_hint" android:textSize="10sp"
+                    android:textStyle="bold" android:letterSpacing="0.08"
+                    android:layout_marginBottom="4dp"/>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etSimKeywords"
+                    android:layout_width="match_parent" android:layout_height="44dp"
+                    android:background="@drawable/input_bg"
+                    android:paddingLeft="12dp" android:paddingRight="12dp"
+                    android:inputType="text"
+                    android:hint="ej: alcohol, pharmacy"
+                    android:textSize="12sp" android:textColor="@color/text_primary"
+                    android:maxLines="2" android:layout_marginBottom="14dp"/>
+
+                <!-- Aplicar filtros -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical"
+                    android:layout_marginBottom="14dp"
+                    xmlns:app="http://schemas.android.com/apk/res-auto">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Aplicar filtros guardados"
+                            android:textColor="@color/text_primary" android:textSize="13sp" android:textStyle="bold"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Filtros globales + tarifa (como el bot)"
+                            android:textColor="@color/text_hint" android:textSize="11sp"
+                            android:layout_marginTop="2dp"/>
+                    </LinearLayout>
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchSimUseFilters"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:checked="true"
+                        app:thumbTint="@color/header_switch_thumb"
+                        app:trackTint="@color/switch_track_selector"/>
+                </LinearLayout>
+
+                <!-- Botón Simular -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSimulate"
+                    style="@style/SparkButtonPrimary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Simular oferta"/>
+
+                <!-- Resultado -->
+                <LinearLayout android:id="@+id/cardSimResult"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:padding="16dp"
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/result_neutral_bg"
+                    android:visibility="gone">
+
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:gravity="center_vertical">
+                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                            android:layout_weight="1" android:orientation="vertical">
+                            <TextView android:id="@+id/tvSimVerdict"
+                                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="✓ ACEPTAR" android:textSize="18sp" android:textStyle="bold"
+                                android:letterSpacing="0.02"/>
+                            <TextView android:id="@+id/tvSimHeadline"
+                                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="$14.00 por 5.0 mi" android:textSize="13sp"
+                                android:layout_marginTop="3dp"/>
+                        </LinearLayout>
+                        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:orientation="vertical" android:gravity="end">
+                            <TextView android:id="@+id/tvSimPpm"
+                                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="$2.80" android:textSize="24sp" android:textStyle="bold"
+                                android:layout_gravity="end"/>
+                            <TextView android:id="@+id/tvSimPpmLabel"
+                                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="$/milla calculado" android:textSize="10sp"
+                                android:layout_gravity="end" android:textColor="@color/text_hint"/>
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp"
+                        android:background="@color/border_subtle"
+                        android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+
+                    <TextView android:id="@+id/tvSimRule"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="Regla aplicada" android:textSize="12sp"
+                        android:textStyle="bold" android:textColor="@color/text_secondary"/>
+                    <TextView android:id="@+id/tvSimReason"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="Detalle del cálculo" android:textSize="12sp"
+                        android:layout_marginTop="4dp"/>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp"
+                        android:background="@color/border_subtle"
+                        android:layout_marginTop="12dp" android:layout_marginBottom="8dp"/>
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Checklist de filtros" android:textSize="11sp"
+                        android:textStyle="bold" android:textColor="@color/text_secondary"/>
+                    <TextView android:id="@+id/tvSimChecklist"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="" android:textSize="12sp" android:fontFamily="monospace"
+                        android:layout_marginTop="4dp" android:visibility="gone"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

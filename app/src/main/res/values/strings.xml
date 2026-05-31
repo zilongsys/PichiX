@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PichiX</string>
+    <string name="accessibility_service_label">PichiX</string>
+    <string name="notification_listener_label">PichiX — notificaciones Flex</string>
+    <string name="empty"></string>
+    <string name="accessibility_description">Servicio de accesibilidad para asistencia en Amazon Flex. Actívalo solo si usas PichiX como ayuda en pantalla.</string>
+    <string name="app_tagline">PichiX Assistant</string>
+    <string name="help_title">Ayuda</string>
+    <string name="config_flex_package_helper">Paquete Android de Amazon Flex en tu región. Por defecto com.amazon.rabbit (EE.UU.).</string>
+    <string name="config_flex_phase_note">Motor Flex activo: grabber, scroll, observers y botón flotante. Activa también el acceso a notificaciones para ofertas reservadas.</string>
+    <string name="tarifas_flex_phase_note">Tarifa rápida = criterios globales. Modo Reglas = lista priorizada por estación (estilo Spark), con pago, $/h, tipo de bloque y horarios.</string>
+    <string name="stub_common_note">Esta sección usará el mismo diseño que MakiX cuando se implemente la lógica para Flex.</string>
+    <string name="config_monitor_not_configured">Configura el paquete de Amazon Flex en Config y guarda.</string>
+    <string name="tab_config">Config</string>
+    <string name="tab_tarifas">Tarifas</string>
+    <string name="tab_filtros">Filtros</string>
+    <string name="tab_historial">Historial</string>
+
+    <string name="config_btn_resume">Reanudar MakiX si está pausado</string>
+    <string name="config_btn_pick_sound">Elegir sonido al aceptar</string>
+    <string name="config_btn_pick_reject_sound">Elegir sonido al rechazar</string>
+    <string name="config_btn_stop_sound">Detener sonido ahora</string>
+    <string name="config_btn_accessibility">Abrir ajustes de accesibilidad</string>
+    <string name="config_btn_overlay">Configurar botón flotante</string>
+    <string name="config_btn_save">Guardar configuración</string>
+
+    <string name="config_section_monitor_packages">APPS VIGILADAS (AVANZADO)</string>
+    <string name="config_monitor_csv_hint">Paquete(s) Android — se guarda al pulsar Guardar</string>
+    <string name="config_monitor_csv_helper">Ej: com.walmart.sparkdriver (uno o varios separados por coma). Si está vacío, se usa monitor_packages.txt. Sin valor por defecto en la app.</string>
+    <string name="config_monitor_privacy_note">El paquete configurado es privado de PichiX. Debes guardarlo en Config antes de activar el bot.</string>
+    <string name="config_monitor_saved_reload">Paquetes guardados. Si el bot ya estaba activo, la lista se actualiza al instante.</string>
+    <string name="config_btn_copy_monitor_path">Copiar ruta</string>
+    <string name="config_btn_create_monitor_file">Crear archivo de ejemplo</string>
+    <string name="config_monitor_path_copied">Ruta copiada</string>
+    <string name="config_monitor_file_created">Archivo de ejemplo creado</string>
+    <string name="config_monitor_url_hint">URL lista de paquetes (opcional)</string>
+    <string name="config_monitor_url_helper">GET: texto con paquetes separados por coma o línea. Se aplica al guardar o al pulsar Actualizar.</string>
+    <string name="config_monitor_file_label">Archivo local</string>
+    <string name="config_btn_refresh_packages">Actualizar desde URL</string>
+    <string name="config_packages_refreshed">Lista de paquetes actualizada</string>
+    <string name="config_packages_refresh_failed">No se pudo cargar la URL</string>
+
+    <string-array name="default_tab_entries">
+        <item>No cambiar (quedarse aquí)</item>
+        <item>Home</item>
+        <item>Config</item>
+        <item>Tarifas</item>
+        <item>Alertas</item>
+        <item>Historial</item>
+        <item>Simulador</item>
+        <item>Revisión</item>
+    </string-array>
+</resources>

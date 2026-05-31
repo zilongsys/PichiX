@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="@dimen/hist_offer_row_height"
+    android:orientation="vertical"
+    android:paddingLeft="10dp"
+    android:paddingRight="10dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
+    android:background="@drawable/row_divider">
+
+    <!-- Fila 1: # · icono estado · tipo orden | precio · millas -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/tvOfferIndex"
+            android:layout_width="24dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="10sp"
+            android:textColor="@color/text_hint"
+            android:textStyle="bold"
+            android:fontFamily="monospace"
+            android:includeFontPadding="false"
+            android:layout_marginEnd="4dp"/>
+
+        <TextView
+            android:id="@+id/tvOfferStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:includeFontPadding="false"
+            android:layout_marginEnd="6dp"/>
+
+        <TextView
+            android:id="@+id/tvOfferType"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="13sp"
+            android:textColor="@color/text_primary"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:ellipsize="end"/>
+
+        <TextView
+            android:id="@+id/tvOfferPrice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:fontFamily="monospace"
+            android:textColor="@color/accent_teal"
+            android:includeFontPadding="false"
+            android:maxLines="1"/>
+    </LinearLayout>
+
+    <!-- Fila 2: tienda -->
+    <TextView
+        android:id="@+id/tvOfferDetail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:textSize="13sp"
+        android:textColor="@color/text_primary"
+        android:textStyle="bold"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:ellipsize="end"/>
+
+    <!-- Fila 3: motivo (izq) | $/mi · hora (der) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:baselineAligned="true">
+
+        <TextView
+            android:id="@+id/tvOfferReason"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.58"
+            android:textSize="11sp"
+            android:textColor="@color/text_hint"
+            android:includeFontPadding="false"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:lineSpacingExtra="1dp"/>
+
+        <TextView
+            android:id="@+id/tvOfferMeta"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.42"
+            android:layout_marginStart="8dp"
+            android:gravity="end"
+            android:textSize="11sp"
+            android:textColor="@color/text_hint"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:ellipsize="end"/>
+    </LinearLayout>
+</LinearLayout>

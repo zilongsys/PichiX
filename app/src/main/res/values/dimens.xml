@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Historial: botones de acción (altura fija; ancho reparte el espacio) -->
+    <dimen name="hist_action_btn_size">92dp</dimen>
+    <dimen name="hist_action_btn_height">48dp</dimen>
+    <!-- Fila del listado (3 líneas); mínimo por ítem; ×4 = altura mínima del panel -->
+    <dimen name="hist_offer_row_height">82dp</dimen>
+    <dimen name="hist_list_4_rows_height">328dp</dimen>
+    <!-- Tarifas: altura del badge de prioridad; alcance usa la misma altura, ancho según texto -->
+    <dimen name="tariff_rule_badge_size">30dp</dimen>
+</resources>

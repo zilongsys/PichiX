@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_page"
+    android:padding="10dp">
+
+    <!-- Header row -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="REVISIÓN DETALLADA"
+            android:textColor="@color/text_hint"
+            android:textSize="10sp"
+            android:textAllCaps="true"
+            android:letterSpacing="0.10"
+            android:fontFamily="monospace"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnFilterSimDetail"
+            style="@style/SparkButtonCompact"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🧪 Simuladas"
+            android:minWidth="0dp"/>
+
+    </LinearLayout>
+
+    <!-- Stats line -->
+    <TextView android:id="@+id/tvDetailStats"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Sin revisiones"
+        android:textSize="11sp" android:textColor="@color/text_hint"
+        android:fontFamily="monospace"
+        android:layout_marginBottom="8dp"/>
+
+    <!-- List -->
+    <LinearLayout style="@style/Card"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvDetailLog"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </LinearLayout>
+
+    <!-- Actions -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:layout_marginTop="8dp">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnExportDetailTxt"
+            style="@style/OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" android:layout_marginEnd="4dp"
+            android:text="Guardar TXT"/>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnClearDetailLog"
+            style="@style/SparkButtonDestructive"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" android:layout_marginStart="4dp"
+            android:text="🗑 Limpiar"/>
+    </LinearLayout>
+
+</LinearLayout>
