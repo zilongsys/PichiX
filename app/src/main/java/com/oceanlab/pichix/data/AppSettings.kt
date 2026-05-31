@@ -84,6 +84,24 @@ class AppSettings(context: Context) {
         get() = prefs.getString(KEY_FLEX_CLICK_SCREEN_TEXT, "") ?: ""
         set(value) = prefs.edit().putString(KEY_FLEX_CLICK_SCREEN_TEXT, value.trim()).apply()
 
+    /** contains = parte del texto; exact = coincidencia exacta (sensible a mayúsculas). */
+    var flexClickScreenMatchMode: String
+        get() = prefs.getString(KEY_FLEX_CLICK_SCREEN_MODE, SCREEN_MATCH_CONTAINS) ?: SCREEN_MATCH_CONTAINS
+        set(value) = prefs.edit().putString(KEY_FLEX_CLICK_SCREEN_MODE, value).apply()
+
+    /** Solo actuar cuando Amazon Flex está en primer plano. */
+    var flexOnlyWhenForeground: Boolean
+        get() = prefs.getBoolean(KEY_FLEX_ONLY_FOREGROUND, true)
+        set(value) = prefs.edit().putBoolean(KEY_FLEX_ONLY_FOREGROUND, value).apply()
+
+    var debugLogEnabled: Boolean
+        get() = prefs.getBoolean(KEY_DEBUG_LOG, false)
+        set(value) = prefs.edit().putBoolean(KEY_DEBUG_LOG, value).apply()
+
+    var fileLogEnabled: Boolean
+        get() = prefs.getBoolean(KEY_FILE_LOG, true)
+        set(value) = prefs.edit().putBoolean(KEY_FILE_LOG, value).apply()
+
     fun nextGrabDelayMs(): Long {
         if (flexClickMode == CLICK_MODE_SMART) {
             val min = flexSmartClickMinSec.coerceAtLeast(1)
@@ -194,7 +212,13 @@ class AppSettings(context: Context) {
         private const val KEY_FLEX_CLICK_SCREEN_TEXT = "flex_click_screen_text"
         const val CLICK_MODE_BASIC = "basic"
         const val CLICK_MODE_SMART = "smart"
+        const val SCREEN_MATCH_CONTAINS = "contains"
+        const val SCREEN_MATCH_EXACT = "exact"
         const val DEFAULT_REFRESH_BUTTON = "Refresh"
+        private const val KEY_FLEX_CLICK_SCREEN_MODE = "flex_click_screen_mode"
+        private const val KEY_FLEX_ONLY_FOREGROUND = "flex_only_foreground"
+        private const val KEY_DEBUG_LOG = "debug_log"
+        private const val KEY_FILE_LOG = "file_log"
         private const val KEY_AUTO_PAUSE_CAPTCHA = "auto_pause_captcha"
         private const val KEY_AUTO_PAUSE_ACCEPT = "auto_pause_accept"
         private const val KEY_AUTO_PAUSE_RESERVED = "auto_pause_reserved"

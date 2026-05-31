@@ -17,6 +17,7 @@ import com.oceanlab.pichix.data.MonitorPackages
 import com.oceanlab.pichix.data.OfferLogger
 import com.oceanlab.pichix.data.OfferStatus
 import com.oceanlab.pichix.service.accessibility.FlexScreenReader
+import com.oceanlab.pichix.service.accessibility.FlexUiDumper
 import com.oceanlab.pichix.ui.MainActivity
 
 /**
@@ -89,14 +90,43 @@ class PichixAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
-        if (!settings.isBotEnabled || pausedAfterAccept) return
+        settings = AppSettings(this)
         val target = MonitorPackages.primaryTarget(this) ?: return
-        if (event.packageName?.toString() != target) return
+        val pkg = event.packageName?.toString().orEmpty()
+        if (settings.debugLogEnabled && pkg == target) {
+            rootInActiveWindow?.let { root ->
+                try {
+                    FlexUiDumper.maybeDump(root, pkg)
+                } finally {
+                    try {
+                        root.recycle()
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+        }
+        if (!settings.isBotEnabled || pausedAfterAccept) return
+        if (pkg != target) return
+        if (!isFlexInForeground()) return
         when (event.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
                 handler.removeCallbacks(observerRunnable)
                 handler.postDelayed(observerRunnable, 200)
+            }
+        }
+    }
+
+    private fun isFlexInForeground(): Boolean {
+        if (!settings.flexOnlyWhenForeground) return true
+        val target = MonitorPackages.primaryTarget(this) ?: return false
+        val active = rootInActiveWindow ?: return false
+        return try {
+            active.packageName?.toString() == target
+        } finally {
+            try {
+                active.recycle()
+            } catch (_: Exception) {
             }
         }
     }
@@ -135,6 +165,7 @@ class PichixAccessibilityService : AccessibilityService() {
     }
 
     private fun runObservers() {
+        if (!isFlexInForeground()) return
         val text = reader.readFullScreenText()
         val flags = reader.detectScreenFlags(text)
 
@@ -161,11 +192,17 @@ class PichixAccessibilityService : AccessibilityService() {
     private fun runGrabberTick() {
         scheduleWork()
         if (!settings.isBotEnabled || pausedAfterAccept || grabInFlight) return
+        if (!isFlexInForeground()) return
         grabInFlight = true
         try {
             val text = reader.readFullScreenText()
             if (settings.flexOnlyRefresh) {
-                if (reader.screenMatchesForClick(settings.flexClickScreenText, text)) {
+                if (reader.screenMatchesForClick(
+                        settings.flexClickScreenText,
+                        text,
+                        settings.flexClickScreenMatchMode,
+                    )
+                ) {
                     val clicked = reader.clickTargetButton(settings.flexRefreshButtonText)
                     if (!clicked) {
                         postObserver("Clic: no se encontró «${settings.flexRefreshButtonText}»")

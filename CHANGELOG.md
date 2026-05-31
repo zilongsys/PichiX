@@ -8,6 +8,19 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.8 (Mayo 2026)
+
+### Añadido
+- Log UI/archivo estilo MakiX (`PichiXDebug` en Logcat, `pichix_ui_*.log`, compartir diagnóstico).
+- Config: secciones expandibles; coincidencia de pantalla **exacta** o **parte del texto** (sensible a mayúsculas).
+- Config: bot solo actúa con **Flex en primer plano**.
+
+### Actualizado
+- Return 2 offers: switch Home y Config sincronizados en tiempo real.
+- Basic click: intervalo en **segundos** (Smart click muestra solo rango aleatorio).
+
+---
+
 ## v0.1.7 (Mayo 2026)
 
 ### Añadido

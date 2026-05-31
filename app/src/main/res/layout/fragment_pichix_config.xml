@@ -15,9 +15,16 @@
         android:orientation="vertical">
 
         <TextView
+            android:id="@+id/headerSectionAmazon"
             style="@style/SectionLabel"
             android:layout_marginTop="4dp"
-            android:text="AMAZON FLEX" />
+            android:text="AMAZON FLEX ▼" />
+
+        <LinearLayout
+            android:id="@+id/sectionAmazon"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
         <LinearLayout style="@style/Card">
 
@@ -49,9 +56,18 @@
                 android:textSize="11sp" />
         </LinearLayout>
 
+        </LinearLayout>
+
         <TextView
+            android:id="@+id/headerSectionPermisos"
             style="@style/SectionLabel"
-            android:text="PERMISOS" />
+            android:text="PERMISOS ▼" />
+
+        <LinearLayout
+            android:id="@+id/sectionPermisos"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
         <LinearLayout style="@style/Card">
 
@@ -94,9 +110,18 @@
                 android:text="Acceso a notificaciones (Flex)" />
         </LinearLayout>
 
+        </LinearLayout>
+
         <TextView
+            android:id="@+id/headerSectionAuto"
             style="@style/SectionLabel"
-            android:text="AUTOMATIZACIÓN FLEX" />
+            android:text="AUTOMATIZACIÓN FLEX ▼" />
+
+        <LinearLayout
+            android:id="@+id/sectionAuto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
         <LinearLayout style="@style/Card">
 
@@ -122,9 +147,42 @@
             </LinearLayout>
         </LinearLayout>
 
+        <LinearLayout style="@style/Card">
+
+            <LinearLayout style="@style/Row">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        style="@style/RowLabel"
+                        android:layout_width="match_parent"
+                        android:layout_weight="0"
+                        android:text="@string/config_flex_foreground_title" />
+                    <TextView
+                        style="@style/RowHint"
+                        android:text="@string/config_flex_foreground_hint" />
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchFlexOnlyForeground"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+        </LinearLayout>
+
+        </LinearLayout>
+
         <TextView
+            android:id="@+id/headerSectionClicks"
             style="@style/SectionLabel"
             android:text="@string/config_section_bot_clicks" />
+
+        <LinearLayout
+            android:id="@+id/sectionClicks"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
         <LinearLayout style="@style/Card">
 
@@ -165,42 +223,56 @@
                     android:text="@string/config_click_mode_smart" />
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
-            <TextView
+            <LinearLayout
+                android:id="@+id/layoutBasicClick"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
-                android:layout_marginRight="16dp"
-                android:text="@string/config_basic_interval_label"
-                android:textColor="@color/text_secondary"
-                android:textSize="11sp" />
+                android:orientation="vertical">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etBasicClickIntervalMs"
-                style="@style/MediumInput"
-                android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginLeft="16dp"
-                android:layout_marginRight="16dp"
-                android:layout_marginBottom="8dp"
-                android:hint="2500"
-                android:inputType="number" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:text="@string/config_basic_interval_label"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
-                android:layout_marginRight="16dp"
-                android:text="@string/config_smart_click_range_label"
-                android:textColor="@color/text_secondary"
-                android:textSize="11sp" />
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etBasicClickIntervalSec"
+                    style="@style/MediumInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:layout_marginBottom="8dp"
+                    android:hint="3"
+                    android:inputType="number" />
+            </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/layoutSmartClick"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
-                android:layout_marginRight="16dp"
-                android:layout_marginBottom="8dp"
-                android:orientation="horizontal">
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:text="@string/config_smart_click_range_label"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:layout_marginBottom="8dp"
+                    android:orientation="horizontal">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etSmartClickMinSec"
@@ -221,6 +293,7 @@
                     android:layout_weight="1"
                     android:hint="6"
                     android:inputType="number" />
+                </LinearLayout>
             </LinearLayout>
 
             <TextView
@@ -259,9 +332,46 @@
                 android:layout_height="44dp"
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
-                android:layout_marginBottom="12dp"
+                android:layout_marginBottom="8dp"
                 android:hint="@string/config_click_screen_text_hint"
                 android:inputType="text" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="6dp"
+                android:text="@string/config_screen_match_mode_label"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/toggleScreenMatchMode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="12dp"
+                app:singleSelection="true"
+                app:selectionRequired="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnScreenMatchContains"
+                    style="@style/SparkThemeToggleButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_screen_match_contains" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnScreenMatchExact"
+                    style="@style/SparkThemeToggleButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_screen_match_exact" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
 
             <TextView
                 android:layout_width="match_parent"
@@ -273,6 +383,19 @@
                 android:textColor="@color/text_secondary"
                 android:textSize="11sp" />
         </LinearLayout>
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/headerSectionPause"
+            style="@style/SectionLabel"
+            android:text="PAUSE BY OVER CLICKS ▼" />
+
+        <LinearLayout
+            android:id="@+id/sectionPause"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
         <LinearLayout style="@style/Card">
 
@@ -395,9 +518,75 @@
                 android:text="@string/config_btn_pick_audio_file" />
         </LinearLayout>
 
+        </LinearLayout>
+
         <TextView
+            android:id="@+id/headerSectionLog"
             style="@style/SectionLabel"
-            android:text="INTERFAZ" />
+            android:text="@string/config_section_log" />
+
+        <LinearLayout
+            android:id="@+id/sectionLog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+        <LinearLayout style="@style/Card">
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="@string/config_debug_log_title" />
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchDebugLog"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/RowHint"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/config_debug_log_hint" />
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="@string/config_file_log_title" />
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchFileLog"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnShareDiagnosticLogs"
+                style="@style/SparkButtonSecondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="14dp"
+                android:text="@string/config_btn_share_logs" />
+        </LinearLayout>
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/headerSectionUi"
+            style="@style/SectionLabel"
+            android:text="INTERFAZ ▼" />
+
+        <LinearLayout
+            android:id="@+id/sectionUi"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
         <LinearLayout style="@style/Card">
 
@@ -410,6 +599,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
             </LinearLayout>
+        </LinearLayout>
+
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton

@@ -34,6 +34,20 @@ class HomeFragment : Fragment() {
 
     private var syncing = false
     private var suppressThemeToggle = false
+    private var suppressReturn2Sync = false
+
+    private val return2Receiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action != MainActivity.RETURN2_SETTING_CHANGED) return
+            suppressReturn2Sync = true
+            try {
+                swReturn2Offers?.isChecked =
+                    intent.getBooleanExtra(MainActivity.EXTRA_RETURN2_ENABLED, settings.flexAutoReturnToOffers)
+            } finally {
+                suppressReturn2Sync = false
+            }
+        }
+    }
 
     private val botStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -89,8 +103,9 @@ class HomeFragment : Fragment() {
         }
 
         swReturn2Offers?.setOnCheckedChangeRetainingFocus(view) { checked ->
-            if (syncing) return@setOnCheckedChangeRetainingFocus
+            if (syncing || suppressReturn2Sync) return@setOnCheckedChangeRetainingFocus
             settings.flexAutoReturnToOffers = checked
+            MainActivity.notifyReturn2SettingChanged(requireContext(), checked)
             PichixAccessibilityService.syncEngine(requireContext())
         }
 
@@ -126,16 +141,21 @@ class HomeFragment : Fragment() {
         val filter = IntentFilter().apply {
             addAction(MainActivity.BOT_STATE_CHANGED)
             addAction(MainActivity.BOT_PAUSED)
+            addAction(MainActivity.RETURN2_SETTING_CHANGED)
         }
-        LocalBroadcastManager.getInstance(requireContext())
-            .registerReceiver(botStateReceiver, filter)
+        LocalBroadcastManager.getInstance(requireContext()).apply {
+            registerReceiver(botStateReceiver, filter)
+            registerReceiver(return2Receiver, IntentFilter(MainActivity.RETURN2_SETTING_CHANGED))
+        }
         refreshStatus()
     }
 
     override fun onPause() {
         super.onPause()
+        val lbm = LocalBroadcastManager.getInstance(requireContext())
         try {
-            LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(botStateReceiver)
+            lbm.unregisterReceiver(botStateReceiver)
+            lbm.unregisterReceiver(return2Receiver)
         } catch (_: Exception) {
         }
     }

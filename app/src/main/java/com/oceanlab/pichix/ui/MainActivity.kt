@@ -403,5 +403,13 @@ class MainActivity : AppCompatActivity() {
     companion object {
         const val BOT_STATE_CHANGED = "com.oceanlab.pichix.BOT_STATE_CHANGED"
         const val BOT_PAUSED = "com.oceanlab.pichix.BOT_PAUSED"
+        const val RETURN2_SETTING_CHANGED = "com.oceanlab.pichix.RETURN2_SETTING_CHANGED"
+        const val EXTRA_RETURN2_ENABLED = "return2_enabled"
+
+        fun notifyReturn2SettingChanged(context: Context, enabled: Boolean) {
+            LocalBroadcastManager.getInstance(context).sendBroadcast(
+                Intent(RETURN2_SETTING_CHANGED).putExtra(EXTRA_RETURN2_ENABLED, enabled),
+            )
+        }
     }
 }

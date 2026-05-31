@@ -9,7 +9,9 @@ import android.view.accessibility.AccessibilityNodeInfo
 import com.oceanlab.pichix.analyzer.FlexBlockOffer
 import com.oceanlab.pichix.analyzer.FlexGrabberEvaluator
 import com.oceanlab.pichix.data.FlexState
+import com.oceanlab.pichix.data.AppSettings
 import com.oceanlab.pichix.flex.FlexIds
+import com.oceanlab.pichix.util.ScreenTextMatcher
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.allTextsByViewId
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.findClickableByExactText
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.findClickableByText
@@ -187,10 +189,13 @@ class FlexScreenReader(private val service: AccessibilityService) {
         }
     }
 
-    fun screenMatchesForClick(requiredScreenText: String, screenText: String? = null): Boolean {
-        if (requiredScreenText.isBlank()) return true
+    fun screenMatchesForClick(
+        requiredScreenText: String,
+        screenText: String? = null,
+        matchMode: String = AppSettings.SCREEN_MATCH_CONTAINS,
+    ): Boolean {
         val text = screenText ?: readFullScreenText()
-        return text.contains(requiredScreenText)
+        return ScreenTextMatcher.matches(text, requiredScreenText, matchMode)
     }
 
     fun clickTargetButton(exactButtonText: String): Boolean {
