@@ -8,6 +8,17 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.11 (Mayo 2026)
+
+### Corregido
+- Motor bloqueado: `isActive` en ventanas Flex falla en varios móviles; ahora se busca ventana activa → con foco → cualquier ventana Flex.
+- `flexRoot()` ya no depende del switch «solo primer plano» (solo filtra *si* actuar, no *cómo* leer el árbol).
+- Overlay sobre Flex: no se confunde con «usuario en PichiX» si Flex sigue en `windows`.
+- Clic Refresh: si modo Exacto no encuentra el botón, reintenta como Contiene.
+- Aviso «Esperando Flex en primer plano…» si el tick se omite por foreground.
+
+---
+
 ## v0.1.10 (Mayo 2026)
 
 ### Corregido

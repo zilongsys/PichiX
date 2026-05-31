@@ -27,11 +27,9 @@ class FlexScreenReader(private val service: AccessibilityService) {
         get() = com.oceanlab.pichix.data.MonitorPackages.primaryTarget(service)
             ?: "com.amazon.rabbit"
 
-    /** Raíz del árbol de Flex (no la ventana del overlay ni de PichiX). */
-    private fun flexRoot(): AccessibilityNodeInfo? {
-        val onlyForeground = AppSettings(service).flexOnlyWhenForeground
-        return FlexWindowRoots.obtainTargetRoot(service, requireActiveWindow = onlyForeground)
-    }
+    /** Raíz del árbol de Flex (independiente del switch «solo primer plano»). */
+    private fun flexRoot(): AccessibilityNodeInfo? =
+        FlexWindowRoots.obtainFlexTreeRoot(service)
 
     fun resolveId(suffix: String): String? {
         for (cand in FlexIds.viewIdCandidates(suffix, appPackage)) {
@@ -213,11 +211,14 @@ class FlexScreenReader(private val service: AccessibilityService) {
         if (buttonText.isBlank()) return false
         val root = flexRoot() ?: return false
         return try {
-            val node = when (matchMode) {
+            var node = when (matchMode) {
                 AppSettings.TEXT_MATCH_CONTAINS ->
                     root.findClickableByText(buttonText, ignoreCase)
                 else ->
                     root.findClickableByExactText(buttonText, ignoreCase)
+            }
+            if (node == null && matchMode == AppSettings.TEXT_MATCH_EXACT) {
+                node = root.findClickableByText(buttonText, ignoreCase)
             }
             if (node != null) {
                 val ok = node.performAction(AccessibilityNodeInfo.ACTION_CLICK)

@@ -69,6 +69,8 @@ class PichixAccessibilityService : AccessibilityService() {
     private var scrollDownEnd = false
     private var scrollUpEnd = false
     private var lastReturnMs = 0L
+    private var lastTargetPackageEventMs = 0L
+    private var lastForegroundSkipLogMs = 0L
 
     private val grabLoopRunnable = Runnable { runGrabberTick() }
     private val timerRunnable = Runnable { runFlexTimerTick() }
@@ -108,6 +110,7 @@ class PichixAccessibilityService : AccessibilityService() {
         }
         if (!settings.isBotEnabled || pausedAfterAccept) return
         if (pkg != target) return
+        lastTargetPackageEventMs = System.currentTimeMillis()
         when (event.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
@@ -119,7 +122,29 @@ class PichixAccessibilityService : AccessibilityService() {
 
     private fun isFlexInForeground(): Boolean {
         if (!settings.flexOnlyWhenForeground) return true
-        return FlexWindowRoots.isTargetInForeground(this)
+        val target = MonitorPackages.primaryTarget(this) ?: return false
+        val now = System.currentTimeMillis()
+        // Eventos recientes de Flex: pantalla en transición o isActive no fiable en el OEM.
+        if (now - lastTargetPackageEventMs < 5_000L) return true
+        val activeRoot = rootInActiveWindow
+        val activePkg = try {
+            activeRoot?.packageName?.toString()
+        } finally {
+            try {
+                activeRoot?.recycle()
+            } catch (_: Exception) {
+            }
+        }
+        if (activePkg == target) return true
+        return FlexWindowRoots.isFlexAvailableForBot(this)
+    }
+
+    private fun logForegroundSkipIfNeeded() {
+        val now = System.currentTimeMillis()
+        if (now - lastForegroundSkipLogMs < 20_000L) return
+        lastForegroundSkipLogMs = now
+        Log.w(TAG, "Tick omitido: Flex no disponible (primer plano / árbol)")
+        postObserver("Esperando Flex en primer plano…")
     }
 
     private val observerRunnable = Runnable { runObservers() }
@@ -187,7 +212,10 @@ class PichixAccessibilityService : AccessibilityService() {
         settings = AppSettings(this)
         scheduleWork()
         if (!settings.isBotEnabled || pausedAfterAccept || grabInFlight) return
-        if (!isFlexInForeground()) return
+        if (!isFlexInForeground()) {
+            logForegroundSkipIfNeeded()
+            return
+        }
         grabInFlight = true
         try {
             val text = reader.readFullScreenText()
