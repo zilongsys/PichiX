@@ -35,6 +35,32 @@ object AccessibilityNodeUtils {
             list.mapNotNull { it.text?.toString()?.trim()?.takeIf { s -> s.isNotEmpty() } }
         }
 
+    /** Coincidencia exacta del texto visible (no parcial). */
+    fun AccessibilityNodeInfo.findClickableByExactText(
+        text: String,
+        ignoreCase: Boolean = false,
+    ): AccessibilityNodeInfo? {
+        if (text.isBlank()) return null
+        var found: AccessibilityNodeInfo? = null
+        withAllObtainedNodes { nodes ->
+            for (n in nodes) {
+                val t = n.text?.toString() ?: n.contentDescription?.toString() ?: ""
+                if (t.equals(text, ignoreCase)) {
+                    var cur: AccessibilityNodeInfo? = n
+                    while (cur != null) {
+                        if (cur.isClickable) {
+                            found = AccessibilityNodeInfo.obtain(cur)
+                            break
+                        }
+                        cur = cur.parent
+                    }
+                    if (found != null) break
+                }
+            }
+        }
+        return found
+    }
+
     fun AccessibilityNodeInfo.findClickableByText(text: String, ignoreCase: Boolean = true): AccessibilityNodeInfo? {
         var found: AccessibilityNodeInfo? = null
         withAllObtainedNodes { nodes ->

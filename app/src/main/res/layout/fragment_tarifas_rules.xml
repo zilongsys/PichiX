@@ -18,7 +18,7 @@
         android:clickable="true"
         android:focusable="true"
         android:foreground="?attr/selectableItemBackground"
-        android:drawableEnd="@android:drawable/arrow_down_float"
+        android:drawableEnd="@drawable/ic_chevron_down"
         android:drawablePadding="6dp"/>
 
     <LinearLayout

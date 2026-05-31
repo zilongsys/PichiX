@@ -1,0 +1,26 @@
+---
+description: Tras cambios de código solicitados por el usuario, hacer commit y push a GitHub automáticamente
+alwaysApply: true
+---
+
+# Git automático en PichiX
+
+Cuando el usuario pida un cambio de código y lo implementes en este repositorio:
+
+1. Al **terminar** la tarea (código compilable, sin secretos en el commit), haz **commit y push** sin pedir confirmación extra.
+2. **No** incluyas en el commit: `.env`, `local.properties`, `*.jks`, keystores ni credenciales.
+3. Mensaje de commit: una línea clara en español o inglés; mencionar `vX.Y.Z` tras actualizar versión (ver regla `version-bump.mdc`: PATCH 0–100, al llegar a 100 subir el segmento anterior).
+4. Comandos (PowerShell, repo en la raíz del workspace):
+
+```powershell
+git add -A
+git status
+git -c user.name="onlyeyes" -c user.email="onlyeyes@users.noreply.github.com" commit -m "mensaje"
+git push origin HEAD
+```
+
+5. Si el cambio es una **versión estable** nueva, además: `git tag vX.Y.Z` y `git push origin --tags` (solo si `versionName`/`CHANGELOG` se actualizaron).
+6. Si `git push` falla por auth, indica al usuario que ejecute `gh auth login` y reintenta una vez.
+7. **Excepciones** (no commit automático): solo preguntas, revisión sin editar archivos, o el usuario dice explícitamente "sin commit" / "no subas".
+
+Remoto: `origin` → https://github.com/zilongsys/PichiX

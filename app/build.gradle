@@ -5,10 +5,10 @@ plugins {
 
 def versionPropsFile = file('version.properties')
 
-def readVersionProps() {
+def readVersionProps = { File vf ->
     def props = new Properties()
-    if (versionPropsFile.exists()) {
-        versionPropsFile.withInputStream { props.load(it) }
+    if (vf.exists()) {
+        vf.withInputStream { props.load(it) }
     } else {
         props['VERSION_MAJOR'] = '0'
         props['VERSION_MIDDLE'] = '1'
@@ -18,13 +18,13 @@ def readVersionProps() {
     return props
 }
 
-def writeVersionProps(Properties props) {
-    versionPropsFile.withWriter { w ->
+def writeVersionProps = { File vf, Properties props ->
+    vf.withWriter { w ->
         props.store(w, 'PichiX — PATCH 0-100, al llegar a 100 sube MIDDLE y PATCH=0')
     }
 }
 
-def bumpVersionProps(Properties props) {
+def bumpVersionProps = { Properties props ->
     int major = (props['VERSION_MAJOR'] ?: '0').toString().toInteger()
     int middle = (props['VERSION_MIDDLE'] ?: '0').toString().toInteger()
     int patch = (props['VERSION_PATCH'] ?: '0').toString().toInteger()
@@ -50,17 +50,17 @@ def bumpVersionProps(Properties props) {
 
 def requestedTasks = gradle.startParameter.taskNames
 def shouldAutoBump = requestedTasks.any { task ->
-    task.contains('assemble') || task.contains('compile') && task.contains('Kotlin')
+    task.contains('assemble') || (task.contains('compile') && task.contains('Kotlin'))
             || task.contains('install') || task.contains('bundle')
 }
 
 if (shouldAutoBump) {
-    def props = readVersionProps()
+    def props = readVersionProps(versionPropsFile)
     bumpVersionProps(props)
-    writeVersionProps(props)
+    writeVersionProps(versionPropsFile, props)
 }
 
-def versionProps = readVersionProps()
+def versionProps = readVersionProps(versionPropsFile)
 def pichixVersionName = "${versionProps['VERSION_MAJOR']}.${versionProps['VERSION_MIDDLE']}.${versionProps['VERSION_PATCH']}"
 def pichixVersionCode = (versionProps['VERSION_CODE'] ?: '1').toString().toInteger()
 

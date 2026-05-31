@@ -67,7 +67,7 @@ class FlexTarifasRulesFragment : Fragment(), FlexTariffRuleEditBottomSheet.Liste
             expanded.visibility = if (open) View.VISIBLE else View.GONE
             header.setCompoundDrawablesWithIntrinsicBounds(
                 0, 0,
-                if (open) android.R.drawable.arrow_up_float else android.R.drawable.arrow_down_float,
+                if (open) R.drawable.ic_chevron_up else R.drawable.ic_chevron_down,
                 0,
             )
         }
@@ -197,8 +197,11 @@ class FlexTarifasRulesFragment : Fragment(), FlexTariffRuleEditBottomSheet.Liste
     }
 
     private fun openEditor(ruleId: String?) {
+        val tag = "edit_flex_rule"
+        (childFragmentManager.findFragmentByTag(tag) as? FlexTariffRuleEditBottomSheet)?.dismissAllowingStateLoss()
+        if (childFragmentManager.isStateSaved) return
         FlexTariffRuleEditBottomSheet.newInstance(ruleId)
-            .show(childFragmentManager, "edit_flex_rule")
+            .show(childFragmentManager, tag)
     }
 
     fun ensureStarterRulesIfEmpty() {

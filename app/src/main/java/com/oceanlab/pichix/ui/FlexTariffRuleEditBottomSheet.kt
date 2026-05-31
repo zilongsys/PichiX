@@ -117,10 +117,19 @@ class FlexTariffRuleEditBottomSheet : BottomSheetDialogFragment() {
 
         val rule = editingRule ?: FlexTariffRule()
         etName.setText(rule.name)
-        spinnerScope.setSelection(FlexStationScope.entries.indexOf(rule.stationScope).coerceAtLeast(0))
+        spinnerScope.setSelection(
+            safeEnumIndex(FlexStationScope.entries.indexOf(rule.stationScope), FlexStationScope.entries.size),
+            false,
+        )
         etPattern.setText(rule.stationPattern)
-        spinnerType.setSelection(FlexBlockTypeFilter.entries.indexOf(rule.blockType).coerceAtLeast(0))
-        spinnerPay.setSelection(FlexPayCriteriaMode.entries.indexOf(rule.payMode).coerceAtLeast(0))
+        spinnerType.setSelection(
+            safeEnumIndex(FlexBlockTypeFilter.entries.indexOf(rule.blockType), FlexBlockTypeFilter.entries.size),
+            false,
+        )
+        spinnerPay.setSelection(
+            safeEnumIndex(FlexPayCriteriaMode.entries.indexOf(rule.payMode), FlexPayCriteriaMode.entries.size),
+            false,
+        )
         etPriceMin.setText("%.0f".format(rule.priceMin))
         etPriceMax.setText(rule.priceMax?.let { "%.0f".format(it) } ?: "")
         etMinHourly.setText("%.0f".format(rule.minHourlyRate))
@@ -165,7 +174,7 @@ class FlexTariffRuleEditBottomSheet : BottomSheetDialogFragment() {
             val ui = draft.blockTypeUi()
             frameTypePreview?.setBackgroundResource(ui.badgeBackgroundRes)
             ivTypePreview?.setImageResource(draft.blockTypeIconRes())
-            ivTypePreview?.setColorFilter(ContextCompat.getColor(requireContext(), ui.iconTintColorRes))
+            ivTypePreview?.setColorFilter(iconTintColor(ui.iconTintColorRes))
         }
 
         fun updateScopeUi() {
@@ -307,7 +316,7 @@ class FlexTariffRuleEditBottomSheet : BottomSheetDialogFragment() {
 
         refreshPreview()
 
-        btnCancel.setOnClickListener { dismiss() }
+        btnCancel.setOnClickListener { dismissAllowingStateLoss() }
         btnSave.setOnClickListener {
             val draft = buildDraft()
             if (draft.payMode == FlexPayCriteriaMode.BLOCK_PAY &&
@@ -324,8 +333,8 @@ class FlexTariffRuleEditBottomSheet : BottomSheetDialogFragment() {
             val idx = updated.indexOfFirst { it.id == draft.id }
             if (idx >= 0) updated[idx] = draft else updated.add(draft)
             FlexTariffRulesStore.save(settings, updated)
-            (parentFragment as? Listener)?.onRuleSaved()
-            dismiss()
+            ruleEditListener()?.onRuleSaved()
+            dismissAllowingStateLoss()
         }
     }
 
@@ -333,6 +342,20 @@ class FlexTariffRuleEditBottomSheet : BottomSheetDialogFragment() {
         ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, labels).also {
             it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
+
+    private fun ruleEditListener(): Listener? =
+        (parentFragment as? Listener)
+            ?: (parentFragment?.parentFragment as? Listener)
+
+    private fun iconTintColor(resId: Int): Int =
+        try {
+            ContextCompat.getColor(requireContext(), resId)
+        } catch (_: Exception) {
+            ContextCompat.getColor(requireContext(), R.color.text_primary)
+        }
+
+    private fun safeEnumIndex(index: Int, size: Int): Int =
+        if (size <= 0) 0 else if (index < 0) 0 else index.coerceIn(0, size - 1)
 
     companion object {
         private const val ARG_RULE_ID = "rule_id"

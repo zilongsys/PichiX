@@ -30,6 +30,7 @@ class HomeFragment : Fragment() {
     private var themeToggleGroup: MaterialButtonToggleGroup? = null
     private var swOverlay: SwitchMaterial? = null
     private var swDryRun: SwitchMaterial? = null
+    private var swReturn2Offers: SwitchMaterial? = null
 
     private var syncing = false
     private var suppressThemeToggle = false
@@ -59,6 +60,7 @@ class HomeFragment : Fragment() {
         themeToggleGroup = view.findViewById(R.id.themeToggleGroup)
         swOverlay = view.findViewById(R.id.homeQuickOverlay)
         swDryRun = view.findViewById(R.id.homeQuickDryRun)
+        swReturn2Offers = view.findViewById(R.id.homeQuickReturn2Offers)
 
         syncSwitches()
         setupThemeToggle(activity)
@@ -84,6 +86,12 @@ class HomeFragment : Fragment() {
             activity.updateHeader()
             LocalBroadcastManager.getInstance(requireContext())
                 .sendBroadcast(Intent(MainActivity.BOT_STATE_CHANGED))
+        }
+
+        swReturn2Offers?.setOnCheckedChangeRetainingFocus(view) { checked ->
+            if (syncing) return@setOnCheckedChangeRetainingFocus
+            settings.flexAutoReturnToOffers = checked
+            PichixAccessibilityService.syncEngine(requireContext())
         }
 
         refreshStatus()
@@ -137,6 +145,7 @@ class HomeFragment : Fragment() {
         try {
             swOverlay?.isChecked = settings.overlayEnabled
             swDryRun?.isChecked = settings.dryRunMode
+            swReturn2Offers?.isChecked = settings.flexAutoReturnToOffers
         } finally {
             syncing = false
         }

@@ -96,6 +96,307 @@
 
         <TextView
             style="@style/SectionLabel"
+            android:text="AUTOMATIZACIÓN FLEX" />
+
+        <LinearLayout style="@style/Card">
+
+            <LinearLayout style="@style/Row">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        style="@style/RowLabel"
+                        android:layout_width="match_parent"
+                        android:layout_weight="0"
+                        android:text="@string/config_return_2_offers_title" />
+                    <TextView
+                        style="@style/RowHint"
+                        android:text="@string/config_return_2_offers_hint" />
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchReturn2Offers"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            style="@style/SectionLabel"
+            android:text="@string/config_section_bot_clicks" />
+
+        <LinearLayout style="@style/Card">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/config_click_mode_label"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/toggleClickMode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="10dp"
+                app:singleSelection="true"
+                app:selectionRequired="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnClickModeBasic"
+                    style="@style/SparkThemeToggleButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_click_mode_basic" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnClickModeSmart"
+                    style="@style/SparkThemeToggleButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_click_mode_smart" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:text="@string/config_basic_interval_label"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etBasicClickIntervalMs"
+                style="@style/MediumInput"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="8dp"
+                android:hint="2500"
+                android:inputType="number" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:text="@string/config_smart_click_range_label"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="8dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etSmartClickMinSec"
+                    style="@style/MediumInput"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_marginRight="6dp"
+                    android:layout_weight="1"
+                    android:hint="1"
+                    android:inputType="number" />
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etSmartClickMaxSec"
+                    style="@style/MediumInput"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_marginLeft="6dp"
+                    android:layout_weight="1"
+                    android:hint="6"
+                    android:inputType="number" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:text="@string/config_refresh_button_text_label"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etRefreshButtonText"
+                style="@style/MediumInput"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="8dp"
+                android:hint="Refresh"
+                android:inputType="text" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:text="@string/config_click_screen_text_label"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etClickScreenText"
+                style="@style/MediumInput"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="12dp"
+                android:hint="@string/config_click_screen_text_hint"
+                android:inputType="text" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="14dp"
+                android:text="@string/config_bot_clicks_helper"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <LinearLayout style="@style/Card">
+
+            <LinearLayout style="@style/Row">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        style="@style/RowLabel"
+                        android:layout_width="match_parent"
+                        android:layout_weight="0"
+                        android:text="@string/config_pause_over_clicks_title" />
+                    <TextView
+                        style="@style/RowHint"
+                        android:text="@string/config_pause_over_clicks_hint" />
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchPauseOverClicks"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginTop="4dp"
+                android:text="@string/config_pause_over_clicks_match_label"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPauseOverClicksText"
+                style="@style/MediumInput"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="8dp"
+                android:hint="@string/config_pause_over_clicks_match_hint"
+                android:inputType="text" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:text="@string/config_pause_over_clicks_minutes_label"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPauseOverClicksMinutes"
+                style="@style/MediumInput"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="8dp"
+                android:hint="5"
+                android:inputType="number" />
+
+            <TextView
+                android:id="@+id/tvPauseSoundLabel"
+                style="@style/RowHint"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="4dp"
+                android:text="@string/config_pause_sound_pause_label" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPickPauseSound"
+                style="@style/SparkButtonSecondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="6dp"
+                android:text="@string/config_btn_pick_pause_sound" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPickPauseAudioFile"
+                style="@style/SparkButtonSecondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/config_btn_pick_audio_file" />
+
+            <TextView
+                android:id="@+id/tvResumeSoundLabel"
+                style="@style/RowHint"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="4dp"
+                android:text="@string/config_pause_sound_resume_label" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPickResumeSound"
+                style="@style/SparkButtonSecondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="6dp"
+                android:text="@string/config_btn_pick_resume_sound" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPickResumeAudioFile"
+                style="@style/SparkButtonSecondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="14dp"
+                android:text="@string/config_btn_pick_audio_file" />
+        </LinearLayout>
+
+        <TextView
+            style="@style/SectionLabel"
             android:text="INTERFAZ" />
 
         <LinearLayout style="@style/Card">

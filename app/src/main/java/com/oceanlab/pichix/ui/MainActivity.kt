@@ -341,6 +341,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun markDirty(tabIndex: Int) {
+        if (tabIndex !in tabNames.indices) return
         dirtyTabs.add(tabIndex)
         refreshDirtyIndicators()
     }
@@ -353,8 +354,9 @@ class MainActivity : AppCompatActivity() {
     private fun refreshDirtyIndicators() {
         val activeColor = ContextCompat.getColor(this, R.color.accent_teal)
         val mutedColor = ContextCompat.getColor(this, R.color.text_hint)
-        for (i in 0..7) {
-            val isActive = i == currentTab
+        val safeCurrent = currentTab.coerceIn(tabNames.indices)
+        for (i in tabNames.indices) {
+            val isActive = i == safeCurrent
             sidebarLabels[i]?.apply {
                 text = tabNames[i] + if (dirtyTabs.contains(i)) " •" else ""
                 setTextColor(if (isActive) activeColor else mutedColor)

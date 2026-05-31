@@ -52,6 +52,26 @@ class AlertManager(private val context: Context) {
         }
     }
 
+    /** Un solo disparo (pausa / reanudación del bot); no interrumpe alertas en curso si ya suenan. */
+    fun playSoundOnce(soundUri: String) {
+        try {
+            setNotificationVolume()
+            val uri = resolveUri(soundUri)
+            val player = MediaPlayer.create(context, uri) ?: return
+            val v = (settings.alertVolume / 100f).coerceIn(0f, 1f)
+            player.setVolume(v, v)
+            player.setOnCompletionListener { mp ->
+                try {
+                    mp.release()
+                } catch (_: Exception) {
+                }
+            }
+            player.start()
+        } catch (e: Exception) {
+            Log.e(TAG, "playSoundOnce: ${e.message}")
+        }
+    }
+
     private fun setNotificationVolume() {
         val maxVol = audioMgr.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION)
         val target = (settings.alertVolume / 100.0 * maxVol).toInt().coerceAtLeast(1)

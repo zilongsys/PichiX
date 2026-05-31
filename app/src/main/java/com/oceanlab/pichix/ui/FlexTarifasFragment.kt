@@ -104,7 +104,11 @@ class FlexTarifasFragment : Fragment() {
             }
             rules?.let { tx.hide(it) }
         }
-        tx.commit()
+        if (fm.isStateSaved) {
+            tx.commitAllowingStateLoss()
+        } else {
+            tx.commit()
+        }
     }
 
     companion object {

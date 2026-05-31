@@ -28,6 +28,7 @@ class FlexNotificationListenerService : NotificationListenerService() {
         if (text.isBlank()) return
 
         val settings = AppSettings(this)
+        PauseByOverClicksController.onNotification(this, text)
         if (settings.flexAlertsEnabled) {
             handleUserAlertRules(settings, sbn, text)
         }
@@ -40,17 +41,18 @@ class FlexNotificationListenerService : NotificationListenerService() {
         text: String,
     ) {
         val now = System.currentTimeMillis()
+        // Una sola ejecución por notificación: la primera regla que coincida (OR entre reglas).
         FlexAlertRulesStore.load(settings)
             .asSequence()
-            .filter { it.enabled && it.matchText.isNotBlank() }
+            .filter { it.enabled && it.effectiveMatchTexts().isNotEmpty() }
             .firstOrNull { rule ->
-                text.contains(rule.matchText.trim(), ignoreCase = true) &&
+                rule.matchesNotificationText(text) &&
                     !wasRecentlyTriggered(rule.id, sbn.key, now)
             }
             ?.let { rule ->
                 recentlyTriggered["${rule.id}|${sbn.key}"] = now
                 pruneRecent(now)
-                Log.d(TAG, "Alerta Flex: '${rule.displayName()}' → '${rule.matchText}'")
+                Log.d(TAG, "Alerta Flex: '${rule.displayName()}' → ${rule.matchSummary()}")
                 AlertManager(this).playFlexNotificationAlert(rule.soundUri, rule.repeatCount)
                 postObserverEvent("Alerta: ${rule.displayName()}")
             }

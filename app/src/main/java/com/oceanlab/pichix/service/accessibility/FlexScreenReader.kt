@@ -186,10 +186,17 @@ class FlexScreenReader(private val service: AccessibilityService) {
         }
     }
 
-    fun clickRefresh(): Boolean {
+    fun screenMatchesForClick(requiredScreenText: String, screenText: String? = null): Boolean {
+        if (requiredScreenText.isBlank()) return true
+        val text = screenText ?: readFullScreenText()
+        return text.contains(requiredScreenText)
+    }
+
+    fun clickTargetButton(exactButtonText: String): Boolean {
+        if (exactButtonText.isBlank()) return false
         val root = service.rootInActiveWindow ?: return false
         return try {
-            val node = root.findClickableByText("Refresh")
+            val node = root.findClickableByExactText(exactButtonText)
             if (node != null) {
                 val ok = node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
                 try { node.recycle() } catch (_: Exception) {}
@@ -199,6 +206,8 @@ class FlexScreenReader(private val service: AccessibilityService) {
             try { root.recycle() } catch (_: Exception) {}
         }
     }
+
+    fun clickRefresh(): Boolean = clickTargetButton("Refresh")
 
     fun clickBack(): Boolean = service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
 

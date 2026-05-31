@@ -24,6 +24,30 @@
     <string name="config_btn_accessibility">Abrir ajustes de accesibilidad</string>
     <string name="config_btn_overlay">Configurar botón flotante</string>
     <string name="config_btn_save">Guardar configuración</string>
+    <string name="config_return_2_offers_title">Return 2 offers</string>
+    <string name="config_return_2_offers_hint">Macro return2offers: dos pulsaciones Atrás cuando no estás en la lista de ofertas (cada ~3 s).</string>
+    <string name="config_pause_over_clicks_title">Pause by over clicks</string>
+    <string name="config_pause_over_clicks_hint">Pausa el bot si una notificación Flex contiene el texto indicado; reanuda solo tras el tiempo configurado.</string>
+    <string name="config_pause_over_clicks_match_label">Texto en la notificación</string>
+    <string name="config_pause_over_clicks_match_hint">ej: captcha, verification</string>
+    <string name="config_pause_over_clicks_minutes_label">Minutos hasta reanudar</string>
+    <string name="config_pause_sound_pause_label">Sonido al pausar</string>
+    <string name="config_pause_sound_resume_label">Sonido al reanudar</string>
+    <string name="config_btn_pick_pause_sound">Elegir tono (al pausar)</string>
+    <string name="config_btn_pick_resume_sound">Elegir tono (al reanudar)</string>
+    <string name="config_btn_pick_audio_file">Elegir audio del dispositivo</string>
+    <string name="home_return_2_offers_title">↩ Return 2 offers</string>
+    <string name="home_return_2_offers_hint">Activa o desactiva el retorno automático (2× Atrás). La configuración detallada está en Config.</string>
+    <string name="config_section_bot_clicks">CLICS DEL BOT</string>
+    <string name="config_click_mode_label">Modo de clic en el botón</string>
+    <string name="config_click_mode_basic">Basic click</string>
+    <string name="config_click_mode_smart">Smart click</string>
+    <string name="config_basic_interval_label">Basic click — intervalo (milisegundos)</string>
+    <string name="config_smart_click_range_label">Smart click — espera aleatoria (segundos mín. y máx.)</string>
+    <string name="config_refresh_button_text_label">Nombre exacto del botón a pulsar</string>
+    <string name="config_click_screen_text_label">Texto que debe mostrar la pantalla</string>
+    <string name="config_click_screen_text_hint">ej: Offers, ofertas (vacío = cualquier pantalla)</string>
+    <string name="config_bot_clicks_helper">Con «Solo refresh» en Tarifas, el bot pulsa ese botón. Smart click elige un tiempo nuevo al azar en cada ciclo.</string>
 
     <string name="config_section_monitor_packages">APPS VIGILADAS (AVANZADO)</string>
     <string name="config_monitor_csv_hint">Paquete(s) Android — se guarda al pulsar Guardar</string>

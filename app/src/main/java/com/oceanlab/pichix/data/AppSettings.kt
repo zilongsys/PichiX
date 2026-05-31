@@ -56,10 +56,42 @@ class AppSettings(context: Context) {
         get() = prefs.getBoolean(KEY_CANCEL_BAD_BLOCKS, false)
         set(value) = prefs.edit().putBoolean(KEY_CANCEL_BAD_BLOCKS, value).apply()
 
-    /** Intervalo del bucle Terminator-Grabber (ms). */
+    /** Intervalo del bucle Terminator-Grabber (ms) — modo Basic click. */
     var flexGrabIntervalMs: Long
         get() = prefs.getLong(KEY_GRAB_INTERVAL_MS, 2500L)
         set(value) = prefs.edit().putLong(KEY_GRAB_INTERVAL_MS, value.coerceIn(800L, 60_000L)).apply()
+
+    /** basic = intervalo fijo; smart = espera aleatoria entre min y max (segundos). */
+    var flexClickMode: String
+        get() = prefs.getString(KEY_FLEX_CLICK_MODE, CLICK_MODE_BASIC) ?: CLICK_MODE_BASIC
+        set(value) = prefs.edit().putString(KEY_FLEX_CLICK_MODE, value).apply()
+
+    var flexSmartClickMinSec: Int
+        get() = prefs.getInt(KEY_FLEX_SMART_MIN_SEC, 1).coerceIn(1, 3600)
+        set(value) = prefs.edit().putInt(KEY_FLEX_SMART_MIN_SEC, value.coerceIn(1, 3600)).apply()
+
+    var flexSmartClickMaxSec: Int
+        get() = prefs.getInt(KEY_FLEX_SMART_MAX_SEC, 6).coerceIn(1, 3600)
+        set(value) = prefs.edit().putInt(KEY_FLEX_SMART_MAX_SEC, value.coerceIn(1, 3600)).apply()
+
+    /** Texto exacto del botón a pulsar (ej. Refresh). */
+    var flexRefreshButtonText: String
+        get() = prefs.getString(KEY_FLEX_REFRESH_BUTTON_TEXT, DEFAULT_REFRESH_BUTTON) ?: DEFAULT_REFRESH_BUTTON
+        set(value) = prefs.edit().putString(KEY_FLEX_REFRESH_BUTTON_TEXT, value.trim()).apply()
+
+    /** Fragmento que debe aparecer en pantalla para aplicar el clic (ej. Offers). Vacío = cualquier pantalla. */
+    var flexClickScreenText: String
+        get() = prefs.getString(KEY_FLEX_CLICK_SCREEN_TEXT, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_FLEX_CLICK_SCREEN_TEXT, value.trim()).apply()
+
+    fun nextGrabDelayMs(): Long {
+        if (flexClickMode == CLICK_MODE_SMART) {
+            val min = flexSmartClickMinSec.coerceAtLeast(1)
+            val max = flexSmartClickMaxSec.coerceAtLeast(min)
+            return (min..max).random().toLong() * 1000L
+        }
+        return flexGrabIntervalMs
+    }
 
     var autoPauseOnCaptcha: Boolean
         get() = prefs.getBoolean(KEY_AUTO_PAUSE_CAPTCHA, true)
@@ -76,6 +108,28 @@ class AppSettings(context: Context) {
     var flexAutoReturnToOffers: Boolean
         get() = prefs.getBoolean(KEY_AUTO_RETURN_OFFERS, true)
         set(value) = prefs.edit().putBoolean(KEY_AUTO_RETURN_OFFERS, value).apply()
+
+    /** Pausa el bot al detectar notificación con texto configurado (Pause by over clicks). */
+    var pauseByOverClicksEnabled: Boolean
+        get() = prefs.getBoolean(KEY_PAUSE_OVER_CLICKS, false)
+        set(value) = prefs.edit().putBoolean(KEY_PAUSE_OVER_CLICKS, value).apply()
+
+    var pauseByOverClicksMatchText: String
+        get() = prefs.getString(KEY_PAUSE_OVER_CLICKS_TEXT, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_PAUSE_OVER_CLICKS_TEXT, value.trim()).apply()
+
+    var pauseByOverClicksPauseSoundUri: String
+        get() = prefs.getString(KEY_PAUSE_OVER_CLICKS_PAUSE_SOUND, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_PAUSE_OVER_CLICKS_PAUSE_SOUND, value).apply()
+
+    var pauseByOverClicksResumeSoundUri: String
+        get() = prefs.getString(KEY_PAUSE_OVER_CLICKS_RESUME_SOUND, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_PAUSE_OVER_CLICKS_RESUME_SOUND, value).apply()
+
+    /** Minutos de espera antes de reanudar el bot automáticamente. */
+    var pauseByOverClicksResumeMinutes: Int
+        get() = prefs.getInt(KEY_PAUSE_OVER_CLICKS_MINUTES, 5).coerceIn(1, 24 * 60)
+        set(value) = prefs.edit().putInt(KEY_PAUSE_OVER_CLICKS_MINUTES, value.coerceIn(1, 24 * 60)).apply()
 
     var overlayPosX: Int
         get() = prefs.getInt(KEY_OVERLAY_X, -1)
@@ -133,10 +187,23 @@ class AppSettings(context: Context) {
         private const val KEY_ONLY_REFRESH = "flex_only_refresh"
         private const val KEY_CANCEL_BAD_BLOCKS = "flex_cancel_bad_blocks"
         private const val KEY_GRAB_INTERVAL_MS = "flex_grab_interval_ms"
+        private const val KEY_FLEX_CLICK_MODE = "flex_click_mode"
+        private const val KEY_FLEX_SMART_MIN_SEC = "flex_smart_click_min_sec"
+        private const val KEY_FLEX_SMART_MAX_SEC = "flex_smart_click_max_sec"
+        private const val KEY_FLEX_REFRESH_BUTTON_TEXT = "flex_refresh_button_text"
+        private const val KEY_FLEX_CLICK_SCREEN_TEXT = "flex_click_screen_text"
+        const val CLICK_MODE_BASIC = "basic"
+        const val CLICK_MODE_SMART = "smart"
+        const val DEFAULT_REFRESH_BUTTON = "Refresh"
         private const val KEY_AUTO_PAUSE_CAPTCHA = "auto_pause_captcha"
         private const val KEY_AUTO_PAUSE_ACCEPT = "auto_pause_accept"
         private const val KEY_AUTO_PAUSE_RESERVED = "auto_pause_reserved"
         private const val KEY_AUTO_RETURN_OFFERS = "flex_auto_return_offers"
+        private const val KEY_PAUSE_OVER_CLICKS = "pause_by_over_clicks"
+        private const val KEY_PAUSE_OVER_CLICKS_TEXT = "pause_by_over_clicks_text"
+        private const val KEY_PAUSE_OVER_CLICKS_PAUSE_SOUND = "pause_by_over_clicks_pause_sound"
+        private const val KEY_PAUSE_OVER_CLICKS_RESUME_SOUND = "pause_by_over_clicks_resume_sound"
+        private const val KEY_PAUSE_OVER_CLICKS_MINUTES = "pause_by_over_clicks_minutes"
         private const val KEY_OVERLAY_X = "overlay_pos_x"
         private const val KEY_OVERLAY_Y = "overlay_pos_y"
         private const val KEY_FLEX_TARIFF_MODE = "flex_tariff_mode"

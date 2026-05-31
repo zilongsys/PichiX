@@ -75,4 +75,15 @@
     <color name="hist_action_txt_bg">#8B5CF6</color>
     <color name="hist_action_today_bg">#D97706</color>
     <color name="hist_action_all_bg">#EF4444</color>
+
+    <color name="flex_block_whole_foods_bg">#2D6A4F</color>
+    <color name="flex_block_whole_foods_icon">#FFFFFF</color>
+    <color name="flex_block_amazon_bg">#FF9900</color>
+    <color name="flex_block_amazon_icon">#FFFFFF</color>
+    <color name="flex_block_sub_same_day_bg">#2563EB</color>
+    <color name="flex_block_sub_same_day_icon">#FFFFFF</color>
+    <color name="flex_block_other_bg">#64748B</color>
+    <color name="flex_block_other_icon">#FFFFFF</color>
+    <color name="flex_block_all_bg">#7C3AED</color>
+    <color name="flex_block_all_icon">#FFFFFF</color>
 </resources>

@@ -37,6 +37,11 @@ import com.oceanlab.pichix.data.FlexAlertRule
 import com.oceanlab.pichix.data.FlexAlertRulesStore
 import com.oceanlab.pichix.service.FlexNotificationListenerService
 import com.oceanlab.pichix.util.AlertManager
+import com.oceanlab.pichix.util.MatchTextParser
+import com.oceanlab.pichix.util.SoundPickerHelper
+import com.oceanlab.pichix.util.SoundUriLabel
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.button.MaterialButtonToggleGroup
 
 class FlexAlertasFragment : Fragment() {
 
@@ -50,9 +55,12 @@ class FlexAlertasFragment : Fragment() {
     private lateinit var switchAlertService: SwitchMaterial
     private lateinit var scrollView: ScrollView
     private var draftSoundUri: String = ""
+    private var draftMatchMode: String = FlexAlertRule.MATCH_ANY
     private var pickingRuleId: String? = null
     private var onSoundPicked: ((String) -> Unit)? = null
     private var ringtoneFocusRestore: View? = null
+    private lateinit var audioFilePicker: SoundPickerHelper
+    private var matchModeToggle: MaterialButtonToggleGroup? = null
 
     private data class IconAction(
         val iconRes: Int,
@@ -162,9 +170,42 @@ class FlexAlertasFragment : Fragment() {
             addView(label("Nombre"))
             etName = input("ej: Oferta reservada")
             addView(etName)
-            addView(label("Texto a detectar"))
-            etMatch = input("ej: reserved, scheduled, block")
+            addView(label("Textos a detectar"))
+            etMatch = input("Uno por línea o separados por coma").apply {
+                maxLines = 4
+                setSingleLine(false)
+                inputType = android.text.InputType.TYPE_CLASS_TEXT or
+                    android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
+            }
             addView(etMatch)
+            addView(smallText("Una alerta puede vigilar varios textos. Elige si basta con uno (cualquiera) o deben aparecer todos."))
+            matchModeToggle = MaterialButtonToggleGroup(context).apply {
+                isSingleSelection = true
+                isSelectionRequired = true
+                addView(MaterialButton(context, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                    id = View.generateViewId()
+                    text = "Cualquiera"
+                    tag = FlexAlertRule.MATCH_ANY
+                })
+                addView(MaterialButton(context, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                    id = View.generateViewId()
+                    text = "Todas"
+                    tag = FlexAlertRule.MATCH_ALL
+                })
+                check((getChildAt(0) as MaterialButton).id)
+                addOnButtonCheckedListener { _, checkedId, isChecked ->
+                    if (!isChecked) return@addOnButtonCheckedListener
+                    draftMatchMode = when (checkedId) {
+                        (getChildAt(1) as MaterialButton).id -> FlexAlertRule.MATCH_ALL
+                        else -> FlexAlertRule.MATCH_ANY
+                    }
+                }
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                ).apply { bottomMargin = dp(10) }
+            }
+            addView(matchModeToggle)
             addView(label("Sonido"))
             tvSoundDraft = smallText(soundName(draftSoundUri))
             addView(tvSoundDraft)
@@ -177,6 +218,12 @@ class FlexAlertasFragment : Fragment() {
             addView(iconActionBar(
                 IconAction(R.drawable.ic_btn_music, "Elegir sonido") {
                     launchRingtonePicker(draftSoundUri)
+                },
+                IconAction(android.R.drawable.ic_menu_upload, "Audio del dispositivo") {
+                    launchAudioPicker { picked ->
+                        draftSoundUri = picked
+                        tvSoundDraft.text = soundName(picked)
+                    }
                 },
                 IconAction(android.R.drawable.ic_menu_preferences, "Sonido del sistema") {
                     draftSoundUri = ""
@@ -206,6 +253,11 @@ class FlexAlertasFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         settings = AppSettings(requireContext())
+        audioFilePicker = SoundPickerHelper(this) { uri ->
+            val consumer = onSoundPicked
+            onSoundPicked = null
+            consumer?.invoke(uri)
+        }
         scrollView.setupFormFocus()
         switchAlertService.isChecked = settings.flexAlertsEnabled
         switchAlertService.setOnCheckedChangeRetainingFocus(scrollView) { checked ->
@@ -241,9 +293,9 @@ class FlexAlertasFragment : Fragment() {
     }
 
     private fun addRule() {
-        val match = etMatch.text?.toString()?.trim().orEmpty()
-        if (match.isBlank()) {
-            Toast.makeText(context, "Escribe el texto que debe detectar", Toast.LENGTH_SHORT).show()
+        val texts = FlexAlertRule.parseMatchInput(etMatch.text?.toString().orEmpty())
+        if (texts.isEmpty()) {
+            Toast.makeText(context, "Escribe al menos un texto a detectar", Toast.LENGTH_SHORT).show()
             etMatch.requestFocus()
             return
         }
@@ -251,7 +303,8 @@ class FlexAlertasFragment : Fragment() {
         rules.add(
             FlexAlertRule(
                 name = etName.text?.toString()?.trim().orEmpty(),
-                matchText = match,
+                matchTexts = texts,
+                matchMode = draftMatchMode,
                 soundUri = draftSoundUri,
                 repeatCount = draftRepeatCount(),
             )
@@ -302,7 +355,7 @@ class FlexAlertasFragment : Fragment() {
                 }
             })
             addView(header)
-            addView(smallText("Detecta: \"${rule.matchText}\""))
+            addView(smallText("Detecta: ${rule.matchSummary()}"))
             addView(smallText("Sonido: ${soundName(rule.soundUri)}"))
             addView(smallText("Repite: ${rule.repeatCount} veces"))
             addView(iconActionBar(
@@ -311,6 +364,12 @@ class FlexAlertasFragment : Fragment() {
                 },
                 IconAction(R.drawable.ic_btn_music, "Elegir sonido") {
                     launchRingtonePicker(rule.soundUri, ruleId = rule.id)
+                },
+                IconAction(android.R.drawable.ic_menu_upload, "Audio del dispositivo") {
+                    launchAudioPicker { picked ->
+                        saveRule(rule.id) { it.copy(soundUri = picked) }
+                        refreshRulesList()
+                    }
                 },
                 IconAction(android.R.drawable.ic_menu_preferences, "Sonido del sistema") {
                     saveRule(rule.id) { it.copy(soundUri = "") }
@@ -338,7 +397,14 @@ class FlexAlertasFragment : Fragment() {
 
     private fun showEditRuleDialog(rule: FlexAlertRule) {
         val etEditName = input("Nombre (opcional)").apply { setText(rule.name) }
-        val etEditMatch = input("Texto a detectar").apply { setText(rule.matchText) }
+        val etEditMatch = input("Textos a detectar").apply {
+            setText(MatchTextParser.formatForEdit(rule.effectiveMatchTexts()))
+            maxLines = 4
+            setSingleLine(false)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or
+                android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
+        }
+        var editMatchMode = rule.matchMode
         val etEditRepeat = input("Veces que suena").apply {
             inputType = android.text.InputType.TYPE_CLASS_NUMBER
             setText(rule.repeatCount.toString())
@@ -353,8 +419,32 @@ class FlexAlertasFragment : Fragment() {
             ).apply { bottomMargin = 0 }
             addView(label("Nombre"))
             addView(etEditName)
-            addView(label("Texto a detectar"))
+            addView(label("Textos a detectar"))
             addView(etEditMatch)
+            val editModeGroup = MaterialButtonToggleGroup(context).apply {
+                isSingleSelection = true
+                isSelectionRequired = true
+                val btnAny = MaterialButton(context, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                    id = View.generateViewId()
+                    text = "Cualquiera"
+                }
+                val btnAll = MaterialButton(context, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                    id = View.generateViewId()
+                    text = "Todas"
+                }
+                addView(btnAny)
+                addView(btnAll)
+                check(if (editMatchMode == FlexAlertRule.MATCH_ALL) btnAll.id else btnAny.id)
+                addOnButtonCheckedListener { _, checkedId, isChecked ->
+                    if (!isChecked) return@addOnButtonCheckedListener
+                    editMatchMode = if (checkedId == btnAll.id) FlexAlertRule.MATCH_ALL else FlexAlertRule.MATCH_ANY
+                }
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                ).apply { bottomMargin = dp(8) }
+            }
+            addView(editModeGroup)
             addView(label("Sonido"))
             addView(tvEditSound)
             addView(label("Veces que suena"))
@@ -363,6 +453,12 @@ class FlexAlertasFragment : Fragment() {
                 IconAction(R.drawable.ic_btn_music, "Elegir sonido") {
                     ringtoneFocusRestore = etEditMatch
                     launchRingtonePicker(editSoundUri) { picked ->
+                        editSoundUri = picked
+                        tvEditSound.text = soundName(picked)
+                    }
+                },
+                IconAction(android.R.drawable.ic_menu_upload, "Audio del dispositivo") {
+                    launchAudioPicker { picked ->
                         editSoundUri = picked
                         tvEditSound.text = soundName(picked)
                     }
@@ -390,9 +486,9 @@ class FlexAlertasFragment : Fragment() {
 
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                val match = etEditMatch.text?.toString()?.trim().orEmpty()
-                if (match.isBlank()) {
-                    Toast.makeText(context, "El texto a detectar no puede estar vacío", Toast.LENGTH_SHORT).show()
+                val texts = FlexAlertRule.parseMatchInput(etEditMatch.text?.toString().orEmpty())
+                if (texts.isEmpty()) {
+                    Toast.makeText(context, "Escribe al menos un texto a detectar", Toast.LENGTH_SHORT).show()
                     etEditMatch.requestFocus()
                     return@setOnClickListener
                 }
@@ -402,7 +498,8 @@ class FlexAlertasFragment : Fragment() {
                     saveRule(rule.id) {
                         it.copy(
                             name = etEditName.text?.toString()?.trim().orEmpty(),
-                            matchText = match,
+                            matchTexts = texts,
+                            matchMode = editMatchMode,
                             soundUri = editSoundUri,
                             repeatCount = repeat,
                         )
@@ -453,15 +550,13 @@ class FlexAlertasFragment : Fragment() {
         ringtonePicker.launch(intent)
     }
 
-    private fun soundName(uriStr: String): String {
-        if (uriStr.isBlank()) return "Sonido del sistema"
-        return try {
-            RingtoneManager.getRingtone(requireContext(), Uri.parse(uriStr))?.getTitle(requireContext())
-                ?: "Sonido personalizado"
-        } catch (_: Exception) {
-            "Sonido personalizado"
-        }
+    private fun launchAudioPicker(onPicked: (String) -> Unit) {
+        onSoundPicked = onPicked
+        audioFilePicker.pickAudioFromDevice()
     }
+
+    private fun soundName(uriStr: String): String =
+        SoundUriLabel.label(requireContext(), uriStr)
 
     private fun isNotificationAccessEnabled(): Boolean {
         val enabled = Settings.Secure.getString(

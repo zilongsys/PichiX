@@ -121,8 +121,7 @@ class PichixAccessibilityService : AccessibilityService() {
         handler.removeCallbacks(grabLoopRunnable)
         handler.removeCallbacks(timerRunnable)
         if (!settings.isBotEnabled) return
-        val interval = settings.flexGrabIntervalMs
-        handler.postDelayed(grabLoopRunnable, interval)
+        handler.postDelayed(grabLoopRunnable, settings.nextGrabDelayMs())
         handler.postDelayed(timerRunnable, FlexState.flexTimerSec * 1000L)
     }
 
@@ -164,12 +163,17 @@ class PichixAccessibilityService : AccessibilityService() {
         if (!settings.isBotEnabled || pausedAfterAccept || grabInFlight) return
         grabInFlight = true
         try {
+            val text = reader.readFullScreenText()
             if (settings.flexOnlyRefresh) {
-                reader.clickRefresh()
+                if (reader.screenMatchesForClick(settings.flexClickScreenText, text)) {
+                    val clicked = reader.clickTargetButton(settings.flexRefreshButtonText)
+                    if (!clicked) {
+                        postObserver("Clic: no se encontró «${settings.flexRefreshButtonText}»")
+                    }
+                }
                 return
             }
 
-            val text = reader.readFullScreenText()
             val flags = reader.detectScreenFlags(text)
             if (flags.captcha) return
 

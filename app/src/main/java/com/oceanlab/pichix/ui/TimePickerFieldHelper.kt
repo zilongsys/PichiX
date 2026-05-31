@@ -1,6 +1,9 @@
 package com.oceanlab.pichix.ui
 
+import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.timepicker.MaterialTimePicker
@@ -29,7 +32,10 @@ object TimePickerFieldHelper {
                 field.setText(formatHHmm(picker.hour, picker.minute))
                 onChanged()
             }
-            picker.show(fragment.parentFragmentManager, "time_${field.id}")
+            val fm = dialogFragmentManager(fragment)
+            if (!fm.isStateSaved) {
+                picker.show(fm, "time_${field.id}")
+            }
         }
         field.setOnClickListener { openPicker() }
         layout?.setEndIconOnClickListener { openPicker() }
@@ -63,6 +69,13 @@ object TimePickerFieldHelper {
         val (h, m) = parseHHmm(text) ?: return null
         return h * 60 + m
     }
+
+    private fun dialogFragmentManager(fragment: Fragment): FragmentManager =
+        when (fragment) {
+            is BottomSheetDialogFragment -> fragment.childFragmentManager
+            is DialogFragment -> fragment.childFragmentManager
+            else -> fragment.parentFragmentManager
+        }
 
     fun durationMinutesToHHmm(totalMinutes: Int): String {
         val h = (totalMinutes / 60).coerceAtLeast(0)

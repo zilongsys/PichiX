@@ -51,7 +51,7 @@ class FlexTariffRulesAdapter(
 
         holder.frameOrderIcon.setBackgroundResource(typeUi.badgeBackgroundRes)
         holder.ivOrderIcon.setImageResource(rule.blockTypeIconRes())
-        holder.ivOrderIcon.setColorFilter(ContextCompat.getColor(ctx, typeUi.iconTintColorRes))
+        holder.ivOrderIcon.setColorFilter(safeColor(ctx, typeUi.iconTintColorRes))
 
         val hint = rule.cardBlockHint()
         if (hint != null) {
@@ -97,6 +97,13 @@ class FlexTariffRulesAdapter(
     }
 
     override fun getItemCount(): Int = rules.size
+
+    private fun safeColor(ctx: android.content.Context, resId: Int): Int =
+        try {
+            ContextCompat.getColor(ctx, resId)
+        } catch (_: Exception) {
+            ContextCompat.getColor(ctx, R.color.text_primary)
+        }
 
     class Holder(v: View) : RecyclerView.ViewHolder(v) {
         val tvIndex: TextView = v.findViewById(R.id.tvRuleIndex)
