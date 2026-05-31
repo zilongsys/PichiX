@@ -320,6 +320,52 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <LinearLayout style="@style/Row">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        style="@style/RowLabel"
+                        android:layout_width="match_parent"
+                        android:layout_weight="0"
+                        android:text="@string/config_click_refresh_title" />
+                    <TextView
+                        style="@style/RowHint"
+                        android:text="@string/config_click_refresh_hint" />
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchClickRefresh"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <View style="@style/DividerFull" />
+
+            <LinearLayout style="@style/Row">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        style="@style/RowLabel"
+                        android:layout_width="match_parent"
+                        android:layout_weight="0"
+                        android:text="@string/config_disable_scroll_title" />
+                    <TextView
+                        style="@style/RowHint"
+                        android:text="@string/config_disable_scroll_hint" />
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchDisableListScroll"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <View style="@style/DividerFull" />
+
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

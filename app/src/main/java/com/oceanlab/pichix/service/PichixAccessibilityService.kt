@@ -186,7 +186,7 @@ class PichixAccessibilityService : AccessibilityService() {
         grabInFlight = true
         try {
             val text = reader.readFullScreenText()
-            if (settings.flexOnlyRefresh &&
+            if (settings.flexClickRefreshEnabled &&
                 reader.screenMatchesForClick(
                     settings.flexClickScreenText,
                     text,
@@ -371,7 +371,7 @@ class PichixAccessibilityService : AccessibilityService() {
     }
 
     private fun maybeScrollList() {
-        if (settings.flexOnlyRefresh || scrollInFlight) return
+        if (settings.flexDisableListScroll || scrollInFlight) return
         val sig = reader.offerListSignature()
         if (sig.isNotEmpty() && sig == lastOfferSignature) {
             FlexState.scrollNeeded = true

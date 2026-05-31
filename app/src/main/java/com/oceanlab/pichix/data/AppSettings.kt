@@ -48,19 +48,29 @@ class AppSettings(context: Context) {
         get() = prefs.getInt(KEY_MIN_START_HOUR, 6)
         set(value) = prefs.edit().putInt(KEY_MIN_START_HOUR, value.coerceIn(0, 23)).apply()
 
-    /** Si true, pulsa Refresh cada ciclo; el grabber sigue evaluando ofertas después. */
-    var flexOnlyRefresh: Boolean
-        get() {
-            if (!prefs.getBoolean(KEY_ONLY_REFRESH_GRAB_MIGRATION, false)) {
-                prefs.edit()
-                    .putBoolean(KEY_ONLY_REFRESH, false)
-                    .putBoolean(KEY_ONLY_REFRESH_GRAB_MIGRATION, true)
-                    .apply()
-                return false
-            }
-            return prefs.getBoolean(KEY_ONLY_REFRESH, false)
-        }
-        set(value) = prefs.edit().putBoolean(KEY_ONLY_REFRESH, value).apply()
+    /** Config → Clics: pulsar Refresh al inicio de cada ciclo (independiente de tarifas). */
+    var flexClickRefreshEnabled: Boolean
+        get() = prefs.getBoolean(KEY_CLICK_REFRESH_ENABLED, false)
+        set(value) = prefs.edit().putBoolean(KEY_CLICK_REFRESH_ENABLED, value).apply()
+
+    /** Config → Clics: no hacer scroll en la lista de ofertas. */
+    var flexDisableListScroll: Boolean
+        get() = prefs.getBoolean(KEY_DISABLE_LIST_SCROLL, false)
+        set(value) = prefs.edit().putBoolean(KEY_DISABLE_LIST_SCROLL, value).apply()
+
+    init {
+        migrateLegacyOnlyRefreshFlag()
+    }
+
+    private fun migrateLegacyOnlyRefreshFlag() {
+        if (prefs.getBoolean(KEY_ONLY_REFRESH_SPLIT_MIGRATION, false)) return
+        val legacy = prefs.getBoolean(KEY_ONLY_REFRESH, false)
+        prefs.edit()
+            .putBoolean(KEY_CLICK_REFRESH_ENABLED, legacy)
+            .putBoolean(KEY_DISABLE_LIST_SCROLL, legacy)
+            .putBoolean(KEY_ONLY_REFRESH_SPLIT_MIGRATION, true)
+            .apply()
+    }
 
     var flexCancelBadBlocks: Boolean
         get() = prefs.getBoolean(KEY_CANCEL_BAD_BLOCKS, false)
@@ -260,7 +270,9 @@ class AppSettings(context: Context) {
         private const val KEY_MIN_BLOCK = "flex_min_block"
         private const val KEY_MIN_START_HOUR = "flex_min_start_hour"
         private const val KEY_ONLY_REFRESH = "flex_only_refresh"
-        private const val KEY_ONLY_REFRESH_GRAB_MIGRATION = "flex_only_refresh_grab_v16"
+        private const val KEY_CLICK_REFRESH_ENABLED = "flex_click_refresh_enabled"
+        private const val KEY_DISABLE_LIST_SCROLL = "flex_disable_list_scroll"
+        private const val KEY_ONLY_REFRESH_SPLIT_MIGRATION = "flex_only_refresh_split_v18"
         private const val KEY_CANCEL_BAD_BLOCKS = "flex_cancel_bad_blocks"
         private const val KEY_GRAB_INTERVAL_MS = "flex_grab_interval_ms"
         private const val KEY_FLEX_CLICK_MODE = "flex_click_mode"

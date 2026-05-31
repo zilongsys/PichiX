@@ -32,14 +32,12 @@ class FlexTarifasClassicFragment : Fragment() {
         val etMinHourly = view.findViewById<TextInputEditText>(R.id.etMinHourly)
         val etMinBlock = view.findViewById<TextInputEditText>(R.id.etMinBlock)
         val etMinStart = view.findViewById<TextInputEditText>(R.id.etMinStartHour)
-        val swOnlyRefresh = view.findViewById<SwitchMaterial>(R.id.switchOnlyRefresh)
         val swCancelBad = view.findViewById<SwitchMaterial>(R.id.switchCancelBadBlocks)
         val btnSave = view.findViewById<MaterialButton>(R.id.btnSaveTarifas)
 
         etMinHourly.setText(settings.flexMinHourlyRate.toString())
         etMinBlock.setText(settings.flexMinBlockPay.toInt().toString())
         etMinStart.setText(settings.flexMinStartHour.toString())
-        swOnlyRefresh.isChecked = settings.flexOnlyRefresh
         swCancelBad.isChecked = settings.flexCancelBadBlocks
 
         fun markDirty() = (requireActivity() as MainActivity).markDirty(2)
@@ -47,7 +45,6 @@ class FlexTarifasClassicFragment : Fragment() {
         etMinHourly.onUserTextChanged(onDirty = ::markDirty)
         etMinBlock.onUserTextChanged(onDirty = ::markDirty)
         etMinStart.onUserTextChanged(onDirty = ::markDirty)
-        swOnlyRefresh.setOnCheckedChangeRetainingFocus(view) { markDirty() }
         swCancelBad.setOnCheckedChangeRetainingFocus(view) { markDirty() }
 
         btnSave.setOnClickListener {
@@ -55,7 +52,6 @@ class FlexTarifasClassicFragment : Fragment() {
                 settings.flexMinHourlyRate = etMinHourly.text?.toString()?.toFloatOrNull() ?: 23f
                 settings.flexMinBlockPay = etMinBlock.text?.toString()?.toFloatOrNull() ?: 119f
                 settings.flexMinStartHour = etMinStart.text?.toString()?.toIntOrNull() ?: 6
-                settings.flexOnlyRefresh = swOnlyRefresh.isChecked
                 settings.flexCancelBadBlocks = swCancelBad.isChecked
                 (requireActivity() as MainActivity).clearDirty(2)
                 PichixAccessibilityService.syncEngine(requireContext())

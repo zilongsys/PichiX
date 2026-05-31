@@ -8,6 +8,15 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.18 (Mayo 2026)
+
+### Actualizado
+- **Refresh y scroll** salen de Tarifas → están en **Config → Clics del bot** (independientes de tarifa clásica o detallado).
+- Dos opciones: «Pulsar Refresh cada ciclo» y «Sin scroll en la lista».
+- El grabber (reglas + tomar bloques) funciona igual con cualquier modo de tarifa.
+
+---
+
 ## v0.1.17 (Mayo 2026)
 
 ### Corregido

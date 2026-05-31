@@ -78,29 +78,6 @@
                         style="@style/RowLabel"
                         android:layout_width="match_parent"
                         android:layout_weight="0"
-                        android:text="Solo refrescar (sin scroll)" />
-                    <TextView
-                        style="@style/RowHint"
-                        android:text="Equivalente a lv_FLX1-OnlyRefresh" />
-                </LinearLayout>
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/switchOnlyRefresh"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-
-            <View style="@style/DividerFull" />
-
-            <LinearLayout style="@style/Row">
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-                    <TextView
-                        style="@style/RowLabel"
-                        android:layout_width="match_parent"
-                        android:layout_weight="0"
                         android:text="Cancelar bloques malos" />
                     <TextView
                         style="@style/RowHint"

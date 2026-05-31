@@ -93,6 +93,8 @@ class FlexConfigFragment : Fragment() {
         val etBasicSec = view.findViewById<TextInputEditText>(R.id.etBasicClickIntervalSec)
         val etSmartMin = view.findViewById<TextInputEditText>(R.id.etSmartClickMinSec)
         val etSmartMax = view.findViewById<TextInputEditText>(R.id.etSmartClickMaxSec)
+        val swClickRefresh = view.findViewById<SwitchMaterial>(R.id.switchClickRefresh)
+        val swDisableScroll = view.findViewById<SwitchMaterial>(R.id.switchDisableListScroll)
         val etRefreshBtn = view.findViewById<TextInputEditText>(R.id.etRefreshButtonText)
         val etClickScreen = view.findViewById<TextInputEditText>(R.id.etClickScreenText)
         val toggleRefreshMode = view.findViewById<MaterialButtonToggleGroup>(R.id.toggleRefreshButtonMatchMode)
@@ -121,6 +123,8 @@ class FlexConfigFragment : Fragment() {
         etBasicSec.setText(basicSec.toString())
         etSmartMin.setText(settings.flexSmartClickMinSec.toString())
         etSmartMax.setText(settings.flexSmartClickMaxSec.toString())
+        swClickRefresh.isChecked = settings.flexClickRefreshEnabled
+        swDisableScroll.isChecked = settings.flexDisableListScroll
         etRefreshBtn.setText(settings.flexRefreshButtonText)
         etClickScreen.setText(settings.flexClickScreenText)
         val smartMode = settings.flexClickMode == AppSettings.CLICK_MODE_SMART
@@ -176,7 +180,7 @@ class FlexConfigFragment : Fragment() {
                 persistAllFields(
                     etPackage, swShowNames, swAutoAccept, swPauseOver, swForeground, swDebug, swFileLog,
                     etPauseText, etPauseMinutes, toggleClickMode, etBasicSec, etSmartMin, etSmartMax,
-                    etRefreshBtn, etClickScreen, toggleRefreshMode, swRefreshIgnore,
+                    swClickRefresh, swDisableScroll, etRefreshBtn, etClickScreen, toggleRefreshMode, swRefreshIgnore,
                     toggleScreenMode, swScreenIgnore, togglePauseMode, swPauseIgnore,
                 )
                 (requireActivity() as MainActivity).apply {
@@ -225,6 +229,14 @@ class FlexConfigFragment : Fragment() {
         etBasicSec.onUserTextChanged(onDirty = { markDirty() })
         etSmartMin.onUserTextChanged(onDirty = { markDirty() })
         etSmartMax.onUserTextChanged(onDirty = { markDirty() })
+        swClickRefresh.setOnCheckedChangeRetainingFocus(view) {
+            settings.flexClickRefreshEnabled = it
+            markDirty()
+        }
+        swDisableScroll.setOnCheckedChangeRetainingFocus(view) {
+            settings.flexDisableListScroll = it
+            markDirty()
+        }
         etRefreshBtn.onUserTextChanged(onDirty = { markDirty() })
         etClickScreen.onUserTextChanged(onDirty = { markDirty() })
         toggleRefreshMode.addOnButtonCheckedListener { _, _, _ -> markDirty() }
@@ -266,6 +278,8 @@ class FlexConfigFragment : Fragment() {
         etBasicSec: TextInputEditText,
         etSmartMin: TextInputEditText,
         etSmartMax: TextInputEditText,
+        swClickRefresh: SwitchMaterial,
+        swDisableScroll: SwitchMaterial,
         etRefreshBtn: TextInputEditText,
         etClickScreen: TextInputEditText,
         toggleRefreshMode: MaterialButtonToggleGroup,
@@ -297,6 +311,8 @@ class FlexConfigFragment : Fragment() {
         val maxSec = etSmartMax.text?.toString()?.toIntOrNull()?.coerceIn(1, 3600) ?: 6
         settings.flexSmartClickMinSec = minOf(minSec, maxSec)
         settings.flexSmartClickMaxSec = maxOf(minSec, maxSec)
+        settings.flexClickRefreshEnabled = swClickRefresh.isChecked
+        settings.flexDisableListScroll = swDisableScroll.isChecked
         settings.flexRefreshButtonText =
             etRefreshBtn.text?.toString()?.trim().orEmpty().ifBlank { AppSettings.DEFAULT_REFRESH_BUTTON }
         settings.flexRefreshButtonMatchMode =
