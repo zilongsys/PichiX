@@ -385,25 +385,25 @@ class PichixAccessibilityService : AccessibilityService() {
         val onScrollDone: (Boolean) -> Unit = { dispatched ->
             if (!dispatched) {
                 scrollInFlight = false
-                return@onScrollDone
-            }
-            handler.postDelayed({
-                val after = reader.offerListSignature()
-                val moved = scrollSigsBefore.isNotEmpty() && scrollSigsBefore != after
-                if (!moved) {
-                    if (down) {
-                        scrollingDown = false
-                        postObserver("Fin de lista (abajo) → scroll arriba")
+            } else {
+                handler.postDelayed({
+                    val after = reader.offerListSignature()
+                    val moved = scrollSigsBefore.isNotEmpty() && scrollSigsBefore != after
+                    if (!moved) {
+                        if (down) {
+                            scrollingDown = false
+                            postObserver("Fin de lista (abajo) → scroll arriba")
+                        } else {
+                            scrollingDown = true
+                            postObserver("Fin de lista (arriba) → scroll abajo")
+                        }
+                        FlexState.scrollNeeded = true
                     } else {
-                        scrollingDown = true
-                        postObserver("Fin de lista (arriba) → scroll abajo")
+                        FlexState.scrollNeeded = false
                     }
-                    FlexState.scrollNeeded = true
-                } else {
-                    FlexState.scrollNeeded = false
-                }
-                scrollInFlight = false
-            }, FlexListScroller.SETTLE_MS)
+                    scrollInFlight = false
+                }, FlexListScroller.SETTLE_MS)
+            }
         }
         if (down) reader.scrollDown(onFinished = onScrollDone) else reader.scrollUp(onFinished = onScrollDone)
     }
