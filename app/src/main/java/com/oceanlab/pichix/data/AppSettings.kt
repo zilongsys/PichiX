@@ -58,6 +58,35 @@ class AppSettings(context: Context) {
         get() = prefs.getBoolean(KEY_AUTO_SCROLL_ENABLED, false)
         set(value) = prefs.edit().putBoolean(KEY_AUTO_SCROLL_ENABLED, value).apply()
 
+    /** first = primera válida en lista; best = mejor según [flexOfferRankCriterion]. */
+    var flexOfferPickMode: String
+        get() = prefs.getString(KEY_OFFER_PICK_MODE, OFFER_PICK_BEST) ?: OFFER_PICK_BEST
+        set(value) = prefs.edit().putString(KEY_OFFER_PICK_MODE, value).apply()
+
+    var flexOfferRankCriterion: String
+        get() = prefs.getString(KEY_OFFER_RANK_CRITERION, OFFER_RANK_HOURLY) ?: OFFER_RANK_HOURLY
+        set(value) = prefs.edit().putString(KEY_OFFER_RANK_CRITERION, value).apply()
+
+    /** Historial: ventana dedup VISTA (ms). */
+    var dedupWindowMs: Long
+        get() = prefs.getLong(KEY_DEDUP_WINDOW_MS, 45_000L).coerceIn(5_000L, 600_000L)
+        set(value) = prefs.edit().putLong(KEY_DEDUP_WINDOW_MS, value.coerceIn(5_000L, 600_000L)).apply()
+
+    /** URI SAF para export TXT del historial. */
+    var txtSaveUri: String
+        get() = prefs.getString(KEY_TXT_SAVE_URI, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_TXT_SAVE_URI, value).apply()
+
+    fun usesBestOfferPick(): Boolean = flexOfferPickMode == OFFER_PICK_BEST
+
+    fun offerRankLabel(): String = when (flexOfferRankCriterion) {
+        OFFER_RANK_BLOCK_PAY -> "\$/bloque"
+        OFFER_RANK_DURATION_MIN -> "duración mín."
+        OFFER_RANK_DURATION_MAX -> "duración máx."
+        OFFER_RANK_START_SOONEST -> "empieza antes"
+        else -> "\$/h"
+    }
+
     init {
         migrateLegacyOnlyRefreshFlag()
         migrateAutoScrollFromDisable()
@@ -273,6 +302,17 @@ class AppSettings(context: Context) {
         private const val KEY_DISABLE_LIST_SCROLL = "flex_disable_list_scroll"
         private const val KEY_AUTO_SCROLL_ENABLED = "flex_auto_scroll_enabled"
         private const val KEY_AUTO_SCROLL_MIGRATION = "flex_auto_scroll_migrate_v19"
+        private const val KEY_OFFER_PICK_MODE = "flex_offer_pick_mode"
+        private const val KEY_OFFER_RANK_CRITERION = "flex_offer_rank_criterion"
+        private const val KEY_DEDUP_WINDOW_MS = "dedup_window_ms"
+        private const val KEY_TXT_SAVE_URI = "txt_save_uri"
+        const val OFFER_PICK_FIRST = "first"
+        const val OFFER_PICK_BEST = "best"
+        const val OFFER_RANK_HOURLY = "hourly"
+        const val OFFER_RANK_BLOCK_PAY = "block_pay"
+        const val OFFER_RANK_DURATION_MIN = "duration_min"
+        const val OFFER_RANK_DURATION_MAX = "duration_max"
+        const val OFFER_RANK_START_SOONEST = "start_soonest"
         private const val KEY_ONLY_REFRESH_SPLIT_MIGRATION = "flex_only_refresh_split_v18"
         private const val KEY_CANCEL_BAD_BLOCKS = "flex_cancel_bad_blocks"
         private const val KEY_GRAB_INTERVAL_MS = "flex_grab_interval_ms"

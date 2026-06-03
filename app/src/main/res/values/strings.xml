@@ -68,6 +68,14 @@
     <string name="config_click_refresh_hint">Al inicio de cada ciclo pulsa el botón Refresh de Flex (si el texto de pantalla coincide). Luego evalúa ofertas.</string>
     <string name="config_auto_scroll_title">Scroll automático en la lista</string>
     <string name="config_auto_scroll_hint">Cada ciclo desliza en la zona de ofertas (posición aleatoria, estilo MakiX). Al llegar abajo sube; al llegar arriba baja.</string>
+    <string name="config_offer_pick_label">Cuál tomar si hay varias válidas en pantalla</string>
+    <string name="config_offer_pick_first">Primera válida</string>
+    <string name="config_offer_pick_best">Mejor de pantalla</string>
+    <string name="config_offer_rank_label">Criterio «Mejor de pantalla»</string>
+    <string name="config_offer_rank_hourly">$/h</string>
+    <string name="config_offer_rank_block">$ bloque</string>
+    <string name="config_offer_rank_dur_min">Duración ↓</string>
+    <string name="config_offer_rank_start">Empieza antes</string>
 
     <string name="config_section_monitor_packages">APPS VIGILADAS (AVANZADO)</string>
     <string name="config_monitor_csv_hint">Paquete(s) Android — se guarda al pulsar Guardar</string>

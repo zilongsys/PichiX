@@ -8,6 +8,7 @@ import android.os.Looper
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.oceanlab.pichix.analyzer.FlexOfferSelector
 import com.oceanlab.pichix.analyzer.FlexGrabResult
 import com.oceanlab.pichix.analyzer.FlexBlockOffer
 import com.oceanlab.pichix.analyzer.FlexGrabberEvaluator
@@ -16,6 +17,7 @@ import com.oceanlab.pichix.data.PichiFileLog
 import com.oceanlab.pichix.data.FlexState
 import com.oceanlab.pichix.data.FlexTariffRulesStore
 import com.oceanlab.pichix.data.MonitorPackages
+import com.oceanlab.pichix.data.OfferLogEntry
 import com.oceanlab.pichix.data.OfferLogger
 import com.oceanlab.pichix.data.OfferStatus
 import com.oceanlab.pichix.service.accessibility.FlexForegroundGate
@@ -244,28 +246,28 @@ class PichixAccessibilityService : AccessibilityService() {
                 return
             }
 
-            for (offer in offers) {
-                when (FlexGrabberEvaluator.evaluateListRow(offer, settings, text)) {
-                    FlexGrabResult.ACCEPT, FlexGrabResult.SIMULATED_ACCEPT -> {
-                        postObserver(
-                            "Tomando: ${offer.stationText} ${offer.payText} " +
-                                "(${offer.hourlyRate?.let { "%.1f".format(it) } ?: "?"} \$/h)",
-                        )
-                        handleAccept(offer)
-                        return
-                    }
+            val evaluated = offers.map { offer ->
+                FlexOfferSelector.EvaluatedOffer(
+                    offer,
+                    FlexGrabberEvaluator.evaluateListRow(offer, settings, text),
+                )
+            }
+            val winner = FlexOfferSelector.pickAcceptable(evaluated, settings)
+            if (winner != null) {
+                postObserver(FlexOfferSelector.selectionSummary(winner, evaluated, settings))
+                handleAccept(winner)
+                return
+            }
+
+            for ((offer, result) in evaluated) {
+                when (result) {
                     FlexGrabResult.REJECT -> {
                         logGrabEvalThrottled(
                             "No cumple regla: ${offer.stationText} ${offer.payText} " +
                                 "(${offer.hourlyRate?.let { "%.1f".format(it) } ?: "?"} \$/h)",
                         )
                         if (settings.flexCancelBadBlocks) {
-                            logger.log(
-                                pay = offer.payText,
-                                station = offer.stationText,
-                                status = OfferStatus.REJECTED,
-                                note = "Criterio grabber",
-                            )
+                            logger.log(offer.toLogEntry(OfferStatus.REJECTED, "Criterio grabber"))
                         }
                     }
                     FlexGrabResult.SKIP -> {
@@ -273,6 +275,7 @@ class PichixAccessibilityService : AccessibilityService() {
                             "Datos incompletos: ${offer.stationText} ${offer.payText}",
                         )
                     }
+                    else -> Unit
                 }
             }
 
@@ -303,10 +306,10 @@ class PichixAccessibilityService : AccessibilityService() {
             if (!shouldSchedule) {
                 val note = if (simulation) "Simulación — detalle sin Schedule" else "Detalle abierto — sin aceptar automático"
                 logger.log(
-                    pay = offer.payText,
-                    station = station,
-                    status = OfferStatus.SIMULATED,
-                    note = note,
+                    offer.toLogEntry(
+                        if (simulation) OfferStatus.SIMULATED else OfferStatus.SIMULATED,
+                        note,
+                    ),
                 )
                 postObserver(
                     if (simulation) {
@@ -327,12 +330,7 @@ class PichixAccessibilityService : AccessibilityService() {
                 screenText = screenText,
             )
             if (detailResult != FlexGrabResult.ACCEPT) {
-                logger.log(
-                    pay = offer.payText,
-                    station = station,
-                    status = OfferStatus.REJECTED,
-                    note = "Detalle no cumple criterios",
-                )
+                logger.log(offer.toLogEntry(OfferStatus.REJECTED, "Detalle no cumple criterios", station))
                 postObserver("Rechazada en detalle: $station")
                 finishBlockTakeFlow()
                 return@postDelayed
@@ -340,10 +338,11 @@ class PichixAccessibilityService : AccessibilityService() {
 
             val scheduled = reader.clickScheduleOnDetail()
             logger.log(
-                pay = offer.payText,
-                station = station,
-                status = if (scheduled) OfferStatus.ACCEPTED else OfferStatus.REJECTED,
-                note = if (scheduled) "Schedule pulsado" else "No se encontró Schedule",
+                offer.toLogEntry(
+                    if (scheduled) OfferStatus.ACCEPTED else OfferStatus.REJECTED,
+                    if (scheduled) "Schedule pulsado" else "No se encontró Schedule",
+                    station,
+                ),
             )
             postObserver(
                 if (scheduled) {
@@ -467,5 +466,24 @@ class PichixAccessibilityService : AccessibilityService() {
     private fun broadcastState() {
         LocalBroadcastManager.getInstance(this).sendBroadcast(Intent(BOT_STATE_CHANGED))
         PichixForegroundService.refreshNotification(this)
+    }
+
+    private fun FlexBlockOffer.toLogEntry(
+        status: OfferStatus,
+        reason: String,
+        stationOverride: String = stationText,
+    ): OfferLogEntry {
+        val pay = payAmount ?: FlexGrabberEvaluator.parsePay(payText) ?: 0.0
+        val hours = durationHours ?: 0.0
+        val hourly = hourlyRate ?: if (hours > 0.1) pay / hours else 0.0
+        return OfferLogEntry(
+            price = pay,
+            hourlyRate = hourly,
+            durationHours = hours,
+            timeWindow = timeText,
+            station = stationOverride.ifBlank { stationText },
+            status = status,
+            reason = reason,
+        )
     }
 }

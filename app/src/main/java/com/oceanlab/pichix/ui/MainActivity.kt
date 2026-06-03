@@ -337,7 +337,7 @@ class MainActivity : AppCompatActivity() {
         val stats = OfferLogger(this).getTodayStats()
         tvCountToday.text = stats.accepted.toString()
         tvAvgRate.text = "\$%.2f".format(stats.totalEarned)
-        tvTotalMiles.text = kotlin.math.ceil(stats.totalMiles).toInt().toString()
+        tvTotalMiles.text = kotlin.math.ceil(stats.totalHours).toInt().toString()
     }
 
     fun markDirty(tabIndex: Int) {

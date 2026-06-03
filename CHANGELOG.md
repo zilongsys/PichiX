@@ -8,6 +8,17 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.21 (Mayo 2026)
+
+### Añadido
+- **Mejor oferta en pantalla**: el grabber evalúa todas las filas visibles y toma la mejor (por defecto mayor $/h). Config → Clics: «Primera válida» o «Mejor de pantalla» + criterio ($/h, $ bloque, duración, empieza antes).
+- **Historial estilo MakiX**: tarjetas de resumen, listado RecyclerView, export CSV/TXT, reset hoy, borrar todo, log diario detallado (`DayLogActivity`) con filtros por estado/estación e import/export.
+
+### Actualizado
+- `OfferLogger` pasa a CSV (`pichix_offers_log.csv`) con estación, $/h, duración y trazas de tiempo.
+
+---
+
 ## v0.1.20 (Mayo 2026)
 
 ### Corregido

@@ -95,6 +95,9 @@ class FlexConfigFragment : Fragment() {
         val etSmartMax = view.findViewById<TextInputEditText>(R.id.etSmartClickMaxSec)
         val swClickRefresh = view.findViewById<SwitchMaterial>(R.id.switchClickRefresh)
         val swAutoScroll = view.findViewById<SwitchMaterial>(R.id.switchAutoScroll)
+        val toggleOfferPick = view.findViewById<MaterialButtonToggleGroup>(R.id.toggleOfferPickMode)
+        val toggleOfferRank = view.findViewById<MaterialButtonToggleGroup>(R.id.toggleOfferRank)
+        val tvOfferRankLabel = view.findViewById<TextView>(R.id.tvOfferRankLabel)
         val etRefreshBtn = view.findViewById<TextInputEditText>(R.id.etRefreshButtonText)
         val etClickScreen = view.findViewById<TextInputEditText>(R.id.etClickScreenText)
         val toggleRefreshMode = view.findViewById<MaterialButtonToggleGroup>(R.id.toggleRefreshButtonMatchMode)
@@ -125,6 +128,17 @@ class FlexConfigFragment : Fragment() {
         etSmartMax.setText(settings.flexSmartClickMaxSec.toString())
         swClickRefresh.isChecked = settings.flexClickRefreshEnabled
         swAutoScroll.isChecked = settings.flexAutoScrollEnabled
+        toggleOfferPick.check(
+            if (settings.usesBestOfferPick()) R.id.btnOfferPickBest else R.id.btnOfferPickFirst,
+        )
+        setOfferRankToggle(toggleOfferRank, settings.flexOfferRankCriterion)
+        fun updateOfferRankVisibility() {
+            val best = toggleOfferPick.checkedButtonId == R.id.btnOfferPickBest
+            val vis = if (best) View.VISIBLE else View.GONE
+            tvOfferRankLabel.visibility = vis
+            toggleOfferRank.visibility = vis
+        }
+        updateOfferRankVisibility()
         etRefreshBtn.setText(settings.flexRefreshButtonText)
         etClickScreen.setText(settings.flexClickScreenText)
         val smartMode = settings.flexClickMode == AppSettings.CLICK_MODE_SMART
@@ -180,7 +194,8 @@ class FlexConfigFragment : Fragment() {
                 persistAllFields(
                     etPackage, swShowNames, swAutoAccept, swPauseOver, swForeground, swDebug, swFileLog,
                     etPauseText, etPauseMinutes, toggleClickMode, etBasicSec, etSmartMin, etSmartMax,
-                    swClickRefresh, swAutoScroll, etRefreshBtn, etClickScreen, toggleRefreshMode, swRefreshIgnore,
+                    swClickRefresh, swAutoScroll, toggleOfferPick, toggleOfferRank,
+                    etRefreshBtn, etClickScreen, toggleRefreshMode, swRefreshIgnore,
                     toggleScreenMode, swScreenIgnore, togglePauseMode, swPauseIgnore,
                 )
                 (requireActivity() as MainActivity).apply {
@@ -227,6 +242,11 @@ class FlexConfigFragment : Fragment() {
         etSmartMax.onUserTextChanged(onDirty = { markDirty() })
         swClickRefresh.setOnCheckedChangeRetainingFocus(view) { markDirty() }
         swAutoScroll.setOnCheckedChangeRetainingFocus(view) { markDirty() }
+        toggleOfferPick.addOnButtonCheckedRetainingFocus(view) {
+            updateOfferRankVisibility()
+            markDirty()
+        }
+        toggleOfferRank.addOnButtonCheckedRetainingFocus(view) { markDirty() }
         etRefreshBtn.onUserTextChanged(onDirty = { markDirty() })
         etClickScreen.onUserTextChanged(onDirty = { markDirty() })
         toggleRefreshMode.addOnButtonCheckedRetainingFocus(view) { markDirty() }
@@ -270,6 +290,8 @@ class FlexConfigFragment : Fragment() {
         etSmartMax: TextInputEditText,
         swClickRefresh: SwitchMaterial,
         swAutoScroll: SwitchMaterial,
+        toggleOfferPick: MaterialButtonToggleGroup,
+        toggleOfferRank: MaterialButtonToggleGroup,
         etRefreshBtn: TextInputEditText,
         etClickScreen: TextInputEditText,
         toggleRefreshMode: MaterialButtonToggleGroup,
@@ -303,6 +325,12 @@ class FlexConfigFragment : Fragment() {
         settings.flexSmartClickMaxSec = maxOf(minSec, maxSec)
         settings.flexClickRefreshEnabled = swClickRefresh.isChecked
         settings.flexAutoScrollEnabled = swAutoScroll.isChecked
+        settings.flexOfferPickMode = if (toggleOfferPick.checkedButtonId == R.id.btnOfferPickBest) {
+            AppSettings.OFFER_PICK_BEST
+        } else {
+            AppSettings.OFFER_PICK_FIRST
+        }
+        settings.flexOfferRankCriterion = readOfferRankCriterion(toggleOfferRank)
         settings.flexRefreshButtonText =
             etRefreshBtn.text?.toString()?.trim().orEmpty().ifBlank { AppSettings.DEFAULT_REFRESH_BUTTON }
         settings.flexRefreshButtonMatchMode =
@@ -364,6 +392,24 @@ class FlexConfigFragment : Fragment() {
         view.findViewById<TextView>(R.id.tvResumeSoundLabel)?.text =
             getString(R.string.config_pause_sound_resume_label) + ": " +
                 SoundUriLabel.label(ctx, resumeSoundUri)
+    }
+
+    private fun setOfferRankToggle(group: MaterialButtonToggleGroup, criterion: String) {
+        group.check(
+            when (criterion) {
+                AppSettings.OFFER_RANK_BLOCK_PAY -> R.id.btnRankBlockPay
+                AppSettings.OFFER_RANK_DURATION_MIN -> R.id.btnRankDurationMin
+                AppSettings.OFFER_RANK_START_SOONEST -> R.id.btnRankStartSoon
+                else -> R.id.btnRankHourly
+            },
+        )
+    }
+
+    private fun readOfferRankCriterion(group: MaterialButtonToggleGroup): String = when (group.checkedButtonId) {
+        R.id.btnRankBlockPay -> AppSettings.OFFER_RANK_BLOCK_PAY
+        R.id.btnRankDurationMin -> AppSettings.OFFER_RANK_DURATION_MIN
+        R.id.btnRankStartSoon -> AppSettings.OFFER_RANK_START_SOONEST
+        else -> AppSettings.OFFER_RANK_HOURLY
     }
 
     fun refreshAccessibilityStatus() {

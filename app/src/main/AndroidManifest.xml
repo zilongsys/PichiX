@@ -36,6 +36,12 @@
             android:label="@string/help_title"
             android:parentActivityName=".ui.MainActivity" />
 
+        <activity
+            android:name=".ui.DayLogActivity"
+            android:exported="false"
+            android:label="Log del día"
+            android:parentActivityName=".ui.MainActivity" />
+
         <service
             android:name=".service.PichixAccessibilityService"
             android:exported="true"
