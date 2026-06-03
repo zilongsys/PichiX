@@ -387,7 +387,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnOfferPickFirst"
-                    style="@style/ToggleChip"
+                    style="@style/SparkThemeToggleButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -395,7 +395,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnOfferPickBest"
-                    style="@style/ToggleChip"
+                    style="@style/SparkThemeToggleButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -424,28 +424,28 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRankHourly"
-                    style="@style/ToggleChip"
+                    style="@style/SparkThemeToggleButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/config_offer_rank_hourly" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRankBlockPay"
-                    style="@style/ToggleChip"
+                    style="@style/SparkThemeToggleButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/config_offer_rank_block" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRankDurationMin"
-                    style="@style/ToggleChip"
+                    style="@style/SparkThemeToggleButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/config_offer_rank_dur_min" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRankStartSoon"
-                    style="@style/ToggleChip"
+                    style="@style/SparkThemeToggleButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/config_offer_rank_start" />
