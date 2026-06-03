@@ -232,27 +232,35 @@ class FlexConfigFragment : Fragment() {
         }
         etPauseText.onUserTextChanged(onDirty = { markDirty() })
         etPauseMinutes.onUserTextChanged(onDirty = { markDirty() })
+        val applyClickMotor: () -> Unit = {
+            persistClickMotorSettings(
+                toggleClickMode, etBasicSec, etSmartMin, etSmartMax, swClickRefresh,
+                etRefreshBtn, etClickScreen, toggleRefreshMode, swRefreshIgnore,
+                toggleScreenMode, swScreenIgnore,
+            )
+            markDirty()
+        }
         toggleClickMode.addOnButtonCheckedRetainingFocus(view) {
             val smart = toggleClickMode.checkedButtonId == R.id.btnClickModeSmart
             updateClickModeVisibility(layoutBasic, layoutSmart, smart)
-            markDirty()
+            applyClickMotor()
         }
-        etBasicSec.onUserTextChanged(onDirty = { markDirty() })
-        etSmartMin.onUserTextChanged(onDirty = { markDirty() })
-        etSmartMax.onUserTextChanged(onDirty = { markDirty() })
-        swClickRefresh.setOnCheckedChangeRetainingFocus(view) { markDirty() }
+        etBasicSec.onUserTextChanged(onDirty = { applyClickMotor() })
+        etSmartMin.onUserTextChanged(onDirty = { applyClickMotor() })
+        etSmartMax.onUserTextChanged(onDirty = { applyClickMotor() })
+        swClickRefresh.setOnCheckedChangeRetainingFocus(view) { applyClickMotor() }
         swAutoScroll.setOnCheckedChangeRetainingFocus(view) { markDirty() }
         toggleOfferPick.addOnButtonCheckedRetainingFocus(view) {
             updateOfferRankVisibility()
             markDirty()
         }
         toggleOfferRank.addOnButtonCheckedRetainingFocus(view) { markDirty() }
-        etRefreshBtn.onUserTextChanged(onDirty = { markDirty() })
-        etClickScreen.onUserTextChanged(onDirty = { markDirty() })
-        toggleRefreshMode.addOnButtonCheckedRetainingFocus(view) { markDirty() }
-        swRefreshIgnore.setOnCheckedChangeRetainingFocus(view) { markDirty() }
-        toggleScreenMode.addOnButtonCheckedRetainingFocus(view) { markDirty() }
-        swScreenIgnore.setOnCheckedChangeRetainingFocus(view) { markDirty() }
+        etRefreshBtn.onUserTextChanged(onDirty = { applyClickMotor() })
+        etClickScreen.onUserTextChanged(onDirty = { applyClickMotor() })
+        toggleRefreshMode.addOnButtonCheckedRetainingFocus(view) { applyClickMotor() }
+        swRefreshIgnore.setOnCheckedChangeRetainingFocus(view) { applyClickMotor() }
+        toggleScreenMode.addOnButtonCheckedRetainingFocus(view) { applyClickMotor() }
+        swScreenIgnore.setOnCheckedChangeRetainingFocus(view) { applyClickMotor() }
         togglePauseMode.addOnButtonCheckedRetainingFocus(view) { markDirty() }
         swPauseIgnore.setOnCheckedChangeRetainingFocus(view) { markDirty() }
 
@@ -272,6 +280,41 @@ class FlexConfigFragment : Fragment() {
     private fun updateClickModeVisibility(basic: View, smart: View, smartMode: Boolean) {
         basic.visibility = if (smartMode) View.GONE else View.VISIBLE
         smart.visibility = if (smartMode) View.VISIBLE else View.GONE
+    }
+
+    /** Clics / intervalo: se guardan al cambiar para que el motor use Smart click sin pulsar «Guardar». */
+    private fun persistClickMotorSettings(
+        toggleClickMode: MaterialButtonToggleGroup,
+        etBasicSec: TextInputEditText,
+        etSmartMin: TextInputEditText,
+        etSmartMax: TextInputEditText,
+        swClickRefresh: SwitchMaterial,
+        etRefreshBtn: TextInputEditText,
+        etClickScreen: TextInputEditText,
+        toggleRefreshMode: MaterialButtonToggleGroup,
+        swRefreshIgnore: SwitchMaterial,
+        toggleScreenMode: MaterialButtonToggleGroup,
+        swScreenIgnore: SwitchMaterial,
+    ) {
+        val smartSelected = toggleClickMode.checkedButtonId == R.id.btnClickModeSmart
+        settings.flexClickMode = if (smartSelected) AppSettings.CLICK_MODE_SMART else AppSettings.CLICK_MODE_BASIC
+        val sec = etBasicSec.text?.toString()?.toIntOrNull()?.coerceIn(1, 60) ?: 3
+        settings.flexGrabIntervalMs = sec * 1000L
+        val minSec = etSmartMin.text?.toString()?.toIntOrNull()?.coerceIn(1, 3600) ?: 1
+        val maxSec = etSmartMax.text?.toString()?.toIntOrNull()?.coerceIn(1, 3600) ?: 6
+        settings.flexSmartClickMinSec = minOf(minSec, maxSec)
+        settings.flexSmartClickMaxSec = maxOf(minSec, maxSec)
+        settings.flexClickRefreshEnabled = swClickRefresh.isChecked
+        settings.flexRefreshButtonText =
+            etRefreshBtn.text?.toString()?.trim().orEmpty().ifBlank { AppSettings.DEFAULT_REFRESH_BUTTON }
+        settings.flexRefreshButtonMatchMode =
+            TextMatchUiHelper.readMatchMode(toggleRefreshMode, R.id.btnRefreshMatchExact)
+        settings.flexRefreshButtonIgnoreCase = swRefreshIgnore.isChecked
+        settings.flexClickScreenText = etClickScreen.text?.toString()?.trim().orEmpty()
+        settings.flexClickScreenMatchMode =
+            TextMatchUiHelper.readMatchMode(toggleScreenMode, R.id.btnScreenMatchExact)
+        settings.flexClickScreenIgnoreCase = swScreenIgnore.isChecked
+        PichixAccessibilityService.syncEngine(requireContext())
     }
 
     private fun persistAllFields(

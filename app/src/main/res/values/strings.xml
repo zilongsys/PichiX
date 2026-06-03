@@ -17,6 +17,12 @@
     <string name="tab_filtros">Filtros</string>
     <string name="tab_historial">Historial</string>
 
+    <string name="tariff_rule_action_duplicate">Duplicar regla</string>
+    <string name="tariff_rule_action_edit">Editar</string>
+    <string name="tariff_rule_action_priority">Cambiar prioridad</string>
+    <string name="tariff_rule_action_delete">Eliminar</string>
+    <string name="tariff_rule_duplicated">Regla duplicada: %1$s</string>
+
     <string name="config_btn_resume">Reanudar MakiX si está pausado</string>
     <string name="config_btn_pick_sound">Elegir sonido al aceptar</string>
     <string name="config_btn_pick_reject_sound">Elegir sonido al rechazar</string>

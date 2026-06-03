@@ -48,6 +48,8 @@ class FlexTarifasRulesFragment : Fragment(), FlexTariffRuleEditBottomSheet.Liste
             override fun onDelete(rule: FlexTariffRule) = confirmDelete(rule)
             override fun onSetPriority(rule: FlexTariffRule, currentPosition: Int) =
                 showPriorityDialog(rule, currentPosition)
+            override fun onRulePressed(rule: FlexTariffRule, currentPosition: Int) =
+                showRuleActionsDialog(rule, currentPosition)
         })
         recycler.layoutManager = LinearLayoutManager(requireContext())
         recycler.adapter = adapter
@@ -182,6 +184,42 @@ class FlexTarifasRulesFragment : Fragment(), FlexTariffRuleEditBottomSheet.Liste
         val item = rules.removeAt(idx)
         rules.add(targetIndex, item)
         persist()
+    }
+
+    private fun showRuleActionsDialog(rule: FlexTariffRule, currentPosition: Int) {
+        val title = rule.displayTitle()
+        AlertDialog.Builder(requireContext(), R.style.SparkAlertDialogTheme)
+            .setTitle(title)
+            .setItems(
+                arrayOf(
+                    getString(R.string.tariff_rule_action_duplicate),
+                    getString(R.string.tariff_rule_action_edit),
+                    getString(R.string.tariff_rule_action_priority),
+                    getString(R.string.tariff_rule_action_delete),
+                ),
+            ) { _, which ->
+                when (which) {
+                    0 -> duplicateRule(rule, currentPosition)
+                    1 -> openEditor(rule.id)
+                    2 -> showPriorityDialog(rule, currentPosition)
+                    3 -> confirmDelete(rule)
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun duplicateRule(rule: FlexTariffRule, currentPosition: Int) {
+        val idx = rules.indexOfFirst { it.id == rule.id }
+        if (idx < 0) return
+        val copy = rule.duplicate()
+        rules.add(idx + 1, copy)
+        persist()
+        Toast.makeText(
+            requireContext(),
+            getString(R.string.tariff_rule_duplicated, copy.displayTitle()),
+            Toast.LENGTH_SHORT,
+        ).show()
     }
 
     private fun confirmDelete(rule: FlexTariffRule) {

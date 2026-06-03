@@ -9,6 +9,7 @@ import com.oceanlab.pichix.data.FlexState
 import com.oceanlab.pichix.flex.FlexIds
 import com.oceanlab.pichix.util.ScreenTextMatcher
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.allTextsByViewId
+import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.performClickOnClickableSelfOrAncestor
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.findClickableByExactText
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.findClickableByText
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.firstTextByViewId
@@ -17,6 +18,7 @@ import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.getAllVi
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.hasViewId
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.recycleNodes
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.useViewIdNodes
+import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.withAllObtainedNodes
 
 /**
  * Lectura/clic sobre Flex vía [AccessibilityService.rootInActiveWindow] (comportamiento v0.1.7).
@@ -267,7 +269,7 @@ class FlexScreenReader(private val service: AccessibilityService) {
         }
     }
 
-    /** Filtro de pantalla para el motor: vacío = siempre; si no, Contiene + ignora mayúsculas (como v0.1.7). */
+    /** Filtro de pantalla para el clic Refresh: vacío = siempre; si no, usa modo e ignoreCase de Config. */
     fun screenMatchesForClick(
         requiredScreenText: String,
         screenText: String? = null,
@@ -276,12 +278,7 @@ class FlexScreenReader(private val service: AccessibilityService) {
     ): Boolean {
         if (requiredScreenText.isBlank()) return true
         val text = screenText ?: readFullScreenText()
-        return ScreenTextMatcher.matches(
-            text,
-            requiredScreenText,
-            AppSettings.TEXT_MATCH_CONTAINS,
-            ignoreCase = true,
-        )
+        return ScreenTextMatcher.matches(text, requiredScreenText, matchMode, ignoreCase)
     }
 
     fun clickTargetButton(
@@ -292,27 +289,74 @@ class FlexScreenReader(private val service: AccessibilityService) {
         if (buttonText.isBlank()) return false
         val root = activeRoot() ?: return false
         return try {
-            if (buttonText.equals("Refresh", ignoreCase = true) && clickPrimaryFooterButton(root)) {
-                return true
+            if (buttonText.equals("Refresh", ignoreCase = ignoreCase)) {
+                if (clickPrimaryFooterButton(root)) return true
+                if (clickMeridianFooterButton(root, buttonText, matchMode, ignoreCase)) return true
             }
-            var node = root.findClickableByExactText(buttonText, ignoreCase = true)
-                ?: root.findClickableByText(buttonText, ignoreCase = true)
+            val node = findClickableButtonNode(root, buttonText, matchMode, ignoreCase)
+                ?: if (matchMode == AppSettings.TEXT_MATCH_EXACT) {
+                    findClickableButtonNode(root, buttonText, AppSettings.TEXT_MATCH_CONTAINS, ignoreCase)
+                } else {
+                    null
+                }
             if (node != null) {
-                val ok = node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-                try { node.recycle() } catch (_: Exception) {}
+                val ok = node.performClickOnClickableSelfOrAncestor()
+                try {
+                    node.recycle()
+                } catch (_: Exception) {
+                }
                 ok
-            } else false
+            } else {
+                false
+            }
         } finally {
-            try { root.recycle() } catch (_: Exception) {}
+            try {
+                root.recycle()
+            } catch (_: Exception) {
+            }
         }
     }
 
-    /** Footer Flex: primaryButton → meridian_button_text_view "Refresh". */
+    private fun findClickableButtonNode(
+        root: AccessibilityNodeInfo,
+        buttonText: String,
+        matchMode: String,
+        ignoreCase: Boolean,
+    ): AccessibilityNodeInfo? {
+        var found: AccessibilityNodeInfo? = null
+        root.withAllObtainedNodes { nodes: List<AccessibilityNodeInfo> ->
+            for (n in nodes) {
+                val label = n.text?.toString() ?: n.contentDescription?.toString() ?: ""
+                if (!ScreenTextMatcher.matches(label, buttonText, matchMode, ignoreCase)) continue
+                found = AccessibilityNodeInfo.obtain(n)
+                break
+            }
+        }
+        return found
+    }
+
+    /** Footer Flex: primaryButton (sube al ancestro clickable si el id no lo es). */
     private fun clickPrimaryFooterButton(root: AccessibilityNodeInfo): Boolean {
         val primaryId = resolveId(FlexIds.PRIMARY_BUTTON) ?: return false
         return root.useViewIdNodes(primaryId) { nodes ->
-            val target = nodes.firstOrNull { it.isClickable } ?: nodes.firstOrNull()
-            target?.performAction(AccessibilityNodeInfo.ACTION_CLICK) == true
+            nodes.any { it.performClickOnClickableSelfOrAncestor() }
+        }
+    }
+
+    /** meridian_button_text_view con texto Refresh (u otro configurado). */
+    private fun clickMeridianFooterButton(
+        root: AccessibilityNodeInfo,
+        buttonText: String,
+        matchMode: String,
+        ignoreCase: Boolean,
+    ): Boolean {
+        val id = resolveId(FlexIds.MERIDIAN_BUTTON_TEXT) ?: return false
+        return root.useViewIdNodes(id) { nodes ->
+            nodes.any { n ->
+                val label = n.text?.toString() ?: n.contentDescription?.toString() ?: ""
+                ScreenTextMatcher.matches(label, buttonText, matchMode, ignoreCase) &&
+                    n.performClickOnClickableSelfOrAncestor()
+            }
         }
     }
 

@@ -194,14 +194,19 @@ class PichixAccessibilityService : AccessibilityService() {
         grabInFlight = true
         try {
             val text = reader.readFullScreenText()
-            if (settings.flexClickRefreshEnabled &&
-                reader.screenMatchesForClick(
+            if (settings.flexClickRefreshEnabled) {
+                val screenOk = reader.screenMatchesForClick(
                     settings.flexClickScreenText,
                     text,
                     settings.flexClickScreenMatchMode,
                     settings.flexClickScreenIgnoreCase,
                 )
-            ) {
+                if (!screenOk && settings.flexClickScreenText.isNotBlank()) {
+                    logGrabEvalThrottled(
+                        "Clic omitido: pantalla no coincide con «${settings.flexClickScreenText}» " +
+                            "(modo ${settings.flexClickScreenMatchMode})",
+                    )
+                } else if (screenOk) {
                 val target = MonitorPackages.primaryTarget(this)
                 val logUi = settings.debugLogEnabled || settings.fileLogEnabled
                 if (logUi) {
@@ -216,6 +221,8 @@ class PichixAccessibilityService : AccessibilityService() {
                 )
                 if (!clicked) {
                     postObserver("Clic: no se encontró «${settings.flexRefreshButtonText}»")
+                } else if (settings.debugLogEnabled) {
+                    postObserver("Clic Refresh (siguiente en ${settings.nextGrabDelayMs() / 1000}s)")
                 }
                 if (logUi) {
                     handler.postDelayed({
@@ -223,6 +230,7 @@ class PichixAccessibilityService : AccessibilityService() {
                             FlexUiDumper.dumpOnRefreshClick(root, target, "despues")
                         }
                     }, 450)
+                }
                 }
             }
 

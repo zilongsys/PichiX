@@ -10,9 +10,13 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ## v0.1.21 (Mayo 2026)
 
+### Corregido
+- **Clic Refresh (Smart/Basic)**: el botón `primaryButton` sube al ancestro clickable; respeta Contiene/Exacto en pantalla y botón; overlay PichiX ya no bloquea el motor; Config → Clics aplica intervalo y Refresh al cambiar (sin esperar Guardar).
+
 ### Añadido
 - **Mejor oferta en pantalla**: el grabber evalúa todas las filas visibles y toma la mejor (por defecto mayor $/h). Config → Clics: «Primera válida» o «Mejor de pantalla» + criterio ($/h, $ bloque, duración, empieza antes).
 - **Historial estilo MakiX**: tarjetas de resumen, listado RecyclerView, export CSV/TXT, reset hoy, borrar todo, log diario detallado (`DayLogActivity`) con filtros por estado/estación e import/export.
+- **Tarifas → Reglas**: al pulsar una regla, menú con **Duplicar regla** (copia justo debajo, con id nuevo y alias « (copia)»).
 
 ### Actualizado
 - `OfferLogger` pasa a CSV (`pichix_offers_log.csv`) con estación, $/h, duración y trazas de tiempo.

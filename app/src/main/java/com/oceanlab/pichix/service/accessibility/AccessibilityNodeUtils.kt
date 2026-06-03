@@ -35,6 +35,19 @@ object AccessibilityNodeUtils {
             list.mapNotNull { it.text?.toString()?.trim()?.takeIf { s -> s.isNotEmpty() } }
         }
 
+    fun AccessibilityNodeInfo.performClickOnClickableSelfOrAncestor(maxDepth: Int = 16): Boolean {
+        var cur: AccessibilityNodeInfo? = this
+        var depth = 0
+        while (cur != null && depth < maxDepth) {
+            if (cur.isClickable && cur.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
+                return true
+            }
+            cur = cur.parent
+            depth++
+        }
+        return false
+    }
+
     /** Coincidencia exacta del texto visible (no parcial). */
     fun AccessibilityNodeInfo.findClickableByExactText(
         text: String,

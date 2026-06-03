@@ -164,6 +164,20 @@ data class FlexTariffRule(
 
     fun displayTitle(): String = name.ifBlank { stationPattern.ifBlank { "Regla sin nombre" } }
 
+    /** Copia con id nuevo; nombre con sufijo « (copia)» si tenía alias. */
+    fun duplicate(): FlexTariffRule {
+        val suffix = " (copia)"
+        val newName = when {
+            name.isBlank() -> ""
+            name.contains("(copia)", ignoreCase = true) -> name.trim()
+            else -> name.trim() + suffix
+        }
+        return copy(
+            id = UUID.randomUUID().toString(),
+            name = newName,
+        )
+    }
+
     fun cardTitlePart(): String {
         val station = stationPattern.trim()
         val alias = name.trim()

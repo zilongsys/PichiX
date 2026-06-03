@@ -14,7 +14,7 @@ import com.oceanlab.pichix.data.AppSettings
 object FlexForegroundGate {
 
     private const val TAG = "PichiXForeground"
-    private const val TARGET_EVENT_GRACE_MS = 900L
+    private const val TARGET_EVENT_GRACE_MS = 2500L
     private const val OTHER_APP_BLOCK_MS = 350L
 
     @Volatile
@@ -117,7 +117,8 @@ object FlexForegroundGate {
             if (otherActive) return Verdict.OTHER_FOREGROUND
         }
 
-        if (activePkg == selfPkg) return Verdict.OTHER_FOREGROUND
+        // Overlay o UI de PichiX al frente: no bloquear como «otra app»; usar gracia por eventos Flex.
+        if (activePkg == selfPkg) return Verdict.UNCERTAIN
 
         return Verdict.UNCERTAIN
     }

@@ -23,6 +23,7 @@ class FlexTariffRulesAdapter(
         fun onEdit(rule: FlexTariffRule)
         fun onDelete(rule: FlexTariffRule)
         fun onSetPriority(rule: FlexTariffRule, currentPosition: Int)
+        fun onRulePressed(rule: FlexTariffRule, currentPosition: Int)
     }
 
     fun submit(newRules: List<FlexTariffRule>) {
@@ -93,6 +94,7 @@ class FlexTariffRulesAdapter(
         holder.tvIndex.setOnClickListener { callbacks.onSetPriority(rule, position) }
         holder.btnEdit.setOnClickListener { callbacks.onEdit(rule) }
         holder.btnDelete.setOnClickListener { callbacks.onDelete(rule) }
+        holder.itemView.setOnClickListener { callbacks.onRulePressed(rule, position) }
         holder.itemView.alpha = if (rule.enabled) 1f else 0.55f
     }
 
