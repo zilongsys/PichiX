@@ -365,14 +365,16 @@ class FlexScreenReader(private val service: AccessibilityService) {
     fun clickRefresh(): Boolean = clickTargetButton("Refresh")
 
     /**
-     * True si Flex está visible al frente: ventana activa, alguna ventana del paquete Flex,
-     * o marcadores típicos de la app (ids offer_pay, list_recycler, Refresh, etc.).
+     * Contenido Flex visible (OR): paquete Flex en ventana activa, ids Flex, lista de ofertas
+     * parseada o texto típico de pantalla de ofertas.
      */
     fun isFlexForegroundUi(): Boolean {
         val target = appPackage
+
         activeRoot()?.let { root ->
             try {
-                if (root.packageName?.toString() == target && hasFlexUiMarkers(root)) return true
+                if (root.packageName?.toString() == target) return true
+                if (hasFlexUiMarkers(root)) return true
             } finally {
                 try {
                     root.recycle()
@@ -380,6 +382,7 @@ class FlexScreenReader(private val service: AccessibilityService) {
                 }
             }
         }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             for (win in service.windows ?: emptyList()) {
                 when (win.type) {
@@ -389,9 +392,8 @@ class FlexScreenReader(private val service: AccessibilityService) {
                 }
                 val root = win.root ?: continue
                 try {
-                    if (root.packageName?.toString() == target && hasFlexUiMarkers(root)) {
-                        return true
-                    }
+                    if (root.packageName?.toString() == target) return true
+                    if (hasFlexUiMarkers(root)) return true
                 } finally {
                     try {
                         root.recycle()
@@ -400,7 +402,15 @@ class FlexScreenReader(private val service: AccessibilityService) {
                 }
             }
         }
-        return false
+
+        if (hasAnyOfferPay()) return true
+        if (readOffersFromList().isNotEmpty()) return true
+
+        val screen = readFullScreenText()
+        if (detectScreenFlags(screen).onOffersList) return true
+        val lower = screen.lowercase()
+        return lower.contains("refresh") &&
+            (lower.contains("offer") || lower.contains("filter") || lower.contains("block"))
     }
 
     private fun hasFlexUiMarkers(root: AccessibilityNodeInfo): Boolean {

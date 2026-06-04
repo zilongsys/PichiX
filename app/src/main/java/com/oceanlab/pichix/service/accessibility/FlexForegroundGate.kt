@@ -8,59 +8,27 @@ import android.view.accessibility.AccessibilityWindowInfo
 import com.oceanlab.pichix.data.AppSettings
 
 /**
- * Decide si el motor (grabber, scroll, clics, return) puede actuar con Flex al frente.
- *
- * Capas (Flex a veces no actualiza TYPE_WINDOW_STATE_CHANGED):
- * 1. Ventana activa = paquete Flex
- * 2. Ventanas del sistema: activas, con foco o visibles con paquete Flex
- * 3. Marcadores de UI Flex en el árbol de accesibilidad (ids + texto)
- * 4. Eventos recientes del paquete Flex (state, content, focus, windows)
+ * Motor solo con Flex al frente: basta **una** señal positiva (OR).
+ * No se bloquea solo porque la ventana «activa» de Android sea otra app o el overlay de PichiX.
  */
 object FlexForegroundGate {
 
     private const val TAG = "PichiXForeground"
-    private const val TARGET_EVENT_GRACE_MS = 5000L
-    private const val TARGET_CONTENT_GRACE_MS = 8000L
-    private const val OTHER_APP_BLOCK_MS = 400L
+    private const val TARGET_EVENT_GRACE_MS = 15_000L
 
     @Volatile
-    private var lastTargetWindowEventMs = 0L
-
-    @Volatile
-    private var lastTargetContentEventMs = 0L
-
-    @Volatile
-    private var lastOtherAppWindowEventMs = 0L
-
-    @Volatile
-    private var lastOtherAppPackage: String? = null
+    private var lastTargetEventMs = 0L
 
     fun onAccessibilityEvent(event: AccessibilityEvent, monitoredTargets: Set<String>) {
         val pkg = event.packageName?.toString().orEmpty()
-        val now = System.currentTimeMillis()
+        if (pkg !in monitoredTargets) return
         when (event.eventType) {
-            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
-                if (pkg.isEmpty()) return
-                if (pkg in monitoredTargets) {
-                    lastTargetWindowEventMs = now
-                    lastTargetContentEventMs = now
-                } else {
-                    lastOtherAppWindowEventMs = now
-                    lastOtherAppPackage = pkg
-                }
-            }
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED,
             AccessibilityEvent.TYPE_VIEW_FOCUSED,
-            AccessibilityEvent.TYPE_VIEW_SCROLLED -> {
-                if (pkg in monitoredTargets) {
-                    lastTargetContentEventMs = now
-                    lastTargetWindowEventMs = now
-                }
-            }
+            AccessibilityEvent.TYPE_VIEW_SCROLLED,
             AccessibilityEvent.TYPE_WINDOWS_CHANGED -> {
-                if (pkg in monitoredTargets) {
-                    lastTargetWindowEventMs = now
-                }
+                lastTargetEventMs = System.currentTimeMillis()
             }
         }
     }
@@ -73,99 +41,66 @@ object FlexForegroundGate {
     ): Boolean {
         if (!settings.flexOnlyWhenForeground) return true
 
-        if (flexUiVisible()) {
-            val now = System.currentTimeMillis()
-            lastTargetWindowEventMs = now
-            lastTargetContentEventMs = now
-            return true
-        }
+        val allowed = recentFlexPackageEvent() ||
+            activeWindowPackage(service) == targetPkg ||
+            anyWindowHasPackage(service, targetPkg, service.packageName) ||
+            flexUiVisible()
 
-        val verdict = probe(service, targetPkg, service.packageName, flexUiVisible)
-        val allowed = when (verdict) {
-            Verdict.TARGET_FOREGROUND -> true
-            Verdict.OTHER_FOREGROUND -> false
-            Verdict.UNCERTAIN -> uncertainAllowsTarget()
-        }
-        if (!allowed && settings.debugLogEnabled) {
+        if (allowed) {
+            lastTargetEventMs = System.currentTimeMillis()
+        } else if (settings.debugLogEnabled) {
             Log.d(
                 TAG,
-                "Motor pausado (sin Flex primer plano): verdict=$verdict other=$lastOtherAppPackage",
+                "Motor pausado: ninguna señal Flex (target=$targetPkg active=${activeWindowPackage(service)})",
             )
         }
         return allowed
     }
 
-    private fun uncertainAllowsTarget(): Boolean {
-        val now = System.currentTimeMillis()
-        val recentTarget = now - lastTargetWindowEventMs <= TARGET_EVENT_GRACE_MS ||
-            now - lastTargetContentEventMs <= TARGET_CONTENT_GRACE_MS
-        val otherNotRecent = now - lastOtherAppWindowEventMs > OTHER_APP_BLOCK_MS
-        return recentTarget && otherNotRecent
+    private fun recentFlexPackageEvent(): Boolean {
+        if (lastTargetEventMs == 0L) return false
+        return System.currentTimeMillis() - lastTargetEventMs <= TARGET_EVENT_GRACE_MS
     }
 
-    private enum class Verdict { TARGET_FOREGROUND, OTHER_FOREGROUND, UNCERTAIN }
-
-    private fun probe(
-        service: AccessibilityService,
-        targetPkg: String,
-        selfPkg: String,
-        flexUiVisible: () -> Boolean,
-    ): Verdict {
-        if (flexUiVisible()) return Verdict.TARGET_FOREGROUND
-
-        val active = service.rootInActiveWindow
-        val activePkg = try {
-            active?.packageName?.toString()
+    private fun activeWindowPackage(service: AccessibilityService): String? {
+        val root = service.rootInActiveWindow ?: return null
+        return try {
+            root.packageName?.toString()
         } finally {
             try {
-                active?.recycle()
+                root.recycle()
             } catch (_: Exception) {
             }
         }
+    }
 
-        when {
-            activePkg == targetPkg -> return Verdict.TARGET_FOREGROUND
-            activePkg != null && activePkg != selfPkg && activePkg != targetPkg ->
-                return Verdict.OTHER_FOREGROUND
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            var targetVisible = false
-            var otherForeground = false
-            for (win in service.windows ?: emptyList()) {
-                when (win.type) {
-                    AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY,
-                    AccessibilityWindowInfo.TYPE_INPUT_METHOD,
-                    AccessibilityWindowInfo.TYPE_SYSTEM -> continue
-                }
-                val root = win.root ?: continue
-                val winPkg = try {
-                    root.packageName?.toString()
-                } finally {
-                    try {
-                        root.recycle()
-                    } catch (_: Exception) {
-                    }
-                }
-                when (winPkg) {
-                    targetPkg -> {
-                        if (win.isActive || win.isFocused) {
-                            return Verdict.TARGET_FOREGROUND
-                        }
-                        targetVisible = true
-                    }
+    /** Cualquier ventana accesible del paquete Flex (aunque Android marque otra como «activa»). */
+    private fun anyWindowHasPackage(
+        service: AccessibilityService,
+        targetPkg: String,
+        selfPkg: String,
+    ): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return false
+        for (win in service.windows ?: emptyList()) {
+            when (win.type) {
+                AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY,
+                AccessibilityWindowInfo.TYPE_INPUT_METHOD,
+                AccessibilityWindowInfo.TYPE_SYSTEM -> continue
+            }
+            val root = win.root ?: continue
+            try {
+                when (root.packageName?.toString()) {
+                    targetPkg -> return true
                     selfPkg, null -> Unit
-                    else -> {
-                        if (win.isActive) otherForeground = true
-                    }
+                    else -> Unit
+                }
+            } finally {
+                try {
+                    root.recycle()
+                } catch (_: Exception) {
                 }
             }
-            if (targetVisible) return Verdict.TARGET_FOREGROUND
-            if (otherForeground) return Verdict.OTHER_FOREGROUND
         }
-
-        if (activePkg == selfPkg) return Verdict.UNCERTAIN
-
-        return Verdict.UNCERTAIN
+        return false
     }
 }
