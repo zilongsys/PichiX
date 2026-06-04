@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -63,8 +64,9 @@ class FlexConfigFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         settings = AppSettings(requireContext())
-        view.setupFormFocus()
-        setupExpandableSections(view)
+        val configScroll = view.findViewById<ScrollView>(R.id.configScroll)
+        configScroll.setupFormFocus()
+        setupExpandableSections(view, configScroll)
 
         pauseSoundPicker = SoundPickerHelper(this) { uri ->
             pauseSoundUri = uri
@@ -190,7 +192,7 @@ class FlexConfigFragment : Fragment() {
         }
 
         btnSave.setOnClickListener {
-            view.runRetainingFocus {
+            configScroll.runRetainingScrollAndFocus {
                 persistAllFields(
                     etPackage, swShowNames, swAutoAccept, swPauseOver, swForeground, swDebug, swFileLog,
                     etPauseText, etPauseMinutes, toggleClickMode, etBasicSec, etSmartMin, etSmartMax,
@@ -233,11 +235,13 @@ class FlexConfigFragment : Fragment() {
         etPauseText.onUserTextChanged(onDirty = { markDirty() })
         etPauseMinutes.onUserTextChanged(onDirty = { markDirty() })
         val applyClickMotor: () -> Unit = {
-            persistClickMotorSettings(
-                toggleClickMode, etBasicSec, etSmartMin, etSmartMax, swClickRefresh,
-                etRefreshBtn, etClickScreen, toggleRefreshMode, swRefreshIgnore,
-                toggleScreenMode, swScreenIgnore,
-            )
+            configScroll.runRetainingScrollAndFocus {
+                persistClickMotorSettings(
+                    toggleClickMode, etBasicSec, etSmartMin, etSmartMax, swClickRefresh,
+                    etRefreshBtn, etClickScreen, toggleRefreshMode, swRefreshIgnore,
+                    toggleScreenMode, swScreenIgnore,
+                )
+            }
             markDirty()
         }
         toggleClickMode.addOnButtonCheckedRetainingFocus(view) {
@@ -251,7 +255,9 @@ class FlexConfigFragment : Fragment() {
         swClickRefresh.setOnCheckedChangeRetainingFocus(view) { applyClickMotor() }
         swAutoScroll.setOnCheckedChangeRetainingFocus(view) { markDirty() }
         toggleOfferPick.addOnButtonCheckedRetainingFocus(view) {
-            updateOfferRankVisibility()
+            configScroll.runRetainingScrollAndFocus {
+                updateOfferRankVisibility()
+            }
             markDirty()
         }
         toggleOfferRank.addOnButtonCheckedRetainingFocus(view) { markDirty() }
@@ -267,14 +273,14 @@ class FlexConfigFragment : Fragment() {
         refreshAccessibilityStatus()
     }
 
-    private fun setupExpandableSections(view: View) {
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionAmazon), view.findViewById(R.id.sectionAmazon))
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionPermisos), view.findViewById(R.id.sectionPermisos))
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionAuto), view.findViewById(R.id.sectionAuto))
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionClicks), view.findViewById(R.id.sectionClicks), startExpanded = false)
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionPause), view.findViewById(R.id.sectionPause), startExpanded = false)
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionLog), view.findViewById(R.id.sectionLog), startExpanded = false)
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionUi), view.findViewById(R.id.sectionUi))
+    private fun setupExpandableSections(view: View, scrollHost: ScrollView) {
+        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionAmazon), view.findViewById(R.id.sectionAmazon), scrollHost)
+        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionPermisos), view.findViewById(R.id.sectionPermisos), scrollHost)
+        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionAuto), view.findViewById(R.id.sectionAuto), scrollHost)
+        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionClicks), view.findViewById(R.id.sectionClicks), scrollHost, startExpanded = false)
+        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionPause), view.findViewById(R.id.sectionPause), scrollHost, startExpanded = false)
+        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionLog), view.findViewById(R.id.sectionLog), scrollHost, startExpanded = false)
+        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionUi), view.findViewById(R.id.sectionUi), scrollHost)
     }
 
     private fun updateClickModeVisibility(basic: View, smart: View, smartMode: Boolean) {

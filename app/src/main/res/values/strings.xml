@@ -52,7 +52,7 @@
     <string name="config_click_mode_smart">Smart click</string>
     <string name="config_basic_interval_label">Basic click — intervalo (segundos)</string>
     <string name="config_flex_foreground_title">Solo con Flex en primer plano</string>
-    <string name="config_flex_foreground_hint">Activo (recomendado): grabber, scroll, Refresh y Return 2 solo si Flex está al frente. Usa ventana activa, ventanas del sistema y eventos recientes si Flex no avisa a Android.</string>
+    <string name="config_flex_foreground_hint">Activo (recomendado): grabber, scroll, Refresh y Return 2 solo con Flex al frente. Detecta por ventana activa, ventanas del sistema, eventos de contenido/foco y marcadores de pantalla Flex (lista, Refresh, offer_pay).</string>
     <string name="config_screen_match_motor_note">Contiene/Exacto y mayúsculas en esta sección: el motor de clics usa siempre Contiene e ignora mayúsculas. Los toggles aplican a alertas y Pause by over clicks.</string>
     <string name="config_text_match_mode_label">Tipo de coincidencia</string>
     <string name="config_screen_match_mode_label">Pantalla de ofertas — tipo de coincidencia</string>

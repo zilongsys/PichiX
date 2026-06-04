@@ -397,7 +397,9 @@ class PichixAccessibilityService : AccessibilityService() {
 
     private fun isMotorForegroundAllowed(): Boolean {
         val target = MonitorPackages.primaryTarget(this) ?: return false
-        val allowed = FlexForegroundGate.allowMotor(this, settings, target)
+        val allowed = FlexForegroundGate.allowMotor(this, settings, target) {
+            reader.isFlexForegroundUi()
+        }
         if (!allowed) cancelPendingMotorActions()
         return allowed
     }

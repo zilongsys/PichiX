@@ -12,6 +12,8 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ### Corregido
 - **Clic Refresh (Smart/Basic)**: el botón `primaryButton` sube al ancestro clickable; respeta Contiene/Exacto en pantalla y botón; overlay PichiX ya no bloquea el motor; Config → Clics aplica intervalo y Refresh al cambiar (sin esperar Guardar).
+- **Flex en primer plano**: detección en capas (ventana activa, ventanas visibles/foco, ids Flex en pantalla, texto de ofertas, eventos content/focus/windows).
+- **Config**: botón Guardar fijo abajo; solo el formulario hace scroll; secciones colapsables con chevron; scroll y foco estables al togglear/colapsar.
 
 ### Añadido
 - **Mejor oferta en pantalla**: el grabber evalúa todas las filas visibles y toma la mejor (por defecto mayor $/h). Config → Clics: «Primera válida» o «Mejor de pantalla» + criterio ($/h, $ bloque, duración, empieza antes).

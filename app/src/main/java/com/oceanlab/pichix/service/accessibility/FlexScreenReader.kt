@@ -1,7 +1,9 @@
 package com.oceanlab.pichix.service.accessibility
 
 import android.accessibilityservice.AccessibilityService
+import android.os.Build
 import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityWindowInfo
 import com.oceanlab.pichix.analyzer.FlexBlockOffer
 import com.oceanlab.pichix.analyzer.FlexGrabberEvaluator
 import com.oceanlab.pichix.data.AppSettings
@@ -361,6 +363,71 @@ class FlexScreenReader(private val service: AccessibilityService) {
     }
 
     fun clickRefresh(): Boolean = clickTargetButton("Refresh")
+
+    /**
+     * True si Flex está visible al frente: ventana activa, alguna ventana del paquete Flex,
+     * o marcadores típicos de la app (ids offer_pay, list_recycler, Refresh, etc.).
+     */
+    fun isFlexForegroundUi(): Boolean {
+        val target = appPackage
+        activeRoot()?.let { root ->
+            try {
+                if (root.packageName?.toString() == target && hasFlexUiMarkers(root)) return true
+            } finally {
+                try {
+                    root.recycle()
+                } catch (_: Exception) {
+                }
+            }
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            for (win in service.windows ?: emptyList()) {
+                when (win.type) {
+                    AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY,
+                    AccessibilityWindowInfo.TYPE_INPUT_METHOD,
+                    AccessibilityWindowInfo.TYPE_SYSTEM -> continue
+                }
+                val root = win.root ?: continue
+                try {
+                    if (root.packageName?.toString() == target && hasFlexUiMarkers(root)) {
+                        return true
+                    }
+                } finally {
+                    try {
+                        root.recycle()
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+    private fun hasFlexUiMarkers(root: AccessibilityNodeInfo): Boolean {
+        val idMarkers = listOf(
+            FlexIds.OFFER_PAY,
+            FlexIds.LIST_RECYCLER,
+            FlexIds.PRIMARY_BUTTON,
+            FlexIds.FILTER_OFFER_COUNT,
+            FlexIds.OFFER_CARD,
+            FlexIds.MERIDIAN_BUTTON_TEXT,
+        )
+        for (suffix in idMarkers) {
+            if (rootHasViewId(root, suffix)) return true
+        }
+        val text = root.getAllVisibleText().lowercase()
+        if (text.contains("refresh") && (text.contains("offer") || text.contains("filter"))) {
+            return true
+        }
+        return detectScreenFlags(text).onOffersList
+    }
+
+    private fun rootHasViewId(root: AccessibilityNodeInfo, suffix: String): Boolean {
+        for (candidate in FlexIds.viewIdCandidates(suffix, appPackage)) {
+            if (root.hasViewId(candidate)) return true
+        }
+        return false
+    }
 
     fun clickBack(): Boolean = service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
 
