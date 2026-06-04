@@ -204,14 +204,14 @@ fun TextInputEditText.onUserTextChanged(
     val root = focusRoot()
     addTextChangedListener(object : TextWatcher {
         override fun afterTextChanged(s: Editable?) {
-            val run = {
+            val action: () -> Unit = {
                 onDirty()
                 onChange?.invoke()
             }
             when (scrollHost) {
-                is ScrollView -> scrollHost.runRetainingScrollAndFocus(run)
-                is NestedScrollView -> scrollHost.runRetainingScrollAndFocus(run)
-                else -> root.runRetainingFocus(run)
+                is ScrollView -> scrollHost.runRetainingScrollAndFocus(action)
+                is NestedScrollView -> scrollHost.runRetainingScrollAndFocus(action)
+                else -> root.runRetainingFocus(action)
             }
         }
         override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
