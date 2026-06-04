@@ -10,6 +10,9 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ## v0.1.21 (Mayo 2026)
 
+### Actualizado
+- **Historial / log**: cada ciclo del grabber registra todas las ofertas visibles como VISTA; dedup por estación+$+$/h+duración+horario (ventana por defecto 90 min, hasta 4 h). RECHAZADA también deduplicada; al aceptar no se repite la misma fila.
+
 ### Corregido
 - **Clic Refresh (Smart/Basic)**: el botón `primaryButton` sube al ancestro clickable; respeta Contiene/Exacto en pantalla y botón; overlay PichiX ya no bloquea el motor; Config → Clics aplica intervalo y Refresh al cambiar (sin esperar Guardar).
 - **Flex en primer plano**: lógica OR (basta una señal: ventana activa Flex, cualquier ventana Flex, contenido/ids/ofertas, evento reciente); ya no bloquea si Android reporta otra app «activa» con Flex visible.

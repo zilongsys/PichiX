@@ -254,6 +254,8 @@ class PichixAccessibilityService : AccessibilityService() {
                 return
             }
 
+            logger.logVisibleOffers(offers)
+
             val evaluated = offers.map { offer ->
                 FlexOfferSelector.EvaluatedOffer(
                     offer,

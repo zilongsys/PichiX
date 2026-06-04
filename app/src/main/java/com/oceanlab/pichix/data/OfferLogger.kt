@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.oceanlab.pichix.analyzer.FlexBlockOffer
+import com.oceanlab.pichix.analyzer.FlexGrabberEvaluator
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -13,7 +15,7 @@ class OfferLogger(private val context: Context) {
     companion object {
         const val ACTION_OFFER_LOGGED = "com.oceanlab.pichix.OFFER_LOGGED"
         private const val TAG = "OfferLogger"
-        private val recentSignatures = java.util.concurrent.ConcurrentHashMap<String, Long>()
+        private val recentDedupKeys = java.util.concurrent.ConcurrentHashMap<String, Long>()
         private val firstSeenSignatures = java.util.concurrent.ConcurrentHashMap<String, Long>()
     }
 
@@ -24,16 +26,42 @@ class OfferLogger(private val context: Context) {
     private val dedupWindowMs: Long get() = settings.dedupWindowMs
     private val traceWindowMs: Long get() = maxOf(dedupWindowMs, 10 * 60 * 1000L)
 
+    init {
+        hydrateDedupFromToday()
+    }
+
+    /** Evita duplicar VISTA/RECHAZADA si el CSV de hoy ya las tiene dentro de la ventana. */
+    private fun hydrateDedupFromToday() {
+        try {
+            val now = System.currentTimeMillis()
+            for (entry in store.filterTodayEntries()) {
+                if (!shouldDedupStatus(entry.status)) continue
+                val key = dedupKey(entry)
+                val ts = entry.timestamp
+                if (now - ts > dedupWindowMs) continue
+                val prev = recentDedupKeys[key]
+                if (prev == null || ts > prev) recentDedupKeys[key] = ts
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "hydrateDedup: ${e.message}")
+        }
+    }
+
     fun log(entry: OfferLogEntry) {
         val sig = signature(entry)
         val now = entry.timestamp
         val tracedEntry = entry.withTraceFirstSeen(sig, now)
-        if (tracedEntry.status == OfferStatus.SEEN) {
-            if (hasSeenWithinWindow(sig, now)) {
-                Log.d(TAG, "Dedup VISTA: $sig")
+        if (shouldDedupStatus(tracedEntry.status)) {
+            val key = dedupKey(tracedEntry)
+            if (hasDedupWithinWindow(key, now)) {
+                Log.d(TAG, "Dedup ${tracedEntry.status}: $sig")
                 return
             }
-            markSeenSignature(sig, now)
+            markDedupKey(key, now)
+        }
+        if (tracedEntry.status == OfferStatus.ACCEPTED || tracedEntry.status == OfferStatus.SIMULATED) {
+            markDedupKey(dedupKey(tracedEntry.copy(status = OfferStatus.SEEN)), now)
+            markDedupKey(dedupKey(tracedEntry.copy(status = OfferStatus.REJECTED)), now)
         }
         try {
             store.appendEntry(tracedEntry)
@@ -57,19 +85,28 @@ class OfferLogger(private val context: Context) {
         )
     }
 
-    fun hasSeenWithinWindow(sig: String, now: Long = System.currentTimeMillis()): Boolean {
-        val last = recentSignatures[sig] ?: return false
+    fun hasSeenWithinWindow(sig: String, now: Long = System.currentTimeMillis()): Boolean =
+        hasDedupWithinWindow("${sig}|${OfferStatus.SEEN}", now)
+
+    private fun hasDedupWithinWindow(key: String, now: Long): Boolean {
+        val last = recentDedupKeys[key] ?: return false
         return (now - last) < dedupWindowMs
     }
 
-    private fun markSeenSignature(sig: String, now: Long) {
-        recentSignatures[sig] = now
+    private fun markDedupKey(key: String, now: Long) {
+        recentDedupKeys[key] = now
         val cutoff = now - dedupWindowMs
-        val iter = recentSignatures.entries.iterator()
+        val iter = recentDedupKeys.entries.iterator()
         while (iter.hasNext()) {
             if (iter.next().value < cutoff) iter.remove()
         }
     }
+
+    private fun shouldDedupStatus(status: OfferStatus): Boolean =
+        status == OfferStatus.SEEN || status == OfferStatus.REJECTED
+
+    private fun dedupKey(entry: OfferLogEntry): String =
+        "${signature(entry)}|${entry.status.name}"
 
     fun markOfferSeen(
         price: Double,
@@ -78,7 +115,7 @@ class OfferLogger(private val context: Context) {
         timeWindow: String,
         station: String,
     ): Long = rememberFirstSeen(
-        sigRaw(price, hourlyRate, durationHours, timeWindow, station),
+        signatureRaw(price, hourlyRate, durationHours, timeWindow, station),
         System.currentTimeMillis(),
     )
 
@@ -101,9 +138,9 @@ class OfferLogger(private val context: Context) {
     }
 
     private fun signature(entry: OfferLogEntry): String =
-        sigRaw(entry.price, entry.hourlyRate, entry.durationHours, entry.timeWindow, entry.station)
+        signatureRaw(entry.price, entry.hourlyRate, entry.durationHours, entry.timeWindow, entry.station)
 
-    private fun sigRaw(
+    private fun signatureRaw(
         price: Double,
         hourlyRate: Double,
         durationHours: Double,
@@ -111,7 +148,56 @@ class OfferLogger(private val context: Context) {
         station: String,
     ): String =
         "${station.trim().lowercase()}|${"%.2f".format(price)}|${"%.2f".format(hourlyRate)}|" +
-            "${"%.1f".format(durationHours)}|${timeWindow.trim()}"
+            "${"%.1f".format(durationHours)}|${timeWindow.trim().lowercase()}"
+
+    /** Registra cada fila visible en la lista (VISTA), sin repetir la misma oferta dentro de [dedupWindowMs]. */
+    fun logVisibleOffers(offers: List<FlexBlockOffer>) {
+        for (offer in offers) {
+            logSeenIfNew(offer)
+        }
+    }
+
+    fun logSeenIfNew(offer: FlexBlockOffer) {
+        val pay = offer.payAmount ?: FlexGrabberEvaluator.parsePay(offer.payText) ?: 0.0
+        val hours = offer.durationHours ?: 0.0
+        val hourly = offer.hourlyRate ?: if (hours > 0.1) pay / hours else 0.0
+        val station = offer.stationText.trim()
+        val timeWindow = offer.timeText.trim()
+        if (station.isBlank() && timeWindow.isBlank() && pay <= 0.0 && offer.payText.isBlank()) return
+        logSeenIfNew(pay, hourly, hours, timeWindow, station)
+    }
+
+    fun logSeenIfNew(
+        price: Double,
+        hourlyRate: Double,
+        durationHours: Double,
+        timeWindow: String,
+        station: String,
+    ) {
+        log(
+            OfferLogEntry(
+                price = price,
+                hourlyRate = hourlyRate,
+                durationHours = durationHours,
+                timeWindow = timeWindow,
+                station = station,
+                status = OfferStatus.SEEN,
+                reason = "Vista en pantalla",
+            ),
+        )
+    }
+
+    fun blockFurtherSeen(
+        price: Double,
+        hourlyRate: Double,
+        durationHours: Double,
+        timeWindow: String,
+        station: String,
+    ) {
+        val now = System.currentTimeMillis()
+        val sig = signatureRaw(price, hourlyRate, durationHours, timeWindow, station)
+        markDedupKey("${sig}|${OfferStatus.SEEN}", now)
+    }
 
     fun entriesForDisplay(entries: List<OfferLogEntry>): List<OfferLogEntry> {
         if (entries.isEmpty()) return entries
@@ -145,36 +231,6 @@ class OfferLogger(private val context: Context) {
 
     fun getTodayEntriesForDisplay(): List<OfferLogEntry> =
         entriesForDisplay(store.filterTodayEntries())
-
-    fun blockFurtherSeen(
-        price: Double,
-        hourlyRate: Double,
-        durationHours: Double,
-        timeWindow: String,
-        station: String,
-    ) {
-        markSeenSignature(sigRaw(price, hourlyRate, durationHours, timeWindow, station), System.currentTimeMillis())
-    }
-
-    fun logSeenIfNew(
-        price: Double,
-        hourlyRate: Double,
-        durationHours: Double,
-        timeWindow: String,
-        station: String,
-    ) {
-        log(
-            OfferLogEntry(
-                price = price,
-                hourlyRate = hourlyRate,
-                durationHours = durationHours,
-                timeWindow = timeWindow,
-                station = station,
-                status = OfferStatus.SEEN,
-                reason = "Vista en pantalla",
-            ),
-        )
-    }
 
     fun getTodayStats(): DayStats {
         return try {
@@ -222,7 +278,7 @@ class OfferLogger(private val context: Context) {
                 !dateField.startsWith(today)
             }
             store.writeAllLines(listOf(header) + kept)
-            recentSignatures.clear()
+            recentDedupKeys.clear()
             firstSeenSignatures.clear()
             broadcastRefresh()
         } catch (e: Exception) {
@@ -247,8 +303,9 @@ class OfferLogger(private val context: Context) {
             parts[7] = statusToCsv(targetStatus)
             lines[idx] = parts.joinToString(",")
             store.writeAllLines(lines)
-            recentSignatures.clear()
+            recentDedupKeys.clear()
             firstSeenSignatures.clear()
+            hydrateDedupFromToday()
             broadcastRefresh()
             Log.d(TAG, "$logLabel: timestamp=$timestamp")
             true
@@ -270,7 +327,7 @@ class OfferLogger(private val context: Context) {
     fun clearHistory() {
         try {
             store.writeAllLines(listOf(OfferLogCsvStore.HEADER))
-            recentSignatures.clear()
+            recentDedupKeys.clear()
             firstSeenSignatures.clear()
             broadcastRefresh()
         } catch (e: Exception) {

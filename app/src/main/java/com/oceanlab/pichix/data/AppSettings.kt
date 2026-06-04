@@ -67,10 +67,10 @@ class AppSettings(context: Context) {
         get() = prefs.getString(KEY_OFFER_RANK_CRITERION, OFFER_RANK_HOURLY) ?: OFFER_RANK_HOURLY
         set(value) = prefs.edit().putString(KEY_OFFER_RANK_CRITERION, value).apply()
 
-    /** Historial: ventana dedup VISTA (ms). */
+    /** Historial: misma oferta (estación+$+hora+duración) no se repite en CSV dentro de esta ventana (ms). */
     var dedupWindowMs: Long
-        get() = prefs.getLong(KEY_DEDUP_WINDOW_MS, 45_000L).coerceIn(5_000L, 600_000L)
-        set(value) = prefs.edit().putLong(KEY_DEDUP_WINDOW_MS, value.coerceIn(5_000L, 600_000L)).apply()
+        get() = prefs.getLong(KEY_DEDUP_WINDOW_MS, 90 * 60 * 1000L).coerceIn(5_000L, 4 * 60 * 60 * 1000L)
+        set(value) = prefs.edit().putLong(KEY_DEDUP_WINDOW_MS, value.coerceIn(5_000L, 4 * 60 * 60 * 1000L)).apply()
 
     /** URI SAF para export TXT del historial. */
     var txtSaveUri: String
