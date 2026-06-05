@@ -93,6 +93,10 @@ class PichixAccessibilityService : AccessibilityService() {
     private var scrollingDown = true
     private var lastReturnMs = 0L
     private var lastGrabEvalLogMs = 0L
+    private var returnInFlight = false
+    private var burstActive = false
+    private var nextBurstAtMs = 0L
+    private var burstEndsAtMs = 0L
 
     private val grabLoopRunnable = Runnable { runGrabberTick() }
     private val timerRunnable = Runnable { runFlexTimerTick() }
@@ -154,17 +158,100 @@ class PichixAccessibilityService : AccessibilityService() {
         handler.removeCallbacksAndMessages(null)
         cancelPendingMotorActions()
         grabInFlight = false
+        returnInFlight = false
+        burstActive = false
+        nextBurstAtMs = 0L
+        burstEndsAtMs = 0L
         FlexState.resetScrollCycle()
         scrollSigsBefore = ""
         scrollingDown = true
+    }
+
+    private fun updateBurstState() {
+        if (!settings.flexBurstClickEnabled) {
+            burstActive = false
+            nextBurstAtMs = 0L
+            burstEndsAtMs = 0L
+            return
+        }
+        val now = System.currentTimeMillis()
+        if (nextBurstAtMs == 0L) {
+            nextBurstAtMs = now + settings.nextBurstIntervalMs()
+        }
+        if (!burstActive && now >= nextBurstAtMs) {
+            burstActive = true
+            burstEndsAtMs = now + settings.flexBurstDurationSec.coerceAtLeast(5) * 1000L
+            postObserver(
+                "Ráfaga de clics iniciada (${settings.flexBurstDurationSec}s, cada ${settings.flexBurstClickIntervalMs}ms)",
+            )
+        } else if (burstActive && now >= burstEndsAtMs) {
+            burstActive = false
+            nextBurstAtMs = now + settings.nextBurstIntervalMs()
+            val mins = ((nextBurstAtMs - now) / 60_000L).coerceAtLeast(1)
+            postObserver("Ráfaga finalizada — próxima en ~$mins min")
+        }
+    }
+
+    private fun tryRefreshClick(screenText: String, burstMode: Boolean) {
+        if (!settings.flexClickRefreshEnabled) return
+        val screenOk = reader.screenMatchesForClick(
+            settings.flexClickScreenText,
+            screenText,
+            settings.flexClickScreenMatchMode,
+            settings.flexClickScreenIgnoreCase,
+        )
+        if (!screenOk && settings.flexClickScreenText.isNotBlank()) {
+            if (!burstMode) {
+                logGrabEvalThrottled(
+                    "Clic omitido: pantalla no coincide con «${settings.flexClickScreenText}» " +
+                        "(modo ${settings.flexClickScreenMatchMode})",
+                )
+            }
+            return
+        }
+        if (!screenOk && settings.flexClickScreenText.isBlank()) return
+        val target = MonitorPackages.primaryTarget(this)
+        val logUi = settings.debugLogEnabled || settings.fileLogEnabled
+        if (logUi) {
+            reader.withActiveRoot { root ->
+                FlexUiDumper.dumpOnRefreshClick(root, target, "antes")
+            }
+        }
+        val clicked = reader.clickTargetButton(
+            settings.flexRefreshButtonText,
+            settings.flexRefreshButtonMatchMode,
+            settings.flexRefreshButtonIgnoreCase,
+        )
+        if (!clicked) {
+            if (!burstMode) postObserver("Clic: no se encontró «${settings.flexRefreshButtonText}»")
+        } else if (burstMode) {
+            postObserver("Ráfaga → Refresh")
+        } else if (settings.debugLogEnabled) {
+            postObserver("Clic Refresh (siguiente en ${settings.nextGrabDelayMs() / 1000}s)")
+        }
+        if (logUi) {
+            handler.postDelayed({
+                reader.withActiveRoot { root ->
+                    FlexUiDumper.dumpOnRefreshClick(root, target, "despues")
+                }
+            }, 450)
+        }
     }
 
     private fun scheduleWork() {
         handler.removeCallbacks(grabLoopRunnable)
         handler.removeCallbacks(timerRunnable)
         if (!settings.isBotEnabled) return
-        handler.postDelayed(grabLoopRunnable, settings.nextGrabDelayMs())
+        handler.postDelayed(grabLoopRunnable, nextGrabberDelayMs())
         handler.postDelayed(timerRunnable, FlexState.flexTimerSec * 1000L)
+    }
+
+    private fun nextGrabberDelayMs(): Long {
+        settings = AppSettings(this)
+        if (burstActive && settings.flexBurstClickEnabled) {
+            return settings.flexBurstClickIntervalMs
+        }
+        return settings.nextGrabDelayMs()
     }
 
     private fun runFlexTimerTick() {
@@ -194,9 +281,11 @@ class PichixAccessibilityService : AccessibilityService() {
             postBotPaused()
         }
 
+        if (returnInFlight) return
         if (settings.flexAutoReturnToOffers && !flags.captcha && flags.shouldReturnToOffers) {
             val now = System.currentTimeMillis()
-            if (now - lastReturnMs > 3000L) {
+            val cooldownMs = settings.flexReturnDetectCooldownSec.coerceAtLeast(1) * 1000L
+            if (now - lastReturnMs > cooldownMs) {
                 lastReturnMs = now
                 performReturnToOffers()
             }
@@ -206,49 +295,18 @@ class PichixAccessibilityService : AccessibilityService() {
     private fun runGrabberTick() {
         settings = AppSettings(this)
         scheduleWork()
-        if (!settings.isBotEnabled || pausedAfterAccept || motorPausedForNavigation || grabInFlight) return
+        if (!settings.isBotEnabled || pausedAfterAccept || motorPausedForNavigation || returnInFlight) return
         if (!isMotorForegroundAllowed()) return
+        updateBurstState()
         grabInFlight = true
         try {
             val text = reader.readFullScreenText()
+            if (burstActive && settings.flexBurstClickEnabled) {
+                tryRefreshClick(text, burstMode = true)
+                return
+            }
             if (settings.flexClickRefreshEnabled) {
-                val screenOk = reader.screenMatchesForClick(
-                    settings.flexClickScreenText,
-                    text,
-                    settings.flexClickScreenMatchMode,
-                    settings.flexClickScreenIgnoreCase,
-                )
-                if (!screenOk && settings.flexClickScreenText.isNotBlank()) {
-                    logGrabEvalThrottled(
-                        "Clic omitido: pantalla no coincide con «${settings.flexClickScreenText}» " +
-                            "(modo ${settings.flexClickScreenMatchMode})",
-                    )
-                } else if (screenOk) {
-                val target = MonitorPackages.primaryTarget(this)
-                val logUi = settings.debugLogEnabled || settings.fileLogEnabled
-                if (logUi) {
-                    reader.withActiveRoot { root ->
-                        FlexUiDumper.dumpOnRefreshClick(root, target, "antes")
-                    }
-                }
-                val clicked = reader.clickTargetButton(
-                    settings.flexRefreshButtonText,
-                    settings.flexRefreshButtonMatchMode,
-                    settings.flexRefreshButtonIgnoreCase,
-                )
-                if (!clicked) {
-                    postObserver("Clic: no se encontró «${settings.flexRefreshButtonText}»")
-                } else if (settings.debugLogEnabled) {
-                    postObserver("Clic Refresh (siguiente en ${settings.nextGrabDelayMs() / 1000}s)")
-                }
-                if (logUi) {
-                    handler.postDelayed({
-                        reader.withActiveRoot { root ->
-                            FlexUiDumper.dumpOnRefreshClick(root, target, "despues")
-                        }
-                    }, 450)
-                }
-                }
+                tryRefreshClick(text, burstMode = false)
             }
 
             warnIfTariffRulesMisconfigured()
@@ -482,6 +540,7 @@ class PichixAccessibilityService : AccessibilityService() {
     }
 
     private fun performReturnToOffers(manual: Boolean = false) {
+        if (returnInFlight) return
         if (!manual && motorPausedForNavigation) return
         if (!isMotorForegroundAllowed()) {
             if (manual) postObserver("Test Return → Flex no en primer plano")
@@ -493,39 +552,55 @@ class PichixAccessibilityService : AccessibilityService() {
             return
         }
 
+        returnInFlight = true
+        cancelPendingMotorActions()
+        grabInFlight = false
+        postObserver(
+            if (manual) "Test Return → iniciando (clics pausados)" else "Return → fuera de ofertas (clics pausados)",
+        )
+
         // Macro ObserverTX-Return_2_Offers: menú ≡ → espera → «Offers» (no pestaña Schedule).
         if (!reader.clickFlexDrawerMenu()) {
             repeat(2) { reader.clickBack() }
             postObserver("Return → menú no encontrado, 2× Atrás")
-            handler.postDelayed({ finishReturnToOffers() }, 800)
+            handler.postDelayed({ finishReturnToOffers() }, settings.nextReturnStepDelayMs())
             return
         }
         postObserver("Return → menú ≡ abierto")
+        val afterMenuMs = settings.nextReturnStepDelayMs()
         handler.postDelayed({
-            if (!isMotorForegroundAllowed()) return@postDelayed
+            if (!isMotorForegroundAllowed()) {
+                finishReturnToOffers(aborted = true)
+                return@postDelayed
+            }
             val offersClicked = reader.clickTextButton("Offers", partial = false) ||
                 reader.clickTextButton("Offers", partial = true)
             postObserver(
                 if (offersClicked) "Return → Offers" else "Return → no se encontró Offers en menú",
             )
-            handler.postDelayed({ finishReturnToOffers() }, 1200)
-        }, 700)
+            handler.postDelayed({ finishReturnToOffers() }, settings.nextReturnStepDelayMs())
+        }, afterMenuMs)
     }
 
-    private fun finishReturnToOffers() {
-        if (!isMotorForegroundAllowed() || pausedAfterAccept || motorPausedForNavigation) return
-        if (!reader.isOnOffersListScreen()) {
-            if (reader.clickFlexDrawerMenu()) {
-                handler.postDelayed({
-                    reader.clickTextButton("Offers", partial = true)
-                }, 500)
+    private fun finishReturnToOffers(aborted: Boolean = false) {
+        if (!aborted && isMotorForegroundAllowed() && !pausedAfterAccept && !motorPausedForNavigation) {
+            if (!reader.isOnOffersListScreen()) {
+                if (reader.clickFlexDrawerMenu()) {
+                    handler.postDelayed({
+                        reader.clickTextButton("Offers", partial = true)
+                    }, settings.nextReturnStepDelayMs())
+                }
             }
         }
         handler.postDelayed({
+            returnInFlight = false
             if (!pausedAfterAccept && !motorPausedForNavigation && isMotorForegroundAllowed()) {
+                postObserver("Return → completado, motor reanudado")
                 runGrabberTick()
+            } else {
+                postObserver("Return → completado")
             }
-        }, 600)
+        }, if (aborted) 0L else settings.nextReturnStepDelayMs())
     }
 
     private fun postObserver(message: String) {

@@ -204,6 +204,18 @@ class AppSettings(context: Context) {
         return flexGrabIntervalMs
     }
 
+    fun nextReturnStepDelayMs(): Long {
+        val min = flexReturnStepMinSec.coerceAtLeast(0)
+        val max = flexReturnStepMaxSec.coerceAtLeast(min)
+        return (min..max).random().toLong() * 1000L
+    }
+
+    fun nextBurstIntervalMs(): Long {
+        val min = flexBurstIntervalMinMin.coerceAtLeast(1)
+        val max = flexBurstIntervalMaxMin.coerceAtLeast(min)
+        return (min..max).random().toLong() * 60_000L
+    }
+
     var autoPauseOnCaptcha: Boolean
         get() = prefs.getBoolean(KEY_AUTO_PAUSE_CAPTCHA, true)
         set(value) = prefs.edit().putBoolean(KEY_AUTO_PAUSE_CAPTCHA, value).apply()
@@ -227,6 +239,43 @@ class AppSettings(context: Context) {
     var flexAutoReturnToOffers: Boolean
         get() = prefs.getBoolean(KEY_AUTO_RETURN_OFFERS, true)
         set(value) = prefs.edit().putBoolean(KEY_AUTO_RETURN_OFFERS, value).apply()
+
+    /** Espera aleatoria (seg) entre pasos del macro Return 2 (menú → Offers → verificar). */
+    var flexReturnStepMinSec: Int
+        get() = prefs.getInt(KEY_RETURN_STEP_MIN_SEC, 1).coerceIn(0, 60)
+        set(value) = prefs.edit().putInt(KEY_RETURN_STEP_MIN_SEC, value.coerceIn(0, 60)).apply()
+
+    var flexReturnStepMaxSec: Int
+        get() = prefs.getInt(KEY_RETURN_STEP_MAX_SEC, 3).coerceIn(0, 60)
+        set(value) = prefs.edit().putInt(KEY_RETURN_STEP_MAX_SEC, value.coerceIn(0, 60)).apply()
+
+    /** Mínimo entre intentos automáticos de Return 2 al detectar pantalla fuera de ofertas. */
+    var flexReturnDetectCooldownSec: Int
+        get() = prefs.getInt(KEY_RETURN_DETECT_COOLDOWN_SEC, 3).coerceIn(1, 120)
+        set(value) = prefs.edit().putInt(KEY_RETURN_DETECT_COOLDOWN_SEC, value.coerceIn(1, 120)).apply()
+
+    /** Ráfaga de clics Refresh: intervalo aleatorio entre ráfagas (minutos). */
+    var flexBurstClickEnabled: Boolean
+        get() = prefs.getBoolean(KEY_BURST_CLICK_ENABLED, false)
+        set(value) = prefs.edit().putBoolean(KEY_BURST_CLICK_ENABLED, value).apply()
+
+    var flexBurstIntervalMinMin: Int
+        get() = prefs.getInt(KEY_BURST_INTERVAL_MIN_MIN, 5).coerceIn(1, 24 * 60)
+        set(value) = prefs.edit().putInt(KEY_BURST_INTERVAL_MIN_MIN, value.coerceIn(1, 24 * 60)).apply()
+
+    var flexBurstIntervalMaxMin: Int
+        get() = prefs.getInt(KEY_BURST_INTERVAL_MAX_MIN, 15).coerceIn(1, 24 * 60)
+        set(value) = prefs.edit().putInt(KEY_BURST_INTERVAL_MAX_MIN, value.coerceIn(1, 24 * 60)).apply()
+
+    /** Intervalo entre clics durante la ráfaga (ms). */
+    var flexBurstClickIntervalMs: Long
+        get() = prefs.getLong(KEY_BURST_CLICK_INTERVAL_MS, 500L).coerceIn(100L, 10_000L)
+        set(value) = prefs.edit().putLong(KEY_BURST_CLICK_INTERVAL_MS, value.coerceIn(100L, 10_000L)).apply()
+
+    /** Duración de cada ráfaga (segundos). */
+    var flexBurstDurationSec: Int
+        get() = prefs.getInt(KEY_BURST_DURATION_SEC, 30).coerceIn(5, 600)
+        set(value) = prefs.edit().putInt(KEY_BURST_DURATION_SEC, value.coerceIn(5, 600)).apply()
 
     /** Pausa el bot al detectar notificación con texto configurado (Pause by over clicks). */
     var pauseByOverClicksEnabled: Boolean
@@ -356,6 +405,14 @@ class AppSettings(context: Context) {
         private const val KEY_FLEX_AUTO_ACCEPT = "flex_auto_accept"
         private const val KEY_AUTO_PAUSE_RESERVED = "auto_pause_reserved"
         private const val KEY_AUTO_RETURN_OFFERS = "flex_auto_return_offers"
+        private const val KEY_RETURN_STEP_MIN_SEC = "flex_return_step_min_sec"
+        private const val KEY_RETURN_STEP_MAX_SEC = "flex_return_step_max_sec"
+        private const val KEY_RETURN_DETECT_COOLDOWN_SEC = "flex_return_detect_cooldown_sec"
+        private const val KEY_BURST_CLICK_ENABLED = "flex_burst_click_enabled"
+        private const val KEY_BURST_INTERVAL_MIN_MIN = "flex_burst_interval_min_min"
+        private const val KEY_BURST_INTERVAL_MAX_MIN = "flex_burst_interval_max_min"
+        private const val KEY_BURST_CLICK_INTERVAL_MS = "flex_burst_click_interval_ms"
+        private const val KEY_BURST_DURATION_SEC = "flex_burst_duration_sec"
         private const val KEY_PAUSE_OVER_CLICKS = "pause_by_over_clicks"
         private const val KEY_PAUSE_OVER_CLICKS_TEXT = "pause_by_over_clicks_text"
         private const val KEY_PAUSE_OVER_CLICKS_PAUSE_SOUND = "pause_by_over_clicks_pause_sound"

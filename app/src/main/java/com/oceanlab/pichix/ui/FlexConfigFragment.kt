@@ -97,7 +97,16 @@ class FlexConfigFragment : Fragment() {
         val etBasicSec = view.findViewById<TextInputEditText>(R.id.etBasicClickIntervalSec)
         val etSmartMin = view.findViewById<TextInputEditText>(R.id.etSmartClickMinSec)
         val etSmartMax = view.findViewById<TextInputEditText>(R.id.etSmartClickMaxSec)
+        val etReturnStepMin = view.findViewById<TextInputEditText>(R.id.etReturnStepMinSec)
+        val etReturnStepMax = view.findViewById<TextInputEditText>(R.id.etReturnStepMaxSec)
+        val etReturnCooldown = view.findViewById<TextInputEditText>(R.id.etReturnDetectCooldownSec)
         val swClickRefresh = view.findViewById<SwitchMaterial>(R.id.switchClickRefresh)
+        val swBurstClick = view.findViewById<SwitchMaterial>(R.id.switchBurstClick)
+        val layoutBurstClick = view.findViewById<LinearLayout>(R.id.layoutBurstClick)
+        val etBurstMin = view.findViewById<TextInputEditText>(R.id.etBurstIntervalMinMin)
+        val etBurstMax = view.findViewById<TextInputEditText>(R.id.etBurstIntervalMaxMin)
+        val etBurstClickMs = view.findViewById<TextInputEditText>(R.id.etBurstClickIntervalMs)
+        val etBurstDuration = view.findViewById<TextInputEditText>(R.id.etBurstDurationSec)
         val swAutoScroll = view.findViewById<SwitchMaterial>(R.id.switchAutoScroll)
         val toggleOfferPick = view.findViewById<MaterialButtonToggleGroup>(R.id.toggleOfferPickMode)
         val toggleOfferRank = view.findViewById<MaterialButtonToggleGroup>(R.id.toggleOfferRank)
@@ -121,6 +130,9 @@ class FlexConfigFragment : Fragment() {
         etPackage.setText(settings.monitorPackagesCsv)
         swShowNames.isChecked = settings.showCategoryNames
         swReturn2?.isChecked = settings.flexAutoReturnToOffers
+        etReturnStepMin.setText(settings.flexReturnStepMinSec.toString())
+        etReturnStepMax.setText(settings.flexReturnStepMaxSec.toString())
+        etReturnCooldown.setText(settings.flexReturnDetectCooldownSec.toString())
         swAutoAccept.isChecked = settings.flexAutoAccept
         swPauseOver.isChecked = settings.pauseByOverClicksEnabled
         swForeground.isChecked = settings.flexOnlyWhenForeground
@@ -138,6 +150,12 @@ class FlexConfigFragment : Fragment() {
         etSmartMin.setText(settings.flexSmartClickMinSec.toString())
         etSmartMax.setText(settings.flexSmartClickMaxSec.toString())
         swClickRefresh.isChecked = settings.flexClickRefreshEnabled
+        swBurstClick.isChecked = settings.flexBurstClickEnabled
+        etBurstMin.setText(settings.flexBurstIntervalMinMin.toString())
+        etBurstMax.setText(settings.flexBurstIntervalMaxMin.toString())
+        etBurstClickMs.setText(settings.flexBurstClickIntervalMs.toString())
+        etBurstDuration.setText(settings.flexBurstDurationSec.toString())
+        updateBurstVisibility(layoutBurstClick, swBurstClick.isChecked)
         swAutoScroll.isChecked = settings.flexAutoScrollEnabled
         toggleOfferPick.check(
             if (settings.usesBestOfferPick()) R.id.btnOfferPickBest else R.id.btnOfferPickFirst,
@@ -235,8 +253,10 @@ class FlexConfigFragment : Fragment() {
                 persistAllFields(
                     etPackage, swShowNames, swAutoAccept, swPauseOver, swForeground, swDebug, swFileLog,
                     swOverlayOnOff, swOverlayMotorPause, swOverlayTestReturn,
+                    etReturnStepMin, etReturnStepMax, etReturnCooldown,
                     etPauseText, etPauseMinutes, toggleClickMode, etBasicSec, etSmartMin, etSmartMax,
-                    swClickRefresh, swAutoScroll, toggleOfferPick, toggleOfferRank,
+                    swClickRefresh, swBurstClick, etBurstMin, etBurstMax, etBurstClickMs, etBurstDuration,
+                    swAutoScroll, toggleOfferPick, toggleOfferRank,
                     etRefreshBtn, etClickScreen, toggleRefreshMode, swRefreshIgnore,
                     toggleScreenMode, swScreenIgnore, togglePauseMode, swPauseIgnore,
                 )
@@ -273,15 +293,27 @@ class FlexConfigFragment : Fragment() {
         }
         etPauseText.onUserTextChanged(onDirty = { markDirty() })
         etPauseMinutes.onUserTextChanged(onDirty = { markDirty() })
+        val applyReturnTiming: () -> Unit = {
+            persistReturnTimingSettings(etReturnStepMin, etReturnStepMax, etReturnCooldown)
+            markDirty()
+        }
+        etReturnStepMin.onUserTextChanged(onDirty = { applyReturnTiming() })
+        etReturnStepMax.onUserTextChanged(onDirty = { applyReturnTiming() })
+        etReturnCooldown.onUserTextChanged(onDirty = { applyReturnTiming() })
         val applyClickMotor: () -> Unit = {
             configScroll.runRetainingScrollAndFocus {
                 persistClickMotorSettings(
                     toggleClickMode, etBasicSec, etSmartMin, etSmartMax, swClickRefresh,
+                    swBurstClick, etBurstMin, etBurstMax, etBurstClickMs, etBurstDuration,
                     etRefreshBtn, etClickScreen, toggleRefreshMode, swRefreshIgnore,
                     toggleScreenMode, swScreenIgnore,
                 )
             }
             markDirty()
+        }
+        swBurstClick.setOnCheckedChangeRetainingFocus(view) { checked ->
+            updateBurstVisibility(layoutBurstClick, checked)
+            applyClickMotor()
         }
         toggleClickMode.addOnButtonCheckedRetainingFocus(view) {
             val smart = toggleClickMode.checkedButtonId == R.id.btnClickModeSmart
@@ -300,6 +332,10 @@ class FlexConfigFragment : Fragment() {
             markDirty()
         }
         toggleOfferRank.addOnButtonCheckedRetainingFocus(view) { markDirty() }
+        etBurstMin.onUserTextChanged(onDirty = { applyClickMotor() })
+        etBurstMax.onUserTextChanged(onDirty = { applyClickMotor() })
+        etBurstClickMs.onUserTextChanged(onDirty = { applyClickMotor() })
+        etBurstDuration.onUserTextChanged(onDirty = { applyClickMotor() })
         etRefreshBtn.onUserTextChanged(onDirty = { applyClickMotor() })
         etClickScreen.onUserTextChanged(onDirty = { applyClickMotor() })
         toggleRefreshMode.addOnButtonCheckedRetainingFocus(view) { applyClickMotor() }
@@ -328,6 +364,24 @@ class FlexConfigFragment : Fragment() {
         smart.visibility = if (smartMode) View.VISIBLE else View.GONE
     }
 
+    private fun updateBurstVisibility(layout: View, enabled: Boolean) {
+        layout.visibility = if (enabled) View.VISIBLE else View.GONE
+    }
+
+    private fun persistReturnTimingSettings(
+        etReturnStepMin: TextInputEditText,
+        etReturnStepMax: TextInputEditText,
+        etReturnCooldown: TextInputEditText,
+    ) {
+        val minStep = etReturnStepMin.text?.toString()?.toIntOrNull()?.coerceIn(0, 60) ?: 1
+        val maxStep = etReturnStepMax.text?.toString()?.toIntOrNull()?.coerceIn(0, 60) ?: 3
+        settings.flexReturnStepMinSec = minOf(minStep, maxStep)
+        settings.flexReturnStepMaxSec = maxOf(minStep, maxStep)
+        settings.flexReturnDetectCooldownSec =
+            etReturnCooldown.text?.toString()?.toIntOrNull()?.coerceIn(1, 120) ?: 3
+        PichixAccessibilityService.syncEngine(requireContext())
+    }
+
     /** Clics / intervalo: se guardan al cambiar para que el motor use Smart click sin pulsar «Guardar». */
     private fun persistClickMotorSettings(
         toggleClickMode: MaterialButtonToggleGroup,
@@ -335,6 +389,11 @@ class FlexConfigFragment : Fragment() {
         etSmartMin: TextInputEditText,
         etSmartMax: TextInputEditText,
         swClickRefresh: SwitchMaterial,
+        swBurstClick: SwitchMaterial,
+        etBurstMin: TextInputEditText,
+        etBurstMax: TextInputEditText,
+        etBurstClickMs: TextInputEditText,
+        etBurstDuration: TextInputEditText,
         etRefreshBtn: TextInputEditText,
         etClickScreen: TextInputEditText,
         toggleRefreshMode: MaterialButtonToggleGroup,
@@ -351,6 +410,15 @@ class FlexConfigFragment : Fragment() {
         settings.flexSmartClickMinSec = minOf(minSec, maxSec)
         settings.flexSmartClickMaxSec = maxOf(minSec, maxSec)
         settings.flexClickRefreshEnabled = swClickRefresh.isChecked
+        settings.flexBurstClickEnabled = swBurstClick.isChecked
+        val burstMin = etBurstMin.text?.toString()?.toIntOrNull()?.coerceIn(1, 24 * 60) ?: 5
+        val burstMax = etBurstMax.text?.toString()?.toIntOrNull()?.coerceIn(1, 24 * 60) ?: 15
+        settings.flexBurstIntervalMinMin = minOf(burstMin, burstMax)
+        settings.flexBurstIntervalMaxMin = maxOf(burstMin, burstMax)
+        settings.flexBurstClickIntervalMs =
+            etBurstClickMs.text?.toString()?.toLongOrNull()?.coerceIn(100L, 10_000L) ?: 500L
+        settings.flexBurstDurationSec =
+            etBurstDuration.text?.toString()?.toIntOrNull()?.coerceIn(5, 600) ?: 30
         settings.flexRefreshButtonText =
             etRefreshBtn.text?.toString()?.trim().orEmpty().ifBlank { AppSettings.DEFAULT_REFRESH_BUTTON }
         settings.flexRefreshButtonMatchMode =
@@ -374,6 +442,9 @@ class FlexConfigFragment : Fragment() {
         swOverlayOnOff: SwitchMaterial,
         swOverlayMotorPause: SwitchMaterial,
         swOverlayTestReturn: SwitchMaterial,
+        etReturnStepMin: TextInputEditText,
+        etReturnStepMax: TextInputEditText,
+        etReturnCooldown: TextInputEditText,
         etPauseText: TextInputEditText,
         etPauseMinutes: TextInputEditText,
         toggleClickMode: MaterialButtonToggleGroup,
@@ -381,6 +452,11 @@ class FlexConfigFragment : Fragment() {
         etSmartMin: TextInputEditText,
         etSmartMax: TextInputEditText,
         swClickRefresh: SwitchMaterial,
+        swBurstClick: SwitchMaterial,
+        etBurstMin: TextInputEditText,
+        etBurstMax: TextInputEditText,
+        etBurstClickMs: TextInputEditText,
+        etBurstDuration: TextInputEditText,
         swAutoScroll: SwitchMaterial,
         toggleOfferPick: MaterialButtonToggleGroup,
         toggleOfferRank: MaterialButtonToggleGroup,
@@ -396,6 +472,12 @@ class FlexConfigFragment : Fragment() {
         settings.monitorPackagesCsv = etPackage.text?.toString()?.trim().orEmpty()
         settings.showCategoryNames = swShowNames.isChecked
         settings.flexAutoReturnToOffers = swReturn2?.isChecked == true
+        val minStep = etReturnStepMin.text?.toString()?.toIntOrNull()?.coerceIn(0, 60) ?: 1
+        val maxStep = etReturnStepMax.text?.toString()?.toIntOrNull()?.coerceIn(0, 60) ?: 3
+        settings.flexReturnStepMinSec = minOf(minStep, maxStep)
+        settings.flexReturnStepMaxSec = maxOf(minStep, maxStep)
+        settings.flexReturnDetectCooldownSec =
+            etReturnCooldown.text?.toString()?.toIntOrNull()?.coerceIn(1, 120) ?: 3
         settings.flexAutoAccept = swAutoAccept.isChecked
         settings.pauseByOverClicksEnabled = swPauseOver.isChecked
         settings.flexOnlyWhenForeground = swForeground.isChecked
@@ -420,6 +502,15 @@ class FlexConfigFragment : Fragment() {
         settings.flexSmartClickMinSec = minOf(minSec, maxSec)
         settings.flexSmartClickMaxSec = maxOf(minSec, maxSec)
         settings.flexClickRefreshEnabled = swClickRefresh.isChecked
+        settings.flexBurstClickEnabled = swBurstClick.isChecked
+        val burstMin = etBurstMin.text?.toString()?.toIntOrNull()?.coerceIn(1, 24 * 60) ?: 5
+        val burstMax = etBurstMax.text?.toString()?.toIntOrNull()?.coerceIn(1, 24 * 60) ?: 15
+        settings.flexBurstIntervalMinMin = minOf(burstMin, burstMax)
+        settings.flexBurstIntervalMaxMin = maxOf(burstMin, burstMax)
+        settings.flexBurstClickIntervalMs =
+            etBurstClickMs.text?.toString()?.toLongOrNull()?.coerceIn(100L, 10_000L) ?: 500L
+        settings.flexBurstDurationSec =
+            etBurstDuration.text?.toString()?.toIntOrNull()?.coerceIn(5, 600) ?: 30
         settings.flexAutoScrollEnabled = swAutoScroll.isChecked
         settings.flexOfferPickMode = if (toggleOfferPick.checkedButtonId == R.id.btnOfferPickBest) {
             AppSettings.OFFER_PICK_BEST

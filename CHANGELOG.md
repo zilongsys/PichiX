@@ -8,6 +8,17 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.38 (Mayo 2026)
+
+### Añadido
+- **Return 2**: espera aleatoria entre pasos (seg mín–máx) y cooldown entre detecciones automáticas; durante el regreso el motor pausa clics/scroll y reanuda al terminar.
+- **Ráfaga de clics**: intervalo aleatorio entre ráfagas (min), clic Refresh cada N ms durante X segundos; solo en pantalla de ofertas (misma regla que Clic Refresh).
+
+### Actualizado
+- Textos de ayuda: el botón ↩ de prueba es manual; el auto Return 2 solo con interruptor ON y pantallas detectadas fuera de lista.
+
+---
+
 ## v0.1.37 (Mayo 2026)
 
 ### Añadido
