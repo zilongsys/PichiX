@@ -64,20 +64,11 @@ data class FlexReturnScreenTrigger(
 object FlexReturnTriggersEvaluator {
     fun matches(screenText: String, trigger: FlexReturnScreenTrigger): Boolean {
         if (!trigger.enabled) return false
-        if (isOffersListMarkerText(screenText)) return false
         val phrases = trigger.phrases.map { it.trim() }.filter { it.isNotEmpty() }
         if (phrases.isEmpty()) return false
         return phrases.all { phrase ->
             ScreenTextMatcher.matches(screenText, phrase, trigger.matchMode, trigger.ignoreCase)
         }
-    }
-
-    /** Evita que «updates»+«schedule» de la barra inferior disparen Return estando en ofertas. */
-    private fun isOffersListMarkerText(screenText: String): Boolean {
-        val lower = screenText.lowercase()
-        return lower.contains("filter offers by") ||
-            lower.contains("filtrar ofertas") ||
-            lower.contains("filtrar por")
     }
 
     fun anyMatches(screenText: String, triggers: List<FlexReturnScreenTrigger>): Boolean =
@@ -105,21 +96,19 @@ object FlexReturnTriggersStore {
         settings.flexReturnTriggersJson = arr.toString()
     }
 
+    /** Solo frases típicas fuera de la lista de ofertas (evita «read more» etc. que también salen en ofertas). */
     fun defaultTriggers(): List<FlexReturnScreenTrigger> = listOf(
-        FlexReturnScreenTrigger(label = "Your dashboard", phrases = listOf("your dashboard")),
-        FlexReturnScreenTrigger(label = "Tu panel", phrases = listOf("tu panel", "tu tablero")),
-        FlexReturnScreenTrigger(label = "Your standing", phrases = listOf("your standing")),
-        FlexReturnScreenTrigger(label = "Tu reputación", phrases = listOf("tu reputación", "tu standing")),
-        FlexReturnScreenTrigger(label = "Read more", phrases = listOf("read more")),
-        FlexReturnScreenTrigger(label = "Leer más", phrases = listOf("leer más", "read more")),
-        FlexReturnScreenTrigger(label = "Learn more", phrases = listOf("learn more")),
         FlexReturnScreenTrigger(label = "Offer details", phrases = listOf("offer details")),
         FlexReturnScreenTrigger(label = "Detalle oferta", phrases = listOf("detalle de la oferta", "detalles de la oferta")),
         FlexReturnScreenTrigger(label = "No longer available", phrases = listOf("no longer available")),
         FlexReturnScreenTrigger(label = "Ya no disponible", phrases = listOf("ya no está disponible", "no longer available")),
         FlexReturnScreenTrigger(
-            label = "Pestaña Schedule (contenido)",
-            phrases = listOf("scheduled blocks", "bloques programados"),
+            label = "Schedule / bloques",
+            phrases = listOf("scheduled blocks", "bloques programados", "my schedule"),
+        ),
+        FlexReturnScreenTrigger(
+            label = "Updates / noticias",
+            phrases = listOf("your dashboard", "tu panel", "activity hub"),
         ),
     )
 }

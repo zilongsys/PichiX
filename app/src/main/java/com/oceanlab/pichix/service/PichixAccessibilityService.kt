@@ -371,9 +371,10 @@ class PichixAccessibilityService : AccessibilityService() {
         val f = flags ?: reader.detectScreenFlags(screen, settings)
         if (f.captcha) return
 
+        if (reader.isOnOffersListScreen(screen)) return
+
         val triggers = FlexReturnTriggersStore.load(settings)
-        val onOffers = reader.isOffersListContext(screen)
-        val matched = FlexReturnTriggersEvaluator.firstMatch(screen, triggers)
+        val matched = FlexReturnTriggersEvaluator.firstMatch(screen, triggers) ?: return
 
         if (settings.debugLogEnabled) {
             val now = System.currentTimeMillis()
@@ -382,8 +383,7 @@ class PichixAccessibilityService : AccessibilityService() {
                 val snippet = screen.replace('\n', ' ').take(120)
                 Log.d(
                     TAG,
-                    "Return probe: onOffers=$onOffers shouldReturn=${f.shouldReturnToOffers} " +
-                        "match=${matched?.displayTitle() ?: "—"} text=«$snippet»",
+                    "Return probe: onOffers=false match=${matched.displayTitle()} text=«$snippet»",
                 )
             }
         }
@@ -395,8 +395,7 @@ class PichixAccessibilityService : AccessibilityService() {
         if (now - lastReturnMs <= cooldownMs) return
 
         lastReturnMs = now
-        matched?.let { postObserver("Return detectado: ${it.displayTitle()}") }
-            ?: postObserver("Return detectado: pantalla fuera de ofertas")
+        postObserver("Return detectado: ${matched.displayTitle()}")
         performReturnToOffers()
     }
 

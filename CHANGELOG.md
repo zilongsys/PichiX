@@ -8,6 +8,16 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.43 (Mayo 2026)
+
+### Corregido
+- **Return 2 en ofertas**: ya no dispara en lista de ofertas (offer_pay o filtrar = bloqueo); solo si coincide un disparador activo fuera de ofertas. Lógica simplificada sin fallback estructural.
+
+### Actualizado
+- Disparadores por defecto más específicos (sin read more / learn more genéricos).
+
+---
+
 ## v0.1.42 (Mayo 2026)
 
 ### Corregido
