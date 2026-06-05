@@ -8,6 +8,9 @@ import android.view.accessibility.AccessibilityWindowInfo
 import com.oceanlab.pichix.analyzer.FlexBlockOffer
 import com.oceanlab.pichix.analyzer.FlexGrabberEvaluator
 import com.oceanlab.pichix.data.AppSettings
+import com.oceanlab.pichix.data.FlexReturnTriggersEvaluator
+import com.oceanlab.pichix.data.FlexReturnTriggersStore
+import com.oceanlab.pichix.data.FlexReturnScreenTrigger
 import com.oceanlab.pichix.data.FlexState
 import com.oceanlab.pichix.flex.FlexIds
 import com.oceanlab.pichix.util.ScreenTextMatcher
@@ -74,8 +77,9 @@ class FlexScreenReader(private val service: AccessibilityService) {
         }
     }
 
-    fun detectScreenFlags(screenText: String): ScreenFlags {
+    fun detectScreenFlags(screenText: String, settings: AppSettings? = null): ScreenFlags {
         val lower = screenText.lowercase()
+        val triggers = settings?.let { FlexReturnTriggersStore.load(it) }.orEmpty()
         return ScreenFlags(
             blockUnavailable = lower.contains("no longer available") ||
                 lower.contains("not available") ||
@@ -85,7 +89,7 @@ class FlexScreenReader(private val service: AccessibilityService) {
             offerScheduled = lower.contains("scheduled") && lower.contains("offer"),
             onOffersList = isOnOffersListScreen(lower),
             onFlexHomeTabs = lower.contains("updates") && lower.contains("schedule") && !isOnOffersListScreen(lower),
-            shouldReturnToOffers = shouldReturnToOffersScreen(lower),
+            shouldReturnToOffers = shouldReturnToOffersScreen(screenText, triggers),
         )
     }
 
@@ -96,23 +100,21 @@ class FlexScreenReader(private val service: AccessibilityService) {
         return lower.contains("filter offers by")
     }
 
-    /** Pantalla principal Updates/Schedule, feed, detalle u otra — volver a ofertas (macro Return_2). */
-    fun shouldReturnToOffersScreen(screenLower: String? = null): Boolean {
-        if (isOnOffersListScreen(screenLower)) return false
-        val lower = screenLower ?: readFullScreenText().lowercase()
+    /** Pantalla fuera de lista de ofertas — triggers configurables + detalle sin offer_pay. */
+    fun shouldReturnToOffersScreen(
+        screenText: String? = null,
+        triggers: List<FlexReturnScreenTrigger> = emptyList(),
+    ): Boolean {
+        if (isOnOffersListScreen()) return false
+        val text = screenText ?: readFullScreenText()
+        val lower = text.lowercase()
         if (lower.contains("captcha") || lower.contains("robot") ||
             lower.contains("puzzle") || lower.contains("verify")
         ) {
             return false
         }
-        return lower.contains("updates") && lower.contains("schedule") ||
-            lower.contains("your dashboard") ||
-            lower.contains("your standing") ||
-            lower.contains("read more") ||
-            lower.contains("learn more") ||
-            lower.contains("offer details") ||
-            lower.contains("no longer available") ||
-            resolveId(FlexIds.OFFER_DETAILS_STATION) != null && !hasAnyOfferPay()
+        if (FlexReturnTriggersEvaluator.anyMatches(text, triggers)) return true
+        return resolveId(FlexIds.OFFER_DETAILS_STATION) != null && !hasAnyOfferPay()
     }
 
     private fun hasAnyOfferPay(): Boolean {

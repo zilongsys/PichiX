@@ -18,12 +18,16 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.textfield.TextInputEditText
 import com.oceanlab.pichix.R
 import com.oceanlab.pichix.data.AppSettings
+import com.oceanlab.pichix.data.FlexReturnScreenTrigger
+import com.oceanlab.pichix.data.FlexReturnTriggersStore
 import com.oceanlab.pichix.data.MonitorPackages
 import com.oceanlab.pichix.data.PichiFileLog
 import com.oceanlab.pichix.service.OverlayService
@@ -33,9 +37,11 @@ import com.oceanlab.pichix.util.OverlayPermissionHelper
 import com.oceanlab.pichix.util.SoundPickerHelper
 import com.oceanlab.pichix.util.SoundUriLabel
 
-class FlexConfigFragment : Fragment() {
+class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener {
 
     private lateinit var settings: AppSettings
+    private var returnTriggers: MutableList<FlexReturnScreenTrigger> = mutableListOf()
+    private var returnTriggersAdapter: FlexReturnTriggersAdapter? = null
     private var tvAccess: TextView? = null
     private var pauseSoundUri: String = ""
     private var resumeSoundUri: String = ""
@@ -348,7 +354,54 @@ class FlexConfigFragment : Fragment() {
         togglePauseMode.addOnButtonCheckedRetainingFocus(view) { markDirty() }
         swPauseIgnore.setOnCheckedChangeRetainingFocus(view) { markDirty() }
 
+        setupReturnTriggers(view)
         refreshAccessibilityStatus()
+    }
+
+    private fun setupReturnTriggers(view: View) {
+        if (settings.flexReturnTriggersJson.isBlank()) {
+            FlexReturnTriggersStore.save(settings, FlexReturnTriggersStore.defaultTriggers())
+        }
+        returnTriggers = FlexReturnTriggersStore.load(settings).toMutableList()
+        val rv = view.findViewById<RecyclerView>(R.id.rvReturnTriggers)
+        returnTriggersAdapter = FlexReturnTriggersAdapter(returnTriggers, object : FlexReturnTriggersAdapter.Callbacks {
+            override fun onToggle(trigger: FlexReturnScreenTrigger, enabled: Boolean) {
+                val idx = returnTriggers.indexOfFirst { it.id == trigger.id }
+                if (idx < 0) return
+                returnTriggers[idx] = trigger.copy(enabled = enabled)
+                persistReturnTriggers()
+            }
+
+            override fun onEdit(trigger: FlexReturnScreenTrigger) {
+                FlexReturnTriggerEditBottomSheet.newInstance(trigger.id)
+                    .show(childFragmentManager, "return_trigger_edit")
+            }
+        })
+        rv.layoutManager = LinearLayoutManager(requireContext())
+        rv.adapter = returnTriggersAdapter
+        view.findViewById<MaterialButton>(R.id.btnAddReturnTrigger)?.setOnClickListener {
+            FlexReturnTriggerEditBottomSheet.newInstance()
+                .show(childFragmentManager, "return_trigger_add")
+        }
+        view.findViewById<MaterialButton>(R.id.btnResetReturnTriggers)?.setOnClickListener {
+            returnTriggers = FlexReturnTriggersStore.defaultTriggers().toMutableList()
+            persistReturnTriggers()
+            Toast.makeText(requireContext(), "Disparadores restaurados", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun persistReturnTriggers() {
+        FlexReturnTriggersStore.save(settings, returnTriggers)
+        returnTriggersAdapter?.submit(returnTriggers.toList())
+        PichixAccessibilityService.syncEngine(requireContext())
+        (requireActivity() as MainActivity).markDirty(1)
+    }
+
+    override fun onTriggersChanged() {
+        returnTriggers = FlexReturnTriggersStore.load(settings).toMutableList()
+        returnTriggersAdapter?.submit(returnTriggers.toList())
+        PichixAccessibilityService.syncEngine(requireContext())
+        (requireActivity() as MainActivity).markDirty(1)
     }
 
     private fun setupExpandableSections(view: View, scrollHost: ScrollView) {
@@ -421,8 +474,8 @@ class FlexConfigFragment : Fragment() {
         settings.flexBurstIntervalMaxMin = maxOf(burstMin, burstMax)
         settings.flexBurstClickIntervalMs =
             etBurstClickMs.text?.toString()?.toLongOrNull()?.coerceIn(100L, 10_000L) ?: 500L
-        val burstDurMin = etBurstDurationMin.text?.toString()?.toIntOrNull()?.coerceIn(5, 600) ?: 20
-        val burstDurMax = etBurstDurationMax.text?.toString()?.toIntOrNull()?.coerceIn(5, 600) ?: 40
+        val burstDurMin = etBurstDurationMin.text?.toString()?.toIntOrNull()?.coerceIn(5, 3600) ?: 20
+        val burstDurMax = etBurstDurationMax.text?.toString()?.toIntOrNull()?.coerceIn(5, 3600) ?: 40
         settings.flexBurstDurationMinSec = minOf(burstDurMin, burstDurMax)
         settings.flexBurstDurationMaxSec = maxOf(burstDurMin, burstDurMax)
         settings.flexRefreshButtonText =
@@ -516,8 +569,8 @@ class FlexConfigFragment : Fragment() {
         settings.flexBurstIntervalMaxMin = maxOf(burstMin, burstMax)
         settings.flexBurstClickIntervalMs =
             etBurstClickMs.text?.toString()?.toLongOrNull()?.coerceIn(100L, 10_000L) ?: 500L
-        val burstDurMin = etBurstDurationMin.text?.toString()?.toIntOrNull()?.coerceIn(5, 600) ?: 20
-        val burstDurMax = etBurstDurationMax.text?.toString()?.toIntOrNull()?.coerceIn(5, 600) ?: 40
+        val burstDurMin = etBurstDurationMin.text?.toString()?.toIntOrNull()?.coerceIn(5, 3600) ?: 20
+        val burstDurMax = etBurstDurationMax.text?.toString()?.toIntOrNull()?.coerceIn(5, 3600) ?: 40
         settings.flexBurstDurationMinSec = minOf(burstDurMin, burstDurMax)
         settings.flexBurstDurationMaxSec = maxOf(burstDurMin, burstDurMax)
         settings.flexAutoScrollEnabled = swAutoScroll.isChecked

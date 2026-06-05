@@ -8,6 +8,16 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.41 (Mayo 2026)
+
+### Añadido
+- **Return 2 → Disparadores de pantalla**: lista editable con frases del macro por defecto; Contiene/Exacto e ignorar mayúsculas por disparador; varias líneas = AND.
+
+### Actualizado
+- **Ráfaga**: duración mín/máx hasta **3600 s (1 h)** — 240 s es válido.
+
+---
+
 ## v0.1.40 (Mayo 2026)
 
 ### Actualizado

@@ -44,11 +44,23 @@
     <string name="config_return_2_offers_hint">Solo automático con este interruptor ON: si detecta pantalla fuera de ofertas (Updates, feed, detalle…), pausa clics/scroll, ejecuta menú ≡ → Offers y reanuda. El botón ↩ de prueba es manual y no activa el auto en otras pantallas.</string>
     <string name="config_return_step_range_label">Espera aleatoria entre pasos Return 2 (seg, mín – máx)</string>
     <string name="config_return_cooldown_label">Mínimo entre detecciones automáticas (seg)</string>
+    <string name="config_return_triggers_label">Disparadores de pantalla (si coincide alguno y no estás en ofertas → Return 2). Varias líneas en un disparador = todas deben aparecer (AND).</string>
+    <string name="config_return_trigger_add">+ Añadir disparador</string>
+    <string name="config_return_trigger_reset_defaults">Restaurar disparadores del macro Return 2</string>
+    <string name="config_return_trigger_add_title">Nuevo disparador</string>
+    <string name="config_return_trigger_edit_title">Editar disparador</string>
+    <string name="config_return_trigger_label_hint">Nombre (opcional)</string>
+    <string name="config_return_trigger_phrases_hint">Textos a buscar (una frase por línea)</string>
+    <string name="config_return_trigger_match_label">Tipo de coincidencia</string>
+    <string name="config_return_trigger_ignore_case">Ignorar mayúsculas</string>
+    <string name="config_return_trigger_delete">Eliminar</string>
+    <string name="config_return_trigger_save">Guardar</string>
+    <string name="config_return_trigger_phrases_required">Añade al menos una frase</string>
     <string name="config_burst_click_title">Ráfaga de clics</string>
     <string name="config_burst_click_hint">Cada X–Y min (aleatorio) activa una ráfaga: Refresh cada N ms (el intervalo normal de clic queda suspendido), evalúa ofertas visibles y acepta si cumplen criterio; sin scroll. Misma regla de pantalla que Clic Refresh.</string>
     <string name="config_burst_interval_label">Intervalo entre ráfagas (min, mín – máx)</string>
     <string name="config_burst_click_interval_label">Intervalo entre clics durante la ráfaga (ms)</string>
-    <string name="config_burst_duration_label">Duración de cada ráfaga (seg, mín – máx, aleatorio)</string>
+    <string name="config_burst_duration_label">Duración de cada ráfaga (seg, mín – máx, aleatorio; hasta 3600 = 1 h)</string>
     <string name="config_pause_over_clicks_title">Pause by over clicks</string>
     <string name="config_pause_over_clicks_hint">Pausa el bot si una notificación Flex contiene el texto indicado; reanuda solo tras el tiempo configurado.</string>
     <string name="config_pause_over_clicks_match_label">Texto en la notificación</string>

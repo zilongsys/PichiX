@@ -260,6 +260,11 @@ class AppSettings(context: Context) {
         get() = prefs.getInt(KEY_RETURN_DETECT_COOLDOWN_SEC, 3).coerceIn(1, 120)
         set(value) = prefs.edit().putInt(KEY_RETURN_DETECT_COOLDOWN_SEC, value.coerceIn(1, 120)).apply()
 
+    /** JSON de [FlexReturnScreenTrigger] para detectar pantalla fuera de ofertas. */
+    var flexReturnTriggersJson: String
+        get() = prefs.getString(KEY_RETURN_TRIGGERS_JSON, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_RETURN_TRIGGERS_JSON, value).apply()
+
     /** Ráfaga de clics Refresh: intervalo aleatorio entre ráfagas (minutos). */
     var flexBurstClickEnabled: Boolean
         get() = prefs.getBoolean(KEY_BURST_CLICK_ENABLED, false)
@@ -281,24 +286,24 @@ class AppSettings(context: Context) {
     /** Duración aleatoria de cada ráfaga (segundos, mín – máx). */
     var flexBurstDurationMinSec: Int
         get() = readBurstDurationMin()
-        set(value) = prefs.edit().putInt(KEY_BURST_DURATION_MIN_SEC, value.coerceIn(5, 600)).apply()
+        set(value) = prefs.edit().putInt(KEY_BURST_DURATION_MIN_SEC, value.coerceIn(5, 3600)).apply()
 
     var flexBurstDurationMaxSec: Int
         get() = readBurstDurationMax()
-        set(value) = prefs.edit().putInt(KEY_BURST_DURATION_MAX_SEC, value.coerceIn(5, 600)).apply()
+        set(value) = prefs.edit().putInt(KEY_BURST_DURATION_MAX_SEC, value.coerceIn(5, 3600)).apply()
 
     private fun readBurstDurationMin(): Int {
         if (!prefs.contains(KEY_BURST_DURATION_MIN_SEC)) {
-            return prefs.getInt(KEY_BURST_DURATION_SEC, 20).coerceIn(5, 600)
+            return prefs.getInt(KEY_BURST_DURATION_SEC, 20).coerceIn(5, 3600)
         }
-        return prefs.getInt(KEY_BURST_DURATION_MIN_SEC, 20).coerceIn(5, 600)
+        return prefs.getInt(KEY_BURST_DURATION_MIN_SEC, 20).coerceIn(5, 3600)
     }
 
     private fun readBurstDurationMax(): Int {
         if (!prefs.contains(KEY_BURST_DURATION_MAX_SEC)) {
-            return prefs.getInt(KEY_BURST_DURATION_SEC, 40).coerceIn(5, 600)
+            return prefs.getInt(KEY_BURST_DURATION_SEC, 40).coerceIn(5, 3600)
         }
-        return prefs.getInt(KEY_BURST_DURATION_MAX_SEC, 40).coerceIn(5, 600)
+        return prefs.getInt(KEY_BURST_DURATION_MAX_SEC, 40).coerceIn(5, 3600)
     }
 
     /** Pausa el bot al detectar notificación con texto configurado (Pause by over clicks). */
@@ -432,6 +437,7 @@ class AppSettings(context: Context) {
         private const val KEY_RETURN_STEP_MIN_SEC = "flex_return_step_min_sec"
         private const val KEY_RETURN_STEP_MAX_SEC = "flex_return_step_max_sec"
         private const val KEY_RETURN_DETECT_COOLDOWN_SEC = "flex_return_detect_cooldown_sec"
+        private const val KEY_RETURN_TRIGGERS_JSON = "flex_return_triggers_json"
         private const val KEY_BURST_CLICK_ENABLED = "flex_burst_click_enabled"
         private const val KEY_BURST_INTERVAL_MIN_MIN = "flex_burst_interval_min_min"
         private const val KEY_BURST_INTERVAL_MAX_MIN = "flex_burst_interval_max_min"

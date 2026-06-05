@@ -15,6 +15,8 @@ import com.oceanlab.pichix.analyzer.FlexGrabberEvaluator
 import com.oceanlab.pichix.data.AppSettings
 import com.oceanlab.pichix.data.PichiFileLog
 import com.oceanlab.pichix.data.FlexState
+import com.oceanlab.pichix.data.FlexReturnTriggersEvaluator
+import com.oceanlab.pichix.data.FlexReturnTriggersStore
 import com.oceanlab.pichix.data.FlexTariffRulesStore
 import com.oceanlab.pichix.data.MonitorPackages
 import com.oceanlab.pichix.data.OfferLogEntry
@@ -204,7 +206,7 @@ class PichixAccessibilityService : AccessibilityService() {
         scrollIfEmpty: Boolean,
         burstMode: Boolean,
     ): Boolean {
-        val flags = reader.detectScreenFlags(text)
+        val flags = reader.detectScreenFlags(text, settings)
         if (flags.captcha) return false
 
         val offers = reader.readOffersFromList()
@@ -342,7 +344,7 @@ class PichixAccessibilityService : AccessibilityService() {
         if (motorPausedForNavigation) return
         if (!isMotorForegroundAllowed()) return
         val text = reader.readFullScreenText()
-        val flags = reader.detectScreenFlags(text)
+        val flags = reader.detectScreenFlags(text, settings)
 
         when {
             flags.captcha -> postObserver("Captcha detectado")
@@ -361,6 +363,8 @@ class PichixAccessibilityService : AccessibilityService() {
             val cooldownMs = settings.flexReturnDetectCooldownSec.coerceAtLeast(1) * 1000L
             if (now - lastReturnMs > cooldownMs) {
                 lastReturnMs = now
+                FlexReturnTriggersEvaluator.firstMatch(text, FlexReturnTriggersStore.load(settings))
+                    ?.let { postObserver("Return detectado: ${it.displayTitle()}") }
                 performReturnToOffers()
             }
         }
@@ -489,7 +493,7 @@ class PichixAccessibilityService : AccessibilityService() {
         if (!settings.flexAutoScrollEnabled || scrollInFlight) return
         if (!isMotorForegroundAllowed()) return
         val screen = reader.readFullScreenText()
-        if (!reader.detectScreenFlags(screen).onOffersList) return
+        if (!reader.detectScreenFlags(screen, settings).onOffersList) return
         performDirectionalScroll(scrollingDown)
     }
 
