@@ -106,7 +106,8 @@ class FlexConfigFragment : Fragment() {
         val etBurstMin = view.findViewById<TextInputEditText>(R.id.etBurstIntervalMinMin)
         val etBurstMax = view.findViewById<TextInputEditText>(R.id.etBurstIntervalMaxMin)
         val etBurstClickMs = view.findViewById<TextInputEditText>(R.id.etBurstClickIntervalMs)
-        val etBurstDuration = view.findViewById<TextInputEditText>(R.id.etBurstDurationSec)
+        val etBurstDurationMin = view.findViewById<TextInputEditText>(R.id.etBurstDurationMinSec)
+        val etBurstDurationMax = view.findViewById<TextInputEditText>(R.id.etBurstDurationMaxSec)
         val swAutoScroll = view.findViewById<SwitchMaterial>(R.id.switchAutoScroll)
         val toggleOfferPick = view.findViewById<MaterialButtonToggleGroup>(R.id.toggleOfferPickMode)
         val toggleOfferRank = view.findViewById<MaterialButtonToggleGroup>(R.id.toggleOfferRank)
@@ -154,7 +155,8 @@ class FlexConfigFragment : Fragment() {
         etBurstMin.setText(settings.flexBurstIntervalMinMin.toString())
         etBurstMax.setText(settings.flexBurstIntervalMaxMin.toString())
         etBurstClickMs.setText(settings.flexBurstClickIntervalMs.toString())
-        etBurstDuration.setText(settings.flexBurstDurationSec.toString())
+        etBurstDurationMin.setText(settings.flexBurstDurationMinSec.toString())
+        etBurstDurationMax.setText(settings.flexBurstDurationMaxSec.toString())
         updateBurstVisibility(layoutBurstClick, swBurstClick.isChecked)
         swAutoScroll.isChecked = settings.flexAutoScrollEnabled
         toggleOfferPick.check(
@@ -255,7 +257,7 @@ class FlexConfigFragment : Fragment() {
                     swOverlayOnOff, swOverlayMotorPause, swOverlayTestReturn,
                     etReturnStepMin, etReturnStepMax, etReturnCooldown,
                     etPauseText, etPauseMinutes, toggleClickMode, etBasicSec, etSmartMin, etSmartMax,
-                    swClickRefresh, swBurstClick, etBurstMin, etBurstMax, etBurstClickMs, etBurstDuration,
+                    swClickRefresh, swBurstClick, etBurstMin, etBurstMax, etBurstClickMs, etBurstDurationMin, etBurstDurationMax,
                     swAutoScroll, toggleOfferPick, toggleOfferRank,
                     etRefreshBtn, etClickScreen, toggleRefreshMode, swRefreshIgnore,
                     toggleScreenMode, swScreenIgnore, togglePauseMode, swPauseIgnore,
@@ -304,7 +306,7 @@ class FlexConfigFragment : Fragment() {
             configScroll.runRetainingScrollAndFocus {
                 persistClickMotorSettings(
                     toggleClickMode, etBasicSec, etSmartMin, etSmartMax, swClickRefresh,
-                    swBurstClick, etBurstMin, etBurstMax, etBurstClickMs, etBurstDuration,
+                    swBurstClick, etBurstMin, etBurstMax, etBurstClickMs, etBurstDurationMin, etBurstDurationMax,
                     etRefreshBtn, etClickScreen, toggleRefreshMode, swRefreshIgnore,
                     toggleScreenMode, swScreenIgnore,
                 )
@@ -335,7 +337,8 @@ class FlexConfigFragment : Fragment() {
         etBurstMin.onUserTextChanged(onDirty = { applyClickMotor() })
         etBurstMax.onUserTextChanged(onDirty = { applyClickMotor() })
         etBurstClickMs.onUserTextChanged(onDirty = { applyClickMotor() })
-        etBurstDuration.onUserTextChanged(onDirty = { applyClickMotor() })
+        etBurstDurationMin.onUserTextChanged(onDirty = { applyClickMotor() })
+        etBurstDurationMax.onUserTextChanged(onDirty = { applyClickMotor() })
         etRefreshBtn.onUserTextChanged(onDirty = { applyClickMotor() })
         etClickScreen.onUserTextChanged(onDirty = { applyClickMotor() })
         toggleRefreshMode.addOnButtonCheckedRetainingFocus(view) { applyClickMotor() }
@@ -393,7 +396,8 @@ class FlexConfigFragment : Fragment() {
         etBurstMin: TextInputEditText,
         etBurstMax: TextInputEditText,
         etBurstClickMs: TextInputEditText,
-        etBurstDuration: TextInputEditText,
+        etBurstDurationMin: TextInputEditText,
+        etBurstDurationMax: TextInputEditText,
         etRefreshBtn: TextInputEditText,
         etClickScreen: TextInputEditText,
         toggleRefreshMode: MaterialButtonToggleGroup,
@@ -417,8 +421,10 @@ class FlexConfigFragment : Fragment() {
         settings.flexBurstIntervalMaxMin = maxOf(burstMin, burstMax)
         settings.flexBurstClickIntervalMs =
             etBurstClickMs.text?.toString()?.toLongOrNull()?.coerceIn(100L, 10_000L) ?: 500L
-        settings.flexBurstDurationSec =
-            etBurstDuration.text?.toString()?.toIntOrNull()?.coerceIn(5, 600) ?: 30
+        val burstDurMin = etBurstDurationMin.text?.toString()?.toIntOrNull()?.coerceIn(5, 600) ?: 20
+        val burstDurMax = etBurstDurationMax.text?.toString()?.toIntOrNull()?.coerceIn(5, 600) ?: 40
+        settings.flexBurstDurationMinSec = minOf(burstDurMin, burstDurMax)
+        settings.flexBurstDurationMaxSec = maxOf(burstDurMin, burstDurMax)
         settings.flexRefreshButtonText =
             etRefreshBtn.text?.toString()?.trim().orEmpty().ifBlank { AppSettings.DEFAULT_REFRESH_BUTTON }
         settings.flexRefreshButtonMatchMode =
@@ -456,7 +462,8 @@ class FlexConfigFragment : Fragment() {
         etBurstMin: TextInputEditText,
         etBurstMax: TextInputEditText,
         etBurstClickMs: TextInputEditText,
-        etBurstDuration: TextInputEditText,
+        etBurstDurationMin: TextInputEditText,
+        etBurstDurationMax: TextInputEditText,
         swAutoScroll: SwitchMaterial,
         toggleOfferPick: MaterialButtonToggleGroup,
         toggleOfferRank: MaterialButtonToggleGroup,
@@ -509,8 +516,10 @@ class FlexConfigFragment : Fragment() {
         settings.flexBurstIntervalMaxMin = maxOf(burstMin, burstMax)
         settings.flexBurstClickIntervalMs =
             etBurstClickMs.text?.toString()?.toLongOrNull()?.coerceIn(100L, 10_000L) ?: 500L
-        settings.flexBurstDurationSec =
-            etBurstDuration.text?.toString()?.toIntOrNull()?.coerceIn(5, 600) ?: 30
+        val burstDurMin = etBurstDurationMin.text?.toString()?.toIntOrNull()?.coerceIn(5, 600) ?: 20
+        val burstDurMax = etBurstDurationMax.text?.toString()?.toIntOrNull()?.coerceIn(5, 600) ?: 40
+        settings.flexBurstDurationMinSec = minOf(burstDurMin, burstDurMax)
+        settings.flexBurstDurationMaxSec = maxOf(burstDurMin, burstDurMax)
         settings.flexAutoScrollEnabled = swAutoScroll.isChecked
         settings.flexOfferPickMode = if (toggleOfferPick.checkedButtonId == R.id.btnOfferPickBest) {
             AppSettings.OFFER_PICK_BEST

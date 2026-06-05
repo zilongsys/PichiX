@@ -180,9 +180,11 @@ class PichixAccessibilityService : AccessibilityService() {
         }
         if (!burstActive && now >= nextBurstAtMs) {
             burstActive = true
-            burstEndsAtMs = now + settings.flexBurstDurationSec.coerceAtLeast(5) * 1000L
+            val burstDurationMs = settings.nextBurstDurationMs()
+            burstEndsAtMs = now + burstDurationMs
+            val burstSec = (burstDurationMs / 1000L).coerceAtLeast(1)
             postObserver(
-                "Ráfaga de clics iniciada (${settings.flexBurstDurationSec}s, cada ${settings.flexBurstClickIntervalMs}ms)",
+                "Ráfaga iniciada (~${burstSec}s, cada ${settings.flexBurstClickIntervalMs}ms)",
             )
         } else if (burstActive && now >= burstEndsAtMs) {
             burstActive = false

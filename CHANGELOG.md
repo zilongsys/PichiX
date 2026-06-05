@@ -8,6 +8,13 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.40 (Mayo 2026)
+
+### Actualizado
+- **Ráfaga de clics**: duración aleatoria entre seg mín y máx (antes era un valor fijo).
+
+---
+
 ## v0.1.39 (Mayo 2026)
 
 ### Actualizado

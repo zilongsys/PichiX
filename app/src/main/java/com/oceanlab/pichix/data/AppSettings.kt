@@ -216,6 +216,12 @@ class AppSettings(context: Context) {
         return (min..max).random().toLong() * 60_000L
     }
 
+    fun nextBurstDurationMs(): Long {
+        val min = flexBurstDurationMinSec.coerceAtLeast(5)
+        val max = flexBurstDurationMaxSec.coerceAtLeast(min)
+        return (min..max).random().toLong() * 1000L
+    }
+
     var autoPauseOnCaptcha: Boolean
         get() = prefs.getBoolean(KEY_AUTO_PAUSE_CAPTCHA, true)
         set(value) = prefs.edit().putBoolean(KEY_AUTO_PAUSE_CAPTCHA, value).apply()
@@ -272,10 +278,28 @@ class AppSettings(context: Context) {
         get() = prefs.getLong(KEY_BURST_CLICK_INTERVAL_MS, 500L).coerceIn(100L, 10_000L)
         set(value) = prefs.edit().putLong(KEY_BURST_CLICK_INTERVAL_MS, value.coerceIn(100L, 10_000L)).apply()
 
-    /** Duración de cada ráfaga (segundos). */
-    var flexBurstDurationSec: Int
-        get() = prefs.getInt(KEY_BURST_DURATION_SEC, 30).coerceIn(5, 600)
-        set(value) = prefs.edit().putInt(KEY_BURST_DURATION_SEC, value.coerceIn(5, 600)).apply()
+    /** Duración aleatoria de cada ráfaga (segundos, mín – máx). */
+    var flexBurstDurationMinSec: Int
+        get() = readBurstDurationMin()
+        set(value) = prefs.edit().putInt(KEY_BURST_DURATION_MIN_SEC, value.coerceIn(5, 600)).apply()
+
+    var flexBurstDurationMaxSec: Int
+        get() = readBurstDurationMax()
+        set(value) = prefs.edit().putInt(KEY_BURST_DURATION_MAX_SEC, value.coerceIn(5, 600)).apply()
+
+    private fun readBurstDurationMin(): Int {
+        if (!prefs.contains(KEY_BURST_DURATION_MIN_SEC)) {
+            return prefs.getInt(KEY_BURST_DURATION_SEC, 20).coerceIn(5, 600)
+        }
+        return prefs.getInt(KEY_BURST_DURATION_MIN_SEC, 20).coerceIn(5, 600)
+    }
+
+    private fun readBurstDurationMax(): Int {
+        if (!prefs.contains(KEY_BURST_DURATION_MAX_SEC)) {
+            return prefs.getInt(KEY_BURST_DURATION_SEC, 40).coerceIn(5, 600)
+        }
+        return prefs.getInt(KEY_BURST_DURATION_MAX_SEC, 40).coerceIn(5, 600)
+    }
 
     /** Pausa el bot al detectar notificación con texto configurado (Pause by over clicks). */
     var pauseByOverClicksEnabled: Boolean
@@ -413,6 +437,8 @@ class AppSettings(context: Context) {
         private const val KEY_BURST_INTERVAL_MAX_MIN = "flex_burst_interval_max_min"
         private const val KEY_BURST_CLICK_INTERVAL_MS = "flex_burst_click_interval_ms"
         private const val KEY_BURST_DURATION_SEC = "flex_burst_duration_sec"
+        private const val KEY_BURST_DURATION_MIN_SEC = "flex_burst_duration_min_sec"
+        private const val KEY_BURST_DURATION_MAX_SEC = "flex_burst_duration_max_sec"
         private const val KEY_PAUSE_OVER_CLICKS = "pause_by_over_clicks"
         private const val KEY_PAUSE_OVER_CLICKS_TEXT = "pause_by_over_clicks_text"
         private const val KEY_PAUSE_OVER_CLICKS_PAUSE_SOUND = "pause_by_over_clicks_pause_sound"
