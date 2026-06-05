@@ -143,7 +143,9 @@ class PichixAccessibilityService : AccessibilityService() {
         if (pkg != target) return
         when (event.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
-            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
+            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED,
+            AccessibilityEvent.TYPE_VIEW_FOCUSED,
+            AccessibilityEvent.TYPE_WINDOWS_CHANGED -> {
                 handler.removeCallbacks(observerRunnable)
                 handler.postDelayed(observerRunnable, 200)
             }
@@ -357,17 +359,45 @@ class PichixAccessibilityService : AccessibilityService() {
             postBotPaused()
         }
 
-        if (returnInFlight) return
-        if (settings.flexAutoReturnToOffers && !flags.captcha && flags.shouldReturnToOffers) {
+        maybeAutoReturnToOffers(text, flags)
+    }
+
+    private var lastReturnProbeLogMs = 0L
+
+    private fun maybeAutoReturnToOffers(text: String, flags: FlexScreenReader.ScreenFlags? = null) {
+        if (returnInFlight || motorPausedForNavigation || !settings.flexAutoReturnToOffers) return
+        if (!isMotorForegroundAllowed()) return
+        val screen = text.ifBlank { reader.readFullScreenText() }
+        val f = flags ?: reader.detectScreenFlags(screen, settings)
+        if (f.captcha) return
+
+        val triggers = FlexReturnTriggersStore.load(settings)
+        val onOffers = reader.isOffersListContext(screen)
+        val matched = FlexReturnTriggersEvaluator.firstMatch(screen, triggers)
+
+        if (settings.debugLogEnabled) {
             val now = System.currentTimeMillis()
-            val cooldownMs = settings.flexReturnDetectCooldownSec.coerceAtLeast(1) * 1000L
-            if (now - lastReturnMs > cooldownMs) {
-                lastReturnMs = now
-                FlexReturnTriggersEvaluator.firstMatch(text, FlexReturnTriggersStore.load(settings))
-                    ?.let { postObserver("Return detectado: ${it.displayTitle()}") }
-                performReturnToOffers()
+            if (now - lastReturnProbeLogMs > 12_000L) {
+                lastReturnProbeLogMs = now
+                val snippet = screen.replace('\n', ' ').take(120)
+                Log.d(
+                    TAG,
+                    "Return probe: onOffers=$onOffers shouldReturn=${f.shouldReturnToOffers} " +
+                        "match=${matched?.displayTitle() ?: "—"} text=«$snippet»",
+                )
             }
         }
+
+        if (!f.shouldReturnToOffers) return
+
+        val now = System.currentTimeMillis()
+        val cooldownMs = settings.flexReturnDetectCooldownSec.coerceAtLeast(1) * 1000L
+        if (now - lastReturnMs <= cooldownMs) return
+
+        lastReturnMs = now
+        matched?.let { postObserver("Return detectado: ${it.displayTitle()}") }
+            ?: postObserver("Return detectado: pantalla fuera de ofertas")
+        performReturnToOffers()
     }
 
     private fun runGrabberTick() {
@@ -375,10 +405,12 @@ class PichixAccessibilityService : AccessibilityService() {
         scheduleWork()
         if (!settings.isBotEnabled || pausedAfterAccept || motorPausedForNavigation || returnInFlight) return
         if (!isMotorForegroundAllowed()) return
+        val text = reader.readFullScreenText()
+        maybeAutoReturnToOffers(text)
+        if (returnInFlight) return
         updateBurstState()
         grabInFlight = true
         try {
-            val text = reader.readFullScreenText()
             if (burstActive && settings.flexBurstClickEnabled) {
                 tryRefreshClick(text, burstMode = true)
                 processVisibleOffers(text, scrollIfEmpty = false, burstMode = true)

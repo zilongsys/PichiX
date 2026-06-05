@@ -44,7 +44,7 @@
     <string name="config_return_2_offers_hint">Solo automático con este interruptor ON: si detecta pantalla fuera de ofertas (Updates, feed, detalle…), pausa clics/scroll, ejecuta menú ≡ → Offers y reanuda. El botón ↩ de prueba es manual y no activa el auto en otras pantallas.</string>
     <string name="config_return_step_range_label">Espera aleatoria entre pasos Return 2 (seg, mín – máx)</string>
     <string name="config_return_cooldown_label">Mínimo entre detecciones automáticas (seg)</string>
-    <string name="config_return_triggers_label">Disparadores de pantalla (si coincide alguno y no estás en ofertas → Return 2). Varias líneas en un disparador = todas deben aparecer (AND).</string>
+    <string name="config_return_triggers_label">Disparadores de pantalla (si coincide alguno y no estás en ofertas → Return 2). Varias líneas = AND. Si no detecta, pulsa «Restaurar disparadores» y añade el texto exacto de tu pantalla Flex. Evita solo «updates»+«schedule» (la barra inferior siempre los muestra).</string>
     <string name="config_return_trigger_add">+ Añadir disparador</string>
     <string name="config_return_trigger_reset_defaults">Restaurar disparadores del macro Return 2</string>
     <string name="config_return_trigger_add_title">Nuevo disparador</string>

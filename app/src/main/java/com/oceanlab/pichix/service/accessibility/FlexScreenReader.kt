@@ -100,12 +100,34 @@ class FlexScreenReader(private val service: AccessibilityService) {
         return lower.contains("filter offers by")
     }
 
+    /**
+     * ¿Estamos en la lista de ofertas? (para Return 2 — no usar solo offer_pay: puede quedar en el árbol).
+     * Señales: «filter offers by» / filtrar + (offer_pay con Refresh en pantalla).
+     */
+    fun isOffersListContext(screenText: String? = null): Boolean {
+        val text = screenText ?: readFullScreenText()
+        val lower = text.lowercase()
+        if (lower.contains("filter offers by") ||
+            lower.contains("filter offers") ||
+            lower.contains("filtrar ofertas") ||
+            lower.contains("filtrar por")
+        ) {
+            return true
+        }
+        if (hasAnyOfferPay()) {
+            return lower.contains("refresh") ||
+                lower.contains("actualizar") ||
+                lower.contains("filter") ||
+                lower.contains("filtrar")
+        }
+        return false
+    }
+
     /** Pantalla fuera de lista de ofertas — triggers configurables + detalle sin offer_pay. */
     fun shouldReturnToOffersScreen(
         screenText: String? = null,
         triggers: List<FlexReturnScreenTrigger> = emptyList(),
     ): Boolean {
-        if (isOnOffersListScreen()) return false
         val text = screenText ?: readFullScreenText()
         val lower = text.lowercase()
         if (lower.contains("captcha") || lower.contains("robot") ||
@@ -113,7 +135,9 @@ class FlexScreenReader(private val service: AccessibilityService) {
         ) {
             return false
         }
-        if (FlexReturnTriggersEvaluator.anyMatches(text, triggers)) return true
+        if (isOffersListContext(text)) return false
+        val active = triggers.filter { it.enabled }
+        if (FlexReturnTriggersEvaluator.anyMatches(text, active)) return true
         return resolveId(FlexIds.OFFER_DETAILS_STATION) != null && !hasAnyOfferPay()
     }
 

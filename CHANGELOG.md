@@ -8,6 +8,16 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.42 (Mayo 2026)
+
+### Corregido
+- **Return 2 detección**: ya no bloquea por `offer_pay` fantasma en otras pantallas; contexto de lista = «filter offers by»/filtrar + Refresh; triggers no disparan si hay filtro de ofertas; quitado disparador «updates+schedule» (falso positivo en barra inferior); comprobación también en cada ciclo del grabber; más eventos de accesibilidad.
+
+### Actualizado
+- Disparadores por defecto con frases en español; log «Return probe» cada ~12 s con depuración activa.
+
+---
+
 ## v0.1.41 (Mayo 2026)
 
 ### Añadido
