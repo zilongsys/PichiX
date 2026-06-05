@@ -8,6 +8,15 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.37 (Mayo 2026)
+
+### Añadido
+- **Config → Botones flotantes**: sección con ON/OFF del bot, botón **pausa navegación** (⏸/▶) y botón **probar Return 2** (↩). Panel flotante apilado; arrastra cualquier botón para moverlo.
+- **Pausa navegación**: pausa clics, scroll y Return 2 automático sin apagar el bot; ideal para revisar ventas o menús en Flex manualmente.
+- **Probar Return 2**: ejecuta una vez el macro menú ≡ → Offers (misma lógica que la detección automática).
+
+---
+
 ## v0.1.21 (Mayo 2026)
 
 ### Actualizado

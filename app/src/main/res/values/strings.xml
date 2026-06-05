@@ -29,6 +29,14 @@
     <string name="config_btn_stop_sound">Detener sonido ahora</string>
     <string name="config_btn_accessibility">Abrir ajustes de accesibilidad</string>
     <string name="config_btn_overlay">Configurar botón flotante</string>
+    <string name="config_btn_overlay_permission">Permiso «Mostrar sobre otras apps»</string>
+    <string name="config_section_overlay">BOTONES FLOTANTES</string>
+    <string name="config_overlay_onoff_title">Botón ON/OFF</string>
+    <string name="config_overlay_onoff_hint">Activa o desactiva el bot desde encima de Flex. Arrastra el botón para moverlo.</string>
+    <string name="config_overlay_pause_title">Botón pausa navegación</string>
+    <string name="config_overlay_pause_hint">⏸ Pausa clics, scroll y Return 2 automático mientras revisas ventas o menús. El bot sigue encendido; pulsa ▶ para reanudar.</string>
+    <string name="config_overlay_test_return_title">Botón probar Return 2</string>
+    <string name="config_overlay_test_return_hint">↩ Ejecuta una vez el flujo Return 2 (menú ≡ → Offers) como si el bot detectara que saliste de la lista.</string>
     <string name="config_btn_save">Guardar configuración</string>
     <string name="config_auto_accept_title">Aceptar automáticamente</string>
     <string name="config_auto_accept_hint">Activo: abre la oferta y pulsa Schedule en Offer Details. Inactivo o modo simulación (Home): solo abre el detalle y pausa.</string>

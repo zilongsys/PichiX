@@ -288,7 +288,13 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         val lbm = LocalBroadcastManager.getInstance(this)
         lbm.registerReceiver(botPausedReceiver, IntentFilter(BOT_PAUSED))
-        lbm.registerReceiver(botStateChangedReceiver, IntentFilter(BOT_STATE_CHANGED))
+        lbm.registerReceiver(
+            botStateChangedReceiver,
+            IntentFilter().apply {
+                addAction(BOT_STATE_CHANGED)
+                addAction(PichixAccessibilityService.MOTOR_PAUSE_CHANGED)
+            },
+        )
         lbm.registerReceiver(categoryUiReceiver, IntentFilter(CategoryUiHelper.ACTION_CATEGORY_UI_CHANGED))
         applyCategoryUi()
         BotServiceCoordinator.syncForegroundService(this)
@@ -310,8 +316,9 @@ class MainActivity : AppCompatActivity() {
     fun updateHeader() {
         val botEnabled = settings.isBotEnabled
         val paused = PichixAccessibilityService.pausedAfterAccept
+        val motorPaused = PichixAccessibilityService.motorPausedForNavigation
         val dryRun = settings.dryRunMode
-        val activeNow = botEnabled && !paused
+        val activeNow = botEnabled && !paused && !motorPaused
 
         isInternalSwitchUpdate = true
         switchMain.isChecked = activeNow
@@ -320,6 +327,7 @@ class MainActivity : AppCompatActivity() {
         tvStatusPill.text = when {
             !botEnabled -> "● Inactivo"
             paused -> "⏸ Pausado"
+            motorPaused -> "⏸ Navegación manual"
             dryRun -> "🧪 SIMULACIÓN"
             else -> "● Activo — buscando"
         }
@@ -328,8 +336,8 @@ class MainActivity : AppCompatActivity() {
         )
         tvStatusPill.setTextColor(
             when {
-                !activeNow -> ContextCompat.getColor(this, R.color.text_hint)
-                dryRun -> ContextCompat.getColor(this, R.color.amber_400)
+                !botEnabled || paused -> ContextCompat.getColor(this, R.color.text_hint)
+                motorPaused || dryRun -> ContextCompat.getColor(this, R.color.amber_400)
                 else -> ContextCompat.getColor(this, R.color.accent_teal)
             }
         )

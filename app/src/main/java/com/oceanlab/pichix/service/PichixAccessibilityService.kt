@@ -42,6 +42,11 @@ class PichixAccessibilityService : AccessibilityService() {
 
         @Volatile var pausedAfterAccept = false
 
+        /** Pausa manual del motor (clics, scroll, Return 2) para navegar Flex sin interferencias. */
+        @Volatile var motorPausedForNavigation = false
+
+        const val MOTOR_PAUSE_CHANGED = "com.oceanlab.pichix.MOTOR_PAUSE_CHANGED"
+
         @Volatile private var instance: PichixAccessibilityService? = null
 
         fun notifyBotDisabled() {
@@ -62,7 +67,18 @@ class PichixAccessibilityService : AccessibilityService() {
 
         fun scrollDownManual() = instance?.performScrollDown()
         fun scrollUpManual() = instance?.performScrollUp()
-        fun returnToOffers() = instance?.performReturnToOffers()
+        fun returnToOffers() = instance?.performReturnToOffers(manual = true)
+
+        fun toggleMotorPauseForNavigation(context: Context) {
+            setMotorPausedForNavigation(!motorPausedForNavigation, context)
+        }
+
+        fun setMotorPausedForNavigation(paused: Boolean, context: Context) {
+            motorPausedForNavigation = paused
+            instance?.onMotorPauseChanged()
+            LocalBroadcastManager.getInstance(context).sendBroadcast(Intent(MOTOR_PAUSE_CHANGED))
+            PichixForegroundService.refreshNotification(context)
+        }
     }
 
     private lateinit var settings: AppSettings
@@ -117,7 +133,7 @@ class PichixAccessibilityService : AccessibilityService() {
                 }
             }
         }
-        if (!settings.isBotEnabled || pausedAfterAccept) return
+        if (!settings.isBotEnabled || pausedAfterAccept || motorPausedForNavigation) return
         if (pkg != target) return
         when (event.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
@@ -162,6 +178,7 @@ class PichixAccessibilityService : AccessibilityService() {
 
     private fun runObservers() {
         settings = AppSettings(this)
+        if (motorPausedForNavigation) return
         if (!isMotorForegroundAllowed()) return
         val text = reader.readFullScreenText()
         val flags = reader.detectScreenFlags(text)
@@ -189,7 +206,7 @@ class PichixAccessibilityService : AccessibilityService() {
     private fun runGrabberTick() {
         settings = AppSettings(this)
         scheduleWork()
-        if (!settings.isBotEnabled || pausedAfterAccept || grabInFlight) return
+        if (!settings.isBotEnabled || pausedAfterAccept || motorPausedForNavigation || grabInFlight) return
         if (!isMotorForegroundAllowed()) return
         grabInFlight = true
         try {
@@ -455,9 +472,26 @@ class PichixAccessibilityService : AccessibilityService() {
 
     private fun performScrollUp() = performDirectionalScroll(down = false)
 
-    private fun performReturnToOffers() {
-        if (!isMotorForegroundAllowed()) return
-        if (reader.isOnOffersListScreen()) return
+    private fun onMotorPauseChanged() {
+        if (motorPausedForNavigation) {
+            cancelPendingMotorActions()
+            grabInFlight = false
+        } else if (settings.isBotEnabled && !pausedAfterAccept) {
+            scheduleWork()
+        }
+    }
+
+    private fun performReturnToOffers(manual: Boolean = false) {
+        if (!manual && motorPausedForNavigation) return
+        if (!isMotorForegroundAllowed()) {
+            if (manual) postObserver("Test Return → Flex no en primer plano")
+            return
+        }
+        if (!manual && reader.isOnOffersListScreen()) return
+        if (manual && reader.isOnOffersListScreen()) {
+            postObserver("Test Return → ya estás en la lista de ofertas")
+            return
+        }
 
         // Macro ObserverTX-Return_2_Offers: menú ≡ → espera → «Offers» (no pestaña Schedule).
         if (!reader.clickFlexDrawerMenu()) {
@@ -479,7 +513,7 @@ class PichixAccessibilityService : AccessibilityService() {
     }
 
     private fun finishReturnToOffers() {
-        if (!isMotorForegroundAllowed() || pausedAfterAccept) return
+        if (!isMotorForegroundAllowed() || pausedAfterAccept || motorPausedForNavigation) return
         if (!reader.isOnOffersListScreen()) {
             if (reader.clickFlexDrawerMenu()) {
                 handler.postDelayed({
@@ -488,7 +522,9 @@ class PichixAccessibilityService : AccessibilityService() {
             }
         }
         handler.postDelayed({
-            if (!pausedAfterAccept && isMotorForegroundAllowed()) runGrabberTick()
+            if (!pausedAfterAccept && !motorPausedForNavigation && isMotorForegroundAllowed()) {
+                runGrabberTick()
+            }
         }, 600)
     }
 

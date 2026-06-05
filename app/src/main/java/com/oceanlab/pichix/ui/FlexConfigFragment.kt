@@ -26,8 +26,10 @@ import com.oceanlab.pichix.R
 import com.oceanlab.pichix.data.AppSettings
 import com.oceanlab.pichix.data.MonitorPackages
 import com.oceanlab.pichix.data.PichiFileLog
+import com.oceanlab.pichix.service.OverlayService
 import com.oceanlab.pichix.service.PauseByOverClicksController
 import com.oceanlab.pichix.service.PichixAccessibilityService
+import com.oceanlab.pichix.util.OverlayPermissionHelper
 import com.oceanlab.pichix.util.SoundPickerHelper
 import com.oceanlab.pichix.util.SoundUriLabel
 
@@ -110,6 +112,10 @@ class FlexConfigFragment : Fragment() {
         val swPauseIgnore = view.findViewById<SwitchMaterial>(R.id.switchPauseIgnoreCase)
         tvAccess = view.findViewById(R.id.tvAccessStatus)
         val btnAccess = view.findViewById<MaterialButton>(R.id.btnGoAccess)
+        val swOverlayOnOff = view.findViewById<SwitchMaterial>(R.id.switchOverlayOnOff)
+        val swOverlayMotorPause = view.findViewById<SwitchMaterial>(R.id.switchOverlayMotorPause)
+        val swOverlayTestReturn = view.findViewById<SwitchMaterial>(R.id.switchOverlayTestReturn)
+        val btnGoOverlay = view.findViewById<MaterialButton>(R.id.btnGoOverlay)
         val btnSave = view.findViewById<MaterialButton>(R.id.btnSaveConfig)
 
         etPackage.setText(settings.monitorPackagesCsv)
@@ -118,6 +124,9 @@ class FlexConfigFragment : Fragment() {
         swAutoAccept.isChecked = settings.flexAutoAccept
         swPauseOver.isChecked = settings.pauseByOverClicksEnabled
         swForeground.isChecked = settings.flexOnlyWhenForeground
+        swOverlayOnOff.isChecked = settings.overlayEnabled
+        swOverlayMotorPause.isChecked = settings.overlayMotorPauseFabEnabled
+        swOverlayTestReturn.isChecked = settings.overlayTestReturnEnabled
         swDebug.isChecked = settings.debugLogEnabled
         swFileLog.isChecked = settings.fileLogEnabled
         etPauseText.setText(settings.pauseByOverClicksMatchText)
@@ -172,6 +181,35 @@ class FlexConfigFragment : Fragment() {
         btnAccess.setOnClickListener {
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
+        btnGoOverlay.setOnClickListener {
+            OverlayPermissionHelper.openOverlaySettings(requireContext())
+        }
+        val applyOverlayFab: (Boolean) -> Unit = { checked ->
+            if (checked && !OverlayPermissionHelper.canDrawOverlays(requireContext())) {
+                OverlayPermissionHelper.openOverlaySettings(requireContext())
+                Toast.makeText(
+                    requireContext(),
+                    "Concede «Mostrar sobre otras apps» para los botones flotantes",
+                    Toast.LENGTH_LONG,
+                ).show()
+            }
+            OverlayService.sync(requireContext())
+        }
+        swOverlayOnOff.setOnCheckedChangeRetainingFocus(view) { checked ->
+            settings.overlayEnabled = checked
+            applyOverlayFab(checked)
+            markDirty()
+        }
+        swOverlayMotorPause.setOnCheckedChangeRetainingFocus(view) { checked ->
+            settings.overlayMotorPauseFabEnabled = checked
+            applyOverlayFab(checked)
+            markDirty()
+        }
+        swOverlayTestReturn.setOnCheckedChangeRetainingFocus(view) { checked ->
+            settings.overlayTestReturnEnabled = checked
+            applyOverlayFab(checked)
+            markDirty()
+        }
         view.findViewById<MaterialButton>(R.id.btnGoNotifications)?.setOnClickListener {
             startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
         }
@@ -195,6 +233,7 @@ class FlexConfigFragment : Fragment() {
             configScroll.runRetainingScrollAndFocus {
                 persistAllFields(
                     etPackage, swShowNames, swAutoAccept, swPauseOver, swForeground, swDebug, swFileLog,
+                    swOverlayOnOff, swOverlayMotorPause, swOverlayTestReturn,
                     etPauseText, etPauseMinutes, toggleClickMode, etBasicSec, etSmartMin, etSmartMax,
                     swClickRefresh, swAutoScroll, toggleOfferPick, toggleOfferRank,
                     etRefreshBtn, etClickScreen, toggleRefreshMode, swRefreshIgnore,
@@ -276,6 +315,7 @@ class FlexConfigFragment : Fragment() {
     private fun setupExpandableSections(view: View, scrollHost: ScrollView) {
         ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionAmazon), view.findViewById(R.id.sectionAmazon), scrollHost)
         ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionPermisos), view.findViewById(R.id.sectionPermisos), scrollHost)
+        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionOverlay), view.findViewById(R.id.sectionOverlay), scrollHost)
         ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionAuto), view.findViewById(R.id.sectionAuto), scrollHost)
         ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionClicks), view.findViewById(R.id.sectionClicks), scrollHost, startExpanded = false)
         ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionPause), view.findViewById(R.id.sectionPause), scrollHost, startExpanded = false)
@@ -331,6 +371,9 @@ class FlexConfigFragment : Fragment() {
         swForeground: SwitchMaterial,
         swDebug: SwitchMaterial,
         swFileLog: SwitchMaterial,
+        swOverlayOnOff: SwitchMaterial,
+        swOverlayMotorPause: SwitchMaterial,
+        swOverlayTestReturn: SwitchMaterial,
         etPauseText: TextInputEditText,
         etPauseMinutes: TextInputEditText,
         toggleClickMode: MaterialButtonToggleGroup,
@@ -356,6 +399,10 @@ class FlexConfigFragment : Fragment() {
         settings.flexAutoAccept = swAutoAccept.isChecked
         settings.pauseByOverClicksEnabled = swPauseOver.isChecked
         settings.flexOnlyWhenForeground = swForeground.isChecked
+        settings.overlayEnabled = swOverlayOnOff.isChecked
+        settings.overlayMotorPauseFabEnabled = swOverlayMotorPause.isChecked
+        settings.overlayTestReturnEnabled = swOverlayTestReturn.isChecked
+        OverlayService.sync(requireContext())
         settings.debugLogEnabled = swDebug.isChecked
         settings.fileLogEnabled = swFileLog.isChecked
         PichiFileLog.setFileLogEnabled(settings.fileLogEnabled)

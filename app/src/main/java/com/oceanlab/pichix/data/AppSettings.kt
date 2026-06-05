@@ -24,6 +24,19 @@ class AppSettings(context: Context) {
         get() = prefs.getBoolean(KEY_OVERLAY, false)
         set(value) = prefs.edit().putBoolean(KEY_OVERLAY, value).apply()
 
+    /** FAB flotante ⏸ para pausar el motor (clics, scroll, Return 2) sin apagar el bot. */
+    var overlayMotorPauseFabEnabled: Boolean
+        get() = prefs.getBoolean(KEY_OVERLAY_MOTOR_PAUSE, false)
+        set(value) = prefs.edit().putBoolean(KEY_OVERLAY_MOTOR_PAUSE, value).apply()
+
+    /** FAB flotante ↩ para probar manualmente el flujo Return 2 offers. */
+    var overlayTestReturnEnabled: Boolean
+        get() = prefs.getBoolean(KEY_OVERLAY_TEST_RETURN, false)
+        set(value) = prefs.edit().putBoolean(KEY_OVERLAY_TEST_RETURN, value).apply()
+
+    fun hasAnyOverlayFab(): Boolean =
+        overlayEnabled || overlayMotorPauseFabEnabled || overlayTestReturnEnabled
+
     var showCategoryNames: Boolean
         get() = prefs.getBoolean(KEY_SHOW_CATEGORY_NAMES, true)
         set(value) = prefs.edit().putBoolean(KEY_SHOW_CATEGORY_NAMES, value).apply()
@@ -292,6 +305,8 @@ class AppSettings(context: Context) {
         private const val KEY_DARK_THEME = "dark_theme"
         private const val KEY_DRY_RUN = "dry_run"
         private const val KEY_OVERLAY = "overlay_enabled"
+        private const val KEY_OVERLAY_MOTOR_PAUSE = "overlay_motor_pause_fab"
+        private const val KEY_OVERLAY_TEST_RETURN = "overlay_test_return_fab"
         private const val KEY_SHOW_CATEGORY_NAMES = "show_category_names"
         private const val KEY_MONITOR_PACKAGES = "monitor_packages_csv"
         private const val KEY_MIN_HOURLY = "flex_min_hourly"
