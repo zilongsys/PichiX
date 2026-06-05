@@ -93,20 +93,26 @@ class FlexScreenReader(private val service: AccessibilityService) {
         )
     }
 
-    /**
-     * Lista de ofertas: filas offer_pay visibles o texto «filter offers by» / filtrar.
-     * Si esto es true, Return 2 automático no debe ejecutarse.
-     */
+    /** Lista de ofertas: ids de filas + filtro en texto. */
     fun isOnOffersListScreen(screenText: String? = null): Boolean {
-        if (hasAnyOfferPay()) return true
+        if (hasOfferListMarkers()) return true
         val lower = (screenText ?: readFullScreenText()).lowercase()
         return lower.contains("filter offers by") ||
             lower.contains("filtrar ofertas") ||
             lower.contains("filtrar por")
     }
 
+    /** Offer Details (Schedule / tomar bloque): ids de detalle en pantalla. */
+    fun isOnOfferDetailScreen(): Boolean = hasOfferDetailMarkers()
+
     /**
-     * Return 2 automático: lee la pantalla; si NO estás en ofertas y algún disparador activo coincide → true.
+     * Lista de ofertas u Offer Details — aquí NO debe ejecutarse Return 2 automático.
+     */
+    fun isOnOfferFlowScreen(screenText: String? = null): Boolean =
+        isOnOffersListScreen(screenText) || isOnOfferDetailScreen()
+
+    /**
+     * Return 2: sin ids de oferta/detalle en pantalla Y algún disparador activo coincide.
      */
     fun shouldReturnToOffersScreen(
         screenText: String? = null,
@@ -119,12 +125,25 @@ class FlexScreenReader(private val service: AccessibilityService) {
         ) {
             return false
         }
-        if (isOnOffersListScreen(text)) return false
+        if (isOnOfferFlowScreen(text)) return false
         return FlexReturnTriggersEvaluator.anyMatches(text, triggers.filter { it.enabled })
     }
 
-    private fun hasAnyOfferPay(): Boolean {
-        val id = resolveId(FlexIds.OFFER_PAY) ?: return false
+    fun hasOfferListMarkers(): Boolean =
+        hasViewIdInTree(FlexIds.OFFER_PAY) ||
+            hasViewIdInTree(FlexIds.FILTER_OFFER_COUNT) ||
+            hasViewIdInTree(FlexIds.LIST_RECYCLER) ||
+            hasViewIdInTree(FlexIds.OFFER_CARD)
+
+    fun hasOfferDetailMarkers(): Boolean =
+        hasViewIdInTree(FlexIds.OFFER_DETAILS_STATION) ||
+            hasViewIdInTree(FlexIds.PAY_RANGE_WITH_TIPS) ||
+            hasViewIdInTree(FlexIds.OFFER_TIME_WINDOW)
+
+    private fun hasAnyOfferPay(): Boolean = hasViewIdInTree(FlexIds.OFFER_PAY)
+
+    private fun hasViewIdInTree(suffix: String): Boolean {
+        val id = resolveId(suffix) ?: return false
         val root = activeRoot() ?: return false
         return try {
             root.hasViewId(id)

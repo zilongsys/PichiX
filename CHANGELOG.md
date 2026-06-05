@@ -8,6 +8,13 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.44 (Mayo 2026)
+
+### Corregido
+- **Return 2 cíclico**: bloqueo por ids de lista (offer_pay, filter, recycler) y detalle (offer_details_station, pay_range, time_window); periodo de asentamiento tras retorno; limpia scroll/grabber y reanuda con scheduleWork; sin reintentos de menú al finalizar.
+
+---
+
 ## v0.1.43 (Mayo 2026)
 
 ### Corregido

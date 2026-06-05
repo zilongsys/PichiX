@@ -96,6 +96,10 @@ class PichixAccessibilityService : AccessibilityService() {
     private var lastReturnMs = 0L
     private var lastGrabEvalLogMs = 0L
     private var returnInFlight = false
+    /** Tras completar Return 2, ignorar nuevos disparos hasta que la UI se estabilice. */
+    private var returnSettleUntilMs = 0L
+    private var returnStepOffersRunnable: Runnable? = null
+    private val returnStepFinishRunnable = Runnable { completeReturnSequence() }
     private var burstActive = false
     private var nextBurstAtMs = 0L
     private var burstEndsAtMs = 0L
@@ -163,6 +167,8 @@ class PichixAccessibilityService : AccessibilityService() {
         cancelPendingMotorActions()
         grabInFlight = false
         returnInFlight = false
+        returnSettleUntilMs = 0L
+        cancelReturnDelayedSteps()
         burstActive = false
         nextBurstAtMs = 0L
         burstEndsAtMs = 0L
@@ -364,33 +370,35 @@ class PichixAccessibilityService : AccessibilityService() {
 
     private var lastReturnProbeLogMs = 0L
 
+    private fun returnSettleMs(): Long =
+        maxOf(settings.flexReturnDetectCooldownSec.coerceAtLeast(1) * 1000L, 5_000L)
+
     private fun maybeAutoReturnToOffers(text: String, flags: FlexScreenReader.ScreenFlags? = null) {
         if (returnInFlight || motorPausedForNavigation || !settings.flexAutoReturnToOffers) return
+        val now = System.currentTimeMillis()
+        if (now < returnSettleUntilMs) return
         if (!isMotorForegroundAllowed()) return
         val screen = text.ifBlank { reader.readFullScreenText() }
         val f = flags ?: reader.detectScreenFlags(screen, settings)
         if (f.captcha) return
 
-        if (reader.isOnOffersListScreen(screen)) return
+        if (reader.isOnOfferFlowScreen(screen)) return
 
         val triggers = FlexReturnTriggersStore.load(settings)
         val matched = FlexReturnTriggersEvaluator.firstMatch(screen, triggers) ?: return
 
-        if (settings.debugLogEnabled) {
-            val now = System.currentTimeMillis()
-            if (now - lastReturnProbeLogMs > 12_000L) {
-                lastReturnProbeLogMs = now
-                val snippet = screen.replace('\n', ' ').take(120)
-                Log.d(
-                    TAG,
-                    "Return probe: onOffers=false match=${matched.displayTitle()} text=«$snippet»",
-                )
-            }
+        if (settings.debugLogEnabled && now - lastReturnProbeLogMs > 12_000L) {
+            lastReturnProbeLogMs = now
+            val snippet = screen.replace('\n', ' ').take(120)
+            Log.d(
+                TAG,
+                "Return probe: offerFlow=false listIds=${reader.hasOfferListMarkers()} " +
+                    "detailIds=${reader.hasOfferDetailMarkers()} match=${matched.displayTitle()} «$snippet»",
+            )
         }
 
         if (!f.shouldReturnToOffers) return
 
-        val now = System.currentTimeMillis()
         val cooldownMs = settings.flexReturnDetectCooldownSec.coerceAtLeast(1) * 1000L
         if (now - lastReturnMs <= cooldownMs) return
 
@@ -595,6 +603,12 @@ class PichixAccessibilityService : AccessibilityService() {
         }
     }
 
+    private fun cancelReturnDelayedSteps() {
+        returnStepOffersRunnable?.let { handler.removeCallbacks(it) }
+        handler.removeCallbacks(returnStepFinishRunnable)
+        returnStepOffersRunnable = null
+    }
+
     private fun performReturnToOffers(manual: Boolean = false) {
         if (returnInFlight) return
         if (!manual && motorPausedForNavigation) return
@@ -602,61 +616,63 @@ class PichixAccessibilityService : AccessibilityService() {
             if (manual) postObserver("Test Return → Flex no en primer plano")
             return
         }
-        if (!manual && reader.isOnOffersListScreen()) return
-        if (manual && reader.isOnOffersListScreen()) {
-            postObserver("Test Return → ya estás en la lista de ofertas")
+        if (reader.isOnOfferFlowScreen()) {
+            if (manual) postObserver("Test Return → ya en ofertas o detalle de bloque")
             return
         }
 
+        cancelReturnDelayedSteps()
         returnInFlight = true
         cancelPendingMotorActions()
         grabInFlight = false
+        scrollInFlight = false
         postObserver(
             if (manual) "Test Return → iniciando (clics pausados)" else "Return → fuera de ofertas (clics pausados)",
         )
 
-        // Macro ObserverTX-Return_2_Offers: menú ≡ → espera → «Offers» (no pestaña Schedule).
         if (!reader.clickFlexDrawerMenu()) {
             repeat(2) { reader.clickBack() }
             postObserver("Return → menú no encontrado, 2× Atrás")
-            handler.postDelayed({ finishReturnToOffers() }, settings.nextReturnStepDelayMs())
+            handler.postDelayed(returnStepFinishRunnable, settings.nextReturnStepDelayMs())
             return
         }
         postObserver("Return → menú ≡ abierto")
         val afterMenuMs = settings.nextReturnStepDelayMs()
-        handler.postDelayed({
+        returnStepOffersRunnable = Runnable {
+            if (!returnInFlight) return@Runnable
             if (!isMotorForegroundAllowed()) {
-                finishReturnToOffers(aborted = true)
-                return@postDelayed
+                completeReturnSequence()
+                return@Runnable
             }
             val offersClicked = reader.clickTextButton("Offers", partial = false) ||
                 reader.clickTextButton("Offers", partial = true)
             postObserver(
                 if (offersClicked) "Return → Offers" else "Return → no se encontró Offers en menú",
             )
-            handler.postDelayed({ finishReturnToOffers() }, settings.nextReturnStepDelayMs())
-        }, afterMenuMs)
+            handler.postDelayed(returnStepFinishRunnable, settings.nextReturnStepDelayMs())
+        }
+        handler.postDelayed(returnStepOffersRunnable!!, afterMenuMs)
     }
 
-    private fun finishReturnToOffers(aborted: Boolean = false) {
-        if (!aborted && isMotorForegroundAllowed() && !pausedAfterAccept && !motorPausedForNavigation) {
-            if (!reader.isOnOffersListScreen()) {
-                if (reader.clickFlexDrawerMenu()) {
-                    handler.postDelayed({
-                        reader.clickTextButton("Offers", partial = true)
-                    }, settings.nextReturnStepDelayMs())
-                }
-            }
+    private fun completeReturnSequence() {
+        cancelReturnDelayedSteps()
+        returnInFlight = false
+        returnSettleUntilMs = System.currentTimeMillis() + returnSettleMs()
+        grabInFlight = false
+        scrollInFlight = false
+        FlexState.resetScrollCycle()
+        scrollSigsBefore = ""
+        scrollingDown = true
+
+        when {
+            reader.isOnOffersListScreen() -> postObserver("Return → lista de ofertas OK, motor reanudado")
+            reader.isOnOfferDetailScreen() -> postObserver("Return → detalle de bloque (sin re-retorno)")
+            else -> postObserver("Return → secuencia terminada")
         }
-        handler.postDelayed({
-            returnInFlight = false
-            if (!pausedAfterAccept && !motorPausedForNavigation && isMotorForegroundAllowed()) {
-                postObserver("Return → completado, motor reanudado")
-                runGrabberTick()
-            } else {
-                postObserver("Return → completado")
-            }
-        }, if (aborted) 0L else settings.nextReturnStepDelayMs())
+
+        if (!pausedAfterAccept && !motorPausedForNavigation && settings.isBotEnabled && isMotorForegroundAllowed()) {
+            scheduleWork()
+        }
     }
 
     private fun postObserver(message: String) {

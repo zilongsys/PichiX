@@ -41,7 +41,7 @@
     <string name="config_auto_accept_title">Aceptar automáticamente</string>
     <string name="config_auto_accept_hint">Activo: abre la oferta y pulsa Schedule en Offer Details. Inactivo o modo simulación (Home): solo abre el detalle y pausa.</string>
     <string name="config_return_2_offers_title">Return 2 offers</string>
-    <string name="config_return_2_offers_hint">Automático con interruptor ON: lee la pantalla; si NO hay lista de ofertas (offer_pay o «filter offers by») y coincide algún disparador activo → Return 2. Configura disparadores con textos que solo aparezcan fuera de ofertas.</string>
+    <string name="config_return_2_offers_hint">Automático ON: sin ids de oferta/detalle en pantalla (offer_pay, offer_details_station, etc.) y algún disparador coincide → Return 2. No actúa en lista ni en Offer Details (Schedule). Tras volver, pausa breve y reinicia el motor limpio.</string>
     <string name="config_return_step_range_label">Espera aleatoria entre pasos Return 2 (seg, mín – máx)</string>
     <string name="config_return_cooldown_label">Mínimo entre detecciones automáticas (seg)</string>
     <string name="config_return_triggers_label">Disparadores: si la pantalla contiene alguno (y no estás en ofertas) → Return 2. Varias líneas en un disparador = todas deben salir (AND). Usa textos que NO salgan en la lista de ofertas.</string>
