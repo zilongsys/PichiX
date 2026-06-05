@@ -33,7 +33,7 @@
     <string name="config_auto_accept_title">Aceptar automáticamente</string>
     <string name="config_auto_accept_hint">Activo: abre la oferta y pulsa Schedule en Offer Details. Inactivo o modo simulación (Home): solo abre el detalle y pausa.</string>
     <string name="config_return_2_offers_title">Return 2 offers</string>
-    <string name="config_return_2_offers_hint">Si Flex sale de la lista (Updates/Schedule, feed, detalle…): vuelve solo — pestaña Schedule, menú Offers o 2× Atrás (macro Return_2). Cada ~3 s como máximo.</string>
+    <string name="config_return_2_offers_hint">Si Flex sale de la lista (Updates, feed, detalle…): abre el menú ≡ (3 rayas), elige Offers y vuelve a la lista (macro Return_2). Cada ~3 s como máximo.</string>
     <string name="config_pause_over_clicks_title">Pause by over clicks</string>
     <string name="config_pause_over_clicks_hint">Pausa el bot si una notificación Flex contiene el texto indicado; reanuda solo tras el tiempo configurado.</string>
     <string name="config_pause_over_clicks_match_label">Texto en la notificación</string>

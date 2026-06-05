@@ -1,6 +1,7 @@
 package com.oceanlab.pichix.service.accessibility
 
 import android.accessibilityservice.AccessibilityService
+import android.graphics.Rect
 import android.os.Build
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
@@ -391,6 +392,59 @@ class FlexScreenReader(private val service: AccessibilityService) {
     }
 
     fun clickRefresh(): Boolean = clickTargetButton("Refresh")
+
+    /**
+     * Menú ≡ (3 rayas) del macro Return_2 — abre el drawer lateral de Flex.
+     * Busca por contentDescription, ids conocidos o botón clickable arriba-izquierda.
+     */
+    fun clickFlexDrawerMenu(): Boolean {
+        val root = activeRoot() ?: return false
+        return try {
+            val menuDescNeedles = listOf(
+                "open navigation drawer",
+                "open drawer",
+                "navigation menu",
+                "show navigation",
+                "menu",
+            )
+            root.withAllObtainedNodes { nodes ->
+                for (n in nodes) {
+                    val desc = n.contentDescription?.toString()?.lowercase().orEmpty()
+                    if (menuDescNeedles.any { desc.contains(it) } &&
+                        n.performClickOnClickableSelfOrAncestor()
+                    ) {
+                        return@withAllObtainedNodes true
+                    }
+                }
+                for (suffix in FlexIds.NAV_MENU_ID_SUFFIXES) {
+                    val id = resolveId(suffix) ?: continue
+                    val clicked = root.useViewIdNodes(id) { list ->
+                        list.any { it.performClickOnClickableSelfOrAncestor() }
+                    }
+                    if (clicked) return@withAllObtainedNodes true
+                }
+                val dm = service.resources.displayMetrics
+                val maxX = dm.widthPixels * 0.22f
+                val maxY = dm.heightPixels * 0.2f
+                for (n in nodes) {
+                    val rect = Rect()
+                    n.getBoundsInScreen(rect)
+                    if (rect.left > maxX || rect.top > maxY || rect.width() !in 1..220) continue
+                    val text = n.text?.toString().orEmpty()
+                    if (text.isNotBlank() && text.length > 4) continue
+                    if (n.performClickOnClickableSelfOrAncestor()) {
+                        return@withAllObtainedNodes true
+                    }
+                }
+                false
+            }
+        } finally {
+            try {
+                root.recycle()
+            } catch (_: Exception) {
+            }
+        }
+    }
 
     /** Pestaña inferior Flex (Updates / Schedule). */
     fun clickTabByLabel(label: String): Boolean {

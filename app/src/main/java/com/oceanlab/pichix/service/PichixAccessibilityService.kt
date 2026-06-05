@@ -459,23 +459,37 @@ class PichixAccessibilityService : AccessibilityService() {
         if (!isMotorForegroundAllowed()) return
         if (reader.isOnOffersListScreen()) return
 
-        when {
-            reader.shouldReturnToOffersScreen() && reader.clickTabByLabel("Schedule") ->
-                postObserver("Return → pestaña Schedule (ofertas)")
-            reader.clickTextButton("Offers", partial = true) ->
-                postObserver("Return → menú Offers")
-            else -> {
-                repeat(2) { reader.clickBack() }
-                postObserver("Return → 2× Atrás")
+        // Macro ObserverTX-Return_2_Offers: menú ≡ → espera → «Offers» (no pestaña Schedule).
+        if (!reader.clickFlexDrawerMenu()) {
+            repeat(2) { reader.clickBack() }
+            postObserver("Return → menú no encontrado, 2× Atrás")
+            handler.postDelayed({ finishReturnToOffers() }, 800)
+            return
+        }
+        postObserver("Return → menú ≡ abierto")
+        handler.postDelayed({
+            if (!isMotorForegroundAllowed()) return@postDelayed
+            val offersClicked = reader.clickTextButton("Offers", partial = false) ||
+                reader.clickTextButton("Offers", partial = true)
+            postObserver(
+                if (offersClicked) "Return → Offers" else "Return → no se encontró Offers en menú",
+            )
+            handler.postDelayed({ finishReturnToOffers() }, 1200)
+        }, 700)
+    }
+
+    private fun finishReturnToOffers() {
+        if (!isMotorForegroundAllowed() || pausedAfterAccept) return
+        if (!reader.isOnOffersListScreen()) {
+            if (reader.clickFlexDrawerMenu()) {
+                handler.postDelayed({
+                    reader.clickTextButton("Offers", partial = true)
+                }, 500)
             }
         }
         handler.postDelayed({
-            if (!isMotorForegroundAllowed() || pausedAfterAccept) return@postDelayed
-            if (!reader.isOnOffersListScreen()) {
-                reader.clickTabByLabel("Schedule")
-            }
-            runGrabberTick()
-        }, 800)
+            if (!pausedAfterAccept && isMotorForegroundAllowed()) runGrabberTick()
+        }, 600)
     }
 
     private fun postObserver(message: String) {

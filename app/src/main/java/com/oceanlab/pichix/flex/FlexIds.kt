@@ -17,6 +17,15 @@ object FlexIds {
     const val OFFER_DATE = "offer_date"
     const val MERIDIAN_BUTTON_TEXT = "meridian_button_text_view"
     const val MERIDIAN_TAB_ITEM_LABEL = "meridian_tab_item_label"
+    /** Icono menú ≡ (drawer) — candidatos usados en return2offers. */
+    val NAV_MENU_ID_SUFFIXES = listOf(
+        "navigation_icon",
+        "hamburger",
+        "drawer_icon",
+        "menu_button",
+        "toolbar_hamburger",
+        "meridian_navigation_icon",
+    )
     const val PRIMARY_BUTTON = "primaryButton"
     const val OFFER_CARD = "card"
     const val LIST_RECYCLER = "list_recycler"
