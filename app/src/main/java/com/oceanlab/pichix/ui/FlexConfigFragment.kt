@@ -184,6 +184,7 @@ class FlexConfigFragment : Fragment() {
         btnGoOverlay.setOnClickListener {
             OverlayPermissionHelper.openOverlaySettings(requireContext())
         }
+        val markDirty: () -> Unit = { (requireActivity() as MainActivity).markDirty(1) }
         val applyOverlayFab: (Boolean) -> Unit = { checked ->
             if (checked && !OverlayPermissionHelper.canDrawOverlays(requireContext())) {
                 OverlayPermissionHelper.openOverlaySettings(requireContext())
@@ -249,7 +250,6 @@ class FlexConfigFragment : Fragment() {
             }
         }
 
-        val markDirty: () -> Unit = { (requireActivity() as MainActivity).markDirty(1) }
         etPackage.onUserTextChanged(onDirty = { markDirty() })
         swShowNames.setOnCheckedChangeRetainingFocus(view) { markDirty() }
         swAutoAccept.setOnCheckedChangeRetainingFocus(view) { markDirty() }

@@ -46,7 +46,7 @@ class OverlayService : Service() {
             IntentFilter().apply {
                 addAction(MainActivity.BOT_STATE_CHANGED)
                 addAction(MainActivity.BOT_PAUSED)
-                addAction(MainActivity.BOT_RESUMED)
+                addAction(PichixAccessibilityService.BOT_RESUMED)
                 addAction(PichixAccessibilityService.MOTOR_PAUSE_CHANGED)
             },
         )
@@ -102,7 +102,7 @@ class OverlayService : Service() {
 
         val btnOnOff = view.findViewById<FrameLayout>(R.id.overlayBtnOnOff)
         val btnPause = view.findViewById<FrameLayout>(R.id.overlayBtnPause)
-        val btnTest = view.findViewById<FrameLayout>(R.id.overlayBtnTest)
+        val btnTest = view.findViewById<FrameLayout>(R.id.overlayBtnTestReturn)
 
         attachDragOrTap(btnOnOff, view, params) { if (!it) toggleBot() }
         attachDragOrTap(btnPause, view, params) {
