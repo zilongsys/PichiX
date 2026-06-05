@@ -30,6 +30,7 @@
     <string name="config_btn_accessibility">Abrir ajustes de accesibilidad</string>
     <string name="config_btn_overlay">Configurar botón flotante</string>
     <string name="config_btn_overlay_permission">Permiso «Mostrar sobre otras apps»</string>
+    <string name="config_overlay_permission_title">Permiso superponer sobre otras apps</string>
     <string name="config_section_overlay">BOTONES FLOTANTES</string>
     <string name="config_overlay_onoff_title">Botón ON/OFF</string>
     <string name="config_overlay_onoff_hint">Activa o desactiva el bot desde encima de Flex. Arrastra el botón para moverlo.</string>

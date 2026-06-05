@@ -145,6 +145,7 @@ class PichixAccessibilityService : AccessibilityService() {
         }
         if (!settings.isBotEnabled || pausedAfterAccept || motorPausedForNavigation) return
         if (pkg != target) return
+        if (!isMotorForegroundAllowed()) return
         when (event.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED,
@@ -409,13 +410,19 @@ class PichixAccessibilityService : AccessibilityService() {
 
     private fun runGrabberTick() {
         settings = AppSettings(this)
+        if (!settings.isBotEnabled || pausedAfterAccept || motorPausedForNavigation || returnInFlight) {
+            scheduleWork()
+            return
+        }
+        updateBurstState()
+        if (!isMotorForegroundAllowed()) {
+            scheduleWork()
+            return
+        }
         scheduleWork()
-        if (!settings.isBotEnabled || pausedAfterAccept || motorPausedForNavigation || returnInFlight) return
-        if (!isMotorForegroundAllowed()) return
         val text = reader.readFullScreenText()
         maybeAutoReturnToOffers(text)
         if (returnInFlight) return
-        updateBurstState()
         grabInFlight = true
         try {
             if (burstActive && settings.flexBurstClickEnabled) {

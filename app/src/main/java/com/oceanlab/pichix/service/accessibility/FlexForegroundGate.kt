@@ -8,29 +8,17 @@ import android.view.accessibility.AccessibilityWindowInfo
 import com.oceanlab.pichix.data.AppSettings
 
 /**
- * Motor solo con Flex al frente: basta **una** señal positiva (OR).
- * No se bloquea solo porque la ventana «activa» de Android sea otra app o el overlay de PichiX.
+ * Motor solo con Flex al frente: ventana activa, ventana accesible de Flex o UI Flex visible.
+ * Sin periodo de gracia por eventos antiguos (evita detección con Flex minimizado).
  */
 object FlexForegroundGate {
 
     private const val TAG = "PichiXForeground"
-    private const val TARGET_EVENT_GRACE_MS = 15_000L
-
-    @Volatile
-    private var lastTargetEventMs = 0L
 
     fun onAccessibilityEvent(event: AccessibilityEvent, monitoredTargets: Set<String>) {
+        // Reservado para telemetría futura; la comprobación real es en allowMotor().
         val pkg = event.packageName?.toString().orEmpty()
         if (pkg !in monitoredTargets) return
-        when (event.eventType) {
-            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
-            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED,
-            AccessibilityEvent.TYPE_VIEW_FOCUSED,
-            AccessibilityEvent.TYPE_VIEW_SCROLLED,
-            AccessibilityEvent.TYPE_WINDOWS_CHANGED -> {
-                lastTargetEventMs = System.currentTimeMillis()
-            }
-        }
     }
 
     fun allowMotor(
@@ -41,25 +29,17 @@ object FlexForegroundGate {
     ): Boolean {
         if (!settings.flexOnlyWhenForeground) return true
 
-        val allowed = recentFlexPackageEvent() ||
-            activeWindowPackage(service) == targetPkg ||
+        val allowed = activeWindowPackage(service) == targetPkg ||
             anyWindowHasPackage(service, targetPkg, service.packageName) ||
             flexUiVisible()
 
-        if (allowed) {
-            lastTargetEventMs = System.currentTimeMillis()
-        } else if (settings.debugLogEnabled) {
+        if (!allowed && settings.debugLogEnabled) {
             Log.d(
                 TAG,
-                "Motor pausado: ninguna señal Flex (target=$targetPkg active=${activeWindowPackage(service)})",
+                "Motor pausado: Flex no en primer plano (target=$targetPkg active=${activeWindowPackage(service)})",
             )
         }
         return allowed
-    }
-
-    private fun recentFlexPackageEvent(): Boolean {
-        if (lastTargetEventMs == 0L) return false
-        return System.currentTimeMillis() - lastTargetEventMs <= TARGET_EVENT_GRACE_MS
     }
 
     private fun activeWindowPackage(service: AccessibilityService): String? {

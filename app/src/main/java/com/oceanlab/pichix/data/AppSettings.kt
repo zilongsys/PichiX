@@ -187,6 +187,19 @@ class AppSettings(context: Context) {
         get() = prefs.getBoolean(KEY_FLEX_ONLY_FOREGROUND, true)
         set(value) = prefs.edit().putBoolean(KEY_FLEX_ONLY_FOREGROUND, value).apply()
 
+    fun isConfigSectionExpanded(sectionKey: String, defaultExpanded: Boolean = true): Boolean {
+        val key = KEY_CONFIG_SECTION_PREFIX + sectionKey
+        return if (prefs.contains(key)) {
+            prefs.getBoolean(key, defaultExpanded)
+        } else {
+            defaultExpanded
+        }
+    }
+
+    fun setConfigSectionExpanded(sectionKey: String, expanded: Boolean) {
+        prefs.edit().putBoolean(KEY_CONFIG_SECTION_PREFIX + sectionKey, expanded).apply()
+    }
+
     var debugLogEnabled: Boolean
         get() = prefs.getBoolean(KEY_DEBUG_LOG, false)
         set(value) = prefs.edit().putBoolean(KEY_DEBUG_LOG, value).apply()
@@ -426,6 +439,7 @@ class AppSettings(context: Context) {
         const val DEFAULT_REFRESH_BUTTON = "Refresh"
         private const val KEY_FLEX_CLICK_SCREEN_MODE = "flex_click_screen_mode"
         private const val KEY_FLEX_ONLY_FOREGROUND = "flex_only_foreground"
+        private const val KEY_CONFIG_SECTION_PREFIX = "config_section_expanded_"
         private const val KEY_FOREGROUND_MOTOR_RESET = "flex_foreground_motor_reset_v12"
         private const val KEY_DEBUG_LOG = "debug_log"
         private const val KEY_FILE_LOG = "file_log"

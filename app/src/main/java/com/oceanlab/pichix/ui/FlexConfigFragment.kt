@@ -34,6 +34,7 @@ import com.oceanlab.pichix.service.OverlayService
 import com.oceanlab.pichix.service.PauseByOverClicksController
 import com.oceanlab.pichix.service.PichixAccessibilityService
 import com.oceanlab.pichix.util.OverlayPermissionHelper
+import com.oceanlab.pichix.util.PermissionStatusHelper
 import com.oceanlab.pichix.util.SoundPickerHelper
 import com.oceanlab.pichix.util.SoundUriLabel
 
@@ -43,6 +44,8 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
     private var returnTriggers: MutableList<FlexReturnScreenTrigger> = mutableListOf()
     private var returnTriggersAdapter: FlexReturnTriggersAdapter? = null
     private var tvAccess: TextView? = null
+    private var tvNotificationAccess: TextView? = null
+    private var tvOverlayPermission: TextView? = null
     private var pauseSoundUri: String = ""
     private var resumeSoundUri: String = ""
     private lateinit var pauseSoundPicker: SoundPickerHelper
@@ -127,6 +130,8 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         val togglePauseMode = view.findViewById<MaterialButtonToggleGroup>(R.id.togglePauseMatchMode)
         val swPauseIgnore = view.findViewById<SwitchMaterial>(R.id.switchPauseIgnoreCase)
         tvAccess = view.findViewById(R.id.tvAccessStatus)
+        tvNotificationAccess = view.findViewById(R.id.tvNotificationAccessStatus)
+        tvOverlayPermission = view.findViewById(R.id.tvOverlayPermissionStatus)
         val btnAccess = view.findViewById<MaterialButton>(R.id.btnGoAccess)
         val swOverlayOnOff = view.findViewById<SwitchMaterial>(R.id.switchOverlayOnOff)
         val swOverlayMotorPause = view.findViewById<SwitchMaterial>(R.id.switchOverlayMotorPause)
@@ -355,7 +360,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         swPauseIgnore.setOnCheckedChangeRetainingFocus(view) { markDirty() }
 
         setupReturnTriggers(view)
-        refreshAccessibilityStatus()
+        refreshPermissionStatuses()
     }
 
     private fun setupReturnTriggers(view: View) {
@@ -405,14 +410,14 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
     }
 
     private fun setupExpandableSections(view: View, scrollHost: ScrollView) {
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionAmazon), view.findViewById(R.id.sectionAmazon), scrollHost)
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionPermisos), view.findViewById(R.id.sectionPermisos), scrollHost)
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionOverlay), view.findViewById(R.id.sectionOverlay), scrollHost)
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionAuto), view.findViewById(R.id.sectionAuto), scrollHost)
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionClicks), view.findViewById(R.id.sectionClicks), scrollHost, startExpanded = false)
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionPause), view.findViewById(R.id.sectionPause), scrollHost, startExpanded = false)
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionLog), view.findViewById(R.id.sectionLog), scrollHost, startExpanded = false)
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionUi), view.findViewById(R.id.sectionUi), scrollHost)
+        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionAmazon), view.findViewById(R.id.sectionAmazon), scrollHost, sectionKey = "amazon")
+        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionPermisos), view.findViewById(R.id.sectionPermisos), scrollHost, sectionKey = "permisos")
+        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionOverlay), view.findViewById(R.id.sectionOverlay), scrollHost, sectionKey = "overlay")
+        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionAuto), view.findViewById(R.id.sectionAuto), scrollHost, sectionKey = "auto")
+        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionClicks), view.findViewById(R.id.sectionClicks), scrollHost, sectionKey = "clicks", startExpanded = false)
+        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionPause), view.findViewById(R.id.sectionPause), scrollHost, sectionKey = "pause", startExpanded = false)
+        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionLog), view.findViewById(R.id.sectionLog), scrollHost, sectionKey = "log", startExpanded = false)
+        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionUi), view.findViewById(R.id.sectionUi), scrollHost, sectionKey = "ui")
     }
 
     private fun updateClickModeVisibility(basic: View, smart: View, smartMode: Boolean) {
@@ -661,19 +666,33 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         else -> AppSettings.OFFER_RANK_HOURLY
     }
 
-    fun refreshAccessibilityStatus() {
-        val activity = activity as? MainActivity ?: return
-        val enabled = activity.isAccessibilityEnabled()
+    fun refreshAccessibilityStatus() = refreshPermissionStatuses()
+
+    private fun refreshPermissionStatuses() {
         val ctx = requireContext()
-        tvAccess?.text = if (enabled) "✓ Activado" else "✗ No activado"
-        tvAccess?.setTextColor(
-            ContextCompat.getColor(ctx, if (enabled) R.color.green_400 else R.color.coral_600)
+        val activity = activity as? MainActivity
+        val accessEnabled = activity?.isAccessibilityEnabled()
+            ?: PermissionStatusHelper.isAccessibilityServiceEnabled(ctx)
+        applyPermissionStatus(tvAccess, accessEnabled)
+
+        val notificationEnabled = PermissionStatusHelper.isNotificationListenerEnabled(ctx)
+        applyPermissionStatus(tvNotificationAccess, notificationEnabled)
+
+        val overlayEnabled = OverlayPermissionHelper.canDrawOverlays(ctx)
+        applyPermissionStatus(tvOverlayPermission, overlayEnabled)
+    }
+
+    private fun applyPermissionStatus(label: TextView?, enabled: Boolean) {
+        val ctx = requireContext()
+        label?.text = if (enabled) "✓ Activado" else "✗ No activado"
+        label?.setTextColor(
+            ContextCompat.getColor(ctx, if (enabled) R.color.green_400 else R.color.coral_600),
         )
     }
 
     override fun onResume() {
         super.onResume()
-        refreshAccessibilityStatus()
+        refreshPermissionStatuses()
         swReturn2?.isChecked = settings.flexAutoReturnToOffers
         LocalBroadcastManager.getInstance(requireContext())
             .registerReceiver(return2Receiver, IntentFilter(MainActivity.RETURN2_SETTING_CHANGED))

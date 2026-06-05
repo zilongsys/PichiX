@@ -71,17 +71,36 @@ fun View.restoreFocus(target: View?) {
 private fun ViewGroup.runRetainingScrollAndFocusInternal(block: () -> Unit) {
     val scrollY = scrollY
     val focused = findFocus()
-    val shouldRestoreFocus = focused != null &&
-        focused.isDescendantOf(this) &&
-        focused !is ImageButton &&
-        (focused.isFocusable || focused.isFocusableInTouchMode)
+    val anchor = focused?.takeIf {
+        it.isDescendantOf(this) &&
+            (it.isFocusable || it.isFocusableInTouchMode)
+    }
+    val anchorLoc = IntArray(2)
+    val hostLoc = IntArray(2)
+    var anchorOffsetInViewport = 0
+    if (anchor != null) {
+        anchor.getLocationOnScreen(anchorLoc)
+        getLocationOnScreen(hostLoc)
+        anchorOffsetInViewport = anchorLoc[1] - hostLoc[1]
+    }
+    val shouldRestoreFocus = anchor != null &&
+        anchor.isShown &&
+        (anchor.isFocusable || anchor.isFocusableInTouchMode)
     block()
     post {
-        scrollTo(0, scrollY)
-        if (shouldRestoreFocus && focused!!.isShown &&
-            (focused.isFocusable || focused.isFocusableInTouchMode)
-        ) {
-            focused.requestFocus()
+        val child = getChildAt(0)
+        val maxScroll = ((child?.height ?: 0) - height).coerceAtLeast(0)
+        val newScrollY = if (anchor != null && anchor.isShown) {
+            anchor.getLocationOnScreen(anchorLoc)
+            getLocationOnScreen(hostLoc)
+            val delta = (anchorLoc[1] - hostLoc[1]) - anchorOffsetInViewport
+            (scrollY + delta).coerceIn(0, maxScroll)
+        } else {
+            scrollY.coerceIn(0, maxScroll)
+        }
+        scrollTo(0, newScrollY)
+        if (shouldRestoreFocus) {
+            anchor!!.requestFocus()
         }
     }
 }

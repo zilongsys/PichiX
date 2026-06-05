@@ -106,6 +106,24 @@
                 android:layout_marginBottom="8dp"
                 android:text="@string/config_btn_accessibility" />
 
+            <LinearLayout style="@style/Row">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        style="@style/RowLabel"
+                        android:layout_width="match_parent"
+                        android:layout_weight="0"
+                        android:text="Acceso a notificaciones" />
+                    <TextView
+                        android:id="@+id/tvNotificationAccessStatus"
+                        style="@style/RowHint"
+                        android:text="No activado" />
+                </LinearLayout>
+            </LinearLayout>
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnGoNotifications"
                 style="@style/SparkButtonSecondary"
@@ -131,6 +149,24 @@
             android:orientation="vertical">
 
         <LinearLayout style="@style/Card">
+
+            <LinearLayout style="@style/Row">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        style="@style/RowLabel"
+                        android:layout_width="match_parent"
+                        android:layout_weight="0"
+                        android:text="@string/config_overlay_permission_title" />
+                    <TextView
+                        android:id="@+id/tvOverlayPermissionStatus"
+                        style="@style/RowHint"
+                        android:text="No activado" />
+                </LinearLayout>
+            </LinearLayout>
 
             <LinearLayout style="@style/Row">
                 <LinearLayout

@@ -7,6 +7,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.widget.NestedScrollView
 import com.oceanlab.pichix.R
+import com.oceanlab.pichix.data.AppSettings
 
 object ConfigSectionBinder {
 
@@ -14,9 +15,11 @@ object ConfigSectionBinder {
         header: TextView,
         content: View,
         scrollHost: View? = null,
+        sectionKey: String,
         startExpanded: Boolean = true,
     ) {
-        var open = startExpanded
+        val settings = AppSettings(header.context)
+        var open = settings.isConfigSectionExpanded(sectionKey, startExpanded)
         val baseTitle = header.text.toString()
             .removeSuffix(" ▼")
             .removeSuffix(" ▶")
@@ -24,23 +27,31 @@ object ConfigSectionBinder {
         header.text = baseTitle
         header.isClickable = true
         header.isFocusable = true
+        header.isFocusableInTouchMode = true
         header.applySelectableForeground()
-        header.setCompoundDrawablesWithIntrinsicBounds(0, 0, chevronFor(open), 0)
-        header.compoundDrawablePadding = (header.resources.displayMetrics.density * 6).toInt()
-        content.visibility = if (open) View.VISIBLE else View.GONE
+        applyExpandedState(header, content, open)
 
         header.setOnClickListener {
             val toggle = {
                 open = !open
-                content.visibility = if (open) View.VISIBLE else View.GONE
-                header.setCompoundDrawablesWithIntrinsicBounds(0, 0, chevronFor(open), 0)
+                applyExpandedState(header, content, open)
+                settings.setConfigSectionExpanded(sectionKey, open)
             }
             when (scrollHost) {
                 is ScrollView -> scrollHost.runRetainingScrollAndFocus { toggle() }
                 is NestedScrollView -> scrollHost.runRetainingScrollAndFocus { toggle() }
                 else -> toggle()
             }
+            header.post {
+                if (header.isShown) header.requestFocus()
+            }
         }
+    }
+
+    private fun applyExpandedState(header: TextView, content: View, open: Boolean) {
+        content.visibility = if (open) View.VISIBLE else View.GONE
+        header.setCompoundDrawablesWithIntrinsicBounds(0, 0, chevronFor(open), 0)
+        header.compoundDrawablePadding = (header.resources.displayMetrics.density * 6).toInt()
     }
 
     private fun View.applySelectableForeground() {

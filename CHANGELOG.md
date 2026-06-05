@@ -8,6 +8,19 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.45 (Mayo 2026)
+
+### Corregido
+- **Ráfaga**: al terminar la duración configurada vuelve al intervalo normal (Basic/Smart, scroll y evaluación completa); el reloj de ráfaga avanza aunque Flex no esté al frente.
+- **Detección de pantalla**: observers, Return 2 y grabber solo corren con Flex en primer plano; eliminado periodo de gracia de 15 s por eventos antiguos.
+- **Foco en Config**: scroll y foco se anclan al control activo al colapsar/expandir secciones o cambiar valores.
+
+### Añadido
+- **Secciones Config**: estado colapsado/expandido persistido por sección al salir y volver a la pantalla.
+- **Permisos en Config**: estado visible (activado / no activado) para accesibilidad, notificaciones y superponer sobre otras apps.
+
+---
+
 ## v0.1.44 (Mayo 2026)
 
 ### Corregido
