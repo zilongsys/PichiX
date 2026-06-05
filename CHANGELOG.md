@@ -8,6 +8,13 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.39 (Mayo 2026)
+
+### Actualizado
+- **Ráfaga de clics**: evalúa ofertas visibles y acepta si cumplen criterio; sin scroll; el intervalo normal Smart/Basic queda suspendido y solo rige el ms de la ráfaga.
+
+---
+
 ## v0.1.38 (Mayo 2026)
 
 ### Añadido

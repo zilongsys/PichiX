@@ -45,7 +45,7 @@
     <string name="config_return_step_range_label">Espera aleatoria entre pasos Return 2 (seg, mín – máx)</string>
     <string name="config_return_cooldown_label">Mínimo entre detecciones automáticas (seg)</string>
     <string name="config_burst_click_title">Ráfaga de clics</string>
-    <string name="config_burst_click_hint">Cada X–Y min (aleatorio) activa una ráfaga: pulsa Refresh cada N ms durante la duración configurada. Solo en pantalla de ofertas (misma regla que Clic Refresh).</string>
+    <string name="config_burst_click_hint">Cada X–Y min (aleatorio) activa una ráfaga: Refresh cada N ms (el intervalo normal de clic queda suspendido), evalúa ofertas visibles y acepta si cumplen criterio; sin scroll. Misma regla de pantalla que Clic Refresh.</string>
     <string name="config_burst_interval_label">Intervalo entre ráfagas (min, mín – máx)</string>
     <string name="config_burst_click_interval_label">Intervalo entre clics durante la ráfaga (ms)</string>
     <string name="config_burst_duration_label">Duración de cada ráfaga (seg)</string>

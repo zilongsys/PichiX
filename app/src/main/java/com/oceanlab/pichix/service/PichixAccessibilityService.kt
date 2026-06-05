@@ -192,6 +192,78 @@ class PichixAccessibilityService : AccessibilityService() {
         }
     }
 
+    /**
+     * Evalúa ofertas visibles y acepta si cumplen criterio.
+     * @param scrollIfEmpty si false (ráfaga), no hace scroll cuando la lista está vacía.
+     * @return true si se inició flujo de aceptación.
+     */
+    private fun processVisibleOffers(
+        text: String,
+        scrollIfEmpty: Boolean,
+        burstMode: Boolean,
+    ): Boolean {
+        val flags = reader.detectScreenFlags(text)
+        if (flags.captcha) return false
+
+        val offers = reader.readOffersFromList()
+        if (settings.debugLogEnabled && offers.isNotEmpty()) {
+            offers.forEachIndexed { i, o ->
+                Log.i(
+                    FlexUiDumper.DEBUG_TAG,
+                    "Oferta[$i] ${o.stationText} | ${o.timeText} | ${o.durationHours ?: "?"}h | ${o.payText} | \$${o.hourlyRate ?: 0}/h",
+                )
+            }
+        }
+        if (offers.isEmpty()) {
+            if (!burstMode) {
+                logGrabEvalThrottled("Lista sin ofertas parseadas (revisa ids offer_pay)")
+            }
+            if (scrollIfEmpty) maybeScrollList()
+            return false
+        }
+
+        logger.logVisibleOffers(offers)
+
+        val evaluated = offers.map { offer ->
+            FlexOfferSelector.EvaluatedOffer(
+                offer,
+                FlexGrabberEvaluator.evaluateListRow(offer, settings, text),
+            )
+        }
+        val winner = FlexOfferSelector.pickAcceptable(evaluated, settings)
+        if (winner != null) {
+            val prefix = if (burstMode) "Ráfaga → " else ""
+            postObserver(prefix + FlexOfferSelector.selectionSummary(winner, evaluated, settings))
+            handleAccept(winner)
+            return true
+        }
+
+        for ((offer, result) in evaluated) {
+            when (result) {
+                FlexGrabResult.REJECT -> {
+                    logGrabEvalThrottled(
+                        (if (burstMode) "Ráfaga: " else "") +
+                            "No cumple regla: ${offer.stationText} ${offer.payText} " +
+                            "(${offer.hourlyRate?.let { "%.1f".format(it) } ?: "?"} \$/h)",
+                    )
+                    if (settings.flexCancelBadBlocks) {
+                        logger.log(offer.toLogEntry(OfferStatus.REJECTED, "Criterio grabber"))
+                    }
+                }
+                FlexGrabResult.SKIP -> {
+                    logGrabEvalThrottled(
+                        (if (burstMode) "Ráfaga: " else "") +
+                            "Datos incompletos: ${offer.stationText} ${offer.payText}",
+                    )
+                }
+                else -> Unit
+            }
+        }
+
+        if (scrollIfEmpty) maybeScrollList()
+        return false
+    }
+
     private fun tryRefreshClick(screenText: String, burstMode: Boolean) {
         if (!settings.flexClickRefreshEnabled) return
         val screenOk = reader.screenMatchesForClick(
@@ -224,7 +296,7 @@ class PichixAccessibilityService : AccessibilityService() {
         )
         if (!clicked) {
             if (!burstMode) postObserver("Clic: no se encontró «${settings.flexRefreshButtonText}»")
-        } else if (burstMode) {
+        } else if (burstMode && settings.debugLogEnabled) {
             postObserver("Ráfaga → Refresh")
         } else if (settings.debugLogEnabled) {
             postObserver("Clic Refresh (siguiente en ${settings.nextGrabDelayMs() / 1000}s)")
@@ -303,6 +375,7 @@ class PichixAccessibilityService : AccessibilityService() {
             val text = reader.readFullScreenText()
             if (burstActive && settings.flexBurstClickEnabled) {
                 tryRefreshClick(text, burstMode = true)
+                processVisibleOffers(text, scrollIfEmpty = false, burstMode = true)
                 return
             }
             if (settings.flexClickRefreshEnabled) {
@@ -310,61 +383,7 @@ class PichixAccessibilityService : AccessibilityService() {
             }
 
             warnIfTariffRulesMisconfigured()
-
-            val flags = reader.detectScreenFlags(text)
-            if (flags.captcha) return
-
-            val offers = reader.readOffersFromList()
-            if (settings.debugLogEnabled && offers.isNotEmpty()) {
-                offers.forEachIndexed { i, o ->
-                    Log.i(
-                        FlexUiDumper.DEBUG_TAG,
-                        "Oferta[$i] ${o.stationText} | ${o.timeText} | ${o.durationHours ?: "?"}h | ${o.payText} | \$${o.hourlyRate ?: 0}/h",
-                    )
-                }
-            }
-            if (offers.isEmpty()) {
-                logGrabEvalThrottled("Lista sin ofertas parseadas (revisa ids offer_pay)")
-                maybeScrollList()
-                return
-            }
-
-            logger.logVisibleOffers(offers)
-
-            val evaluated = offers.map { offer ->
-                FlexOfferSelector.EvaluatedOffer(
-                    offer,
-                    FlexGrabberEvaluator.evaluateListRow(offer, settings, text),
-                )
-            }
-            val winner = FlexOfferSelector.pickAcceptable(evaluated, settings)
-            if (winner != null) {
-                postObserver(FlexOfferSelector.selectionSummary(winner, evaluated, settings))
-                handleAccept(winner)
-                return
-            }
-
-            for ((offer, result) in evaluated) {
-                when (result) {
-                    FlexGrabResult.REJECT -> {
-                        logGrabEvalThrottled(
-                            "No cumple regla: ${offer.stationText} ${offer.payText} " +
-                                "(${offer.hourlyRate?.let { "%.1f".format(it) } ?: "?"} \$/h)",
-                        )
-                        if (settings.flexCancelBadBlocks) {
-                            logger.log(offer.toLogEntry(OfferStatus.REJECTED, "Criterio grabber"))
-                        }
-                    }
-                    FlexGrabResult.SKIP -> {
-                        logGrabEvalThrottled(
-                            "Datos incompletos: ${offer.stationText} ${offer.payText}",
-                        )
-                    }
-                    else -> Unit
-                }
-            }
-
-            maybeScrollList()
+            processVisibleOffers(text, scrollIfEmpty = true, burstMode = false)
         } finally {
             grabInFlight = false
         }
