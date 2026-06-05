@@ -82,8 +82,36 @@ class FlexScreenReader(private val service: AccessibilityService) {
             captcha = lower.contains("captcha") || lower.contains("robot") ||
                 lower.contains("puzzle") || lower.contains("verify"),
             offerScheduled = lower.contains("scheduled") && lower.contains("offer"),
-            onOffersList = lower.contains("offer") || hasAnyOfferPay(),
+            onOffersList = isOnOffersListScreen(lower),
+            onFlexHomeTabs = lower.contains("updates") && lower.contains("schedule") && !isOnOffersListScreen(lower),
+            shouldReturnToOffers = shouldReturnToOffersScreen(lower),
         )
+    }
+
+    /** Lista de ofertas: filas offer_pay o texto «filter offers by» (no cualquier «offer»). */
+    fun isOnOffersListScreen(screenLower: String? = null): Boolean {
+        if (hasAnyOfferPay()) return true
+        val lower = screenLower ?: readFullScreenText().lowercase()
+        return lower.contains("filter offers by")
+    }
+
+    /** Pantalla principal Updates/Schedule, feed, detalle u otra — volver a ofertas (macro Return_2). */
+    fun shouldReturnToOffersScreen(screenLower: String? = null): Boolean {
+        if (isOnOffersListScreen(screenLower)) return false
+        val lower = screenLower ?: readFullScreenText().lowercase()
+        if (lower.contains("captcha") || lower.contains("robot") ||
+            lower.contains("puzzle") || lower.contains("verify")
+        ) {
+            return false
+        }
+        return lower.contains("updates") && lower.contains("schedule") ||
+            lower.contains("your dashboard") ||
+            lower.contains("your standing") ||
+            lower.contains("read more") ||
+            lower.contains("learn more") ||
+            lower.contains("offer details") ||
+            lower.contains("no longer available") ||
+            resolveId(FlexIds.OFFER_DETAILS_STATION) != null && !hasAnyOfferPay()
     }
 
     private fun hasAnyOfferPay(): Boolean {
@@ -111,10 +139,10 @@ class FlexScreenReader(private val service: AccessibilityService) {
                     val timeText = findSiblingText(payNode, timeId, index)
                     val stationText = findSiblingText(payNode, stationId, index)
                     val durationText = findSiblingText(payNode, durationId, index)
-                    val durationHours = FlexGrabberEvaluator.parseDurationHours(timeText)
-                        ?: FlexGrabberEvaluator.parseDurationFromLabel(durationText)
-                    val hourly = pay?.let {
-                        FlexGrabberEvaluator.hourlyFromPayAndTime(it, timeText, durationText)
+                    val durationHours = FlexGrabberEvaluator.resolveDurationHours(timeText, durationText)
+                    val hourly = pay?.let { p ->
+                        durationHours?.takeIf { it > 0 }?.let { p / it }
+                            ?: FlexGrabberEvaluator.hourlyFromPayAndTime(p, timeText, durationText)
                     }
                     FlexBlockOffer(
                         index = index,
@@ -364,6 +392,32 @@ class FlexScreenReader(private val service: AccessibilityService) {
 
     fun clickRefresh(): Boolean = clickTargetButton("Refresh")
 
+    /** Pestaña inferior Flex (Updates / Schedule). */
+    fun clickTabByLabel(label: String): Boolean {
+        val tabId = resolveId(FlexIds.MERIDIAN_TAB_ITEM_LABEL) ?: return false
+        val root = activeRoot() ?: return false
+        return try {
+            root.useViewIdNodes(tabId) { nodes ->
+                nodes.any { n ->
+                    val t = n.text?.toString().orEmpty()
+                    t.equals(label, ignoreCase = true) && n.performClickOnClickableSelfOrAncestor()
+                }
+            }
+        } finally {
+            try {
+                root.recycle()
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    fun clickTextButton(text: String, partial: Boolean = false): Boolean =
+        clickTargetButton(
+            text,
+            if (partial) AppSettings.TEXT_MATCH_CONTAINS else AppSettings.TEXT_MATCH_EXACT,
+            ignoreCase = true,
+        )
+
     /**
      * Contenido Flex visible (OR): paquete Flex en ventana activa, ids Flex, lista de ofertas
      * parseada o texto típico de pantalla de ofertas.
@@ -469,5 +523,7 @@ class FlexScreenReader(private val service: AccessibilityService) {
         val captcha: Boolean = false,
         val offerScheduled: Boolean = false,
         val onOffersList: Boolean = false,
+        val onFlexHomeTabs: Boolean = false,
+        val shouldReturnToOffers: Boolean = false,
     )
 }

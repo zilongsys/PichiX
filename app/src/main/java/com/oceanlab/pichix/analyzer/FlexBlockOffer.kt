@@ -2,6 +2,7 @@ package com.oceanlab.pichix.analyzer
 
 import com.oceanlab.pichix.data.AppSettings
 import com.oceanlab.pichix.data.FlexTariffRulesStore
+import com.oceanlab.pichix.util.BlockDurationText
 
 data class FlexBlockOffer(
     val index: Int,
@@ -24,7 +25,10 @@ enum class FlexGrabResult {
 object FlexGrabberEvaluator {
 
     private val moneyRegex = Regex("""\$\s*([\d,]+(?:\.\d{1,2})?)""")
-    private val hourRangeRegex = Regex("""(\d{1,2})\s*:\s*(\d{2})\s*(?:AM|PM)?\s*[-–]\s*(\d{1,2})\s*:\s*(\d{2})""", RegexOption.IGNORE_CASE)
+    private val hourRangeRegex = Regex(
+        """(\d{1,2})\s*:\s*(\d{2})\s*(AM|PM)?\s*[-–]\s*(\d{1,2})\s*:\s*(\d{2})\s*(AM|PM)?""",
+        RegexOption.IGNORE_CASE,
+    )
     private val hourOnlyRegex = Regex("""(\d{1,2})\s*:\s*(\d{2})""")
 
     fun parsePay(text: String): Double? =
@@ -61,16 +65,21 @@ object FlexGrabberEvaluator {
         return h
     }
 
-    /** Duración en tarjeta de lista: "3 hr 30 min", "4 hr". */
+    /** Duración en tarjeta de lista: "3 hr 30 min", "1.5 hr", "90 min", "3.30" (h.min). */
     fun parseDurationFromLabel(label: String): Double? {
         if (label.isBlank()) return null
+        BlockDurationText.parseToHours(label)?.let { return it }
         val hrMin = Regex("""(\d+)\s*hr\s*(\d+)\s*min""", RegexOption.IGNORE_CASE).find(label)
         if (hrMin != null) {
             val h = hrMin.groupValues[1].toDoubleOrNull() ?: 0.0
             val m = hrMin.groupValues[2].toDoubleOrNull() ?: 0.0
             return h + m / 60.0
         }
-        val hrOnly = Regex("""(\d+(?:\.\d+)?)\s*hr""", RegexOption.IGNORE_CASE).find(label)
+        val minOnly = Regex("""(\d+)\s*min""", RegexOption.IGNORE_CASE).find(label)
+        if (minOnly != null) {
+            return (minOnly.groupValues[1].toDoubleOrNull() ?: return null) / 60.0
+        }
+        val hrOnly = Regex("""(\d+(?:\.\d+)?)\s*hrs?""", RegexOption.IGNORE_CASE).find(label)
         return hrOnly?.groupValues?.get(1)?.toDoubleOrNull()
     }
 
@@ -79,13 +88,43 @@ object FlexGrabberEvaluator {
         val range = hourRangeRegex.find(timeText) ?: return null
         val h1 = range.groupValues[1].toIntOrNull() ?: return null
         val m1 = range.groupValues[2].toIntOrNull() ?: 0
-        val h2 = range.groupValues[3].toIntOrNull() ?: return null
-        val m2 = range.groupValues[4].toIntOrNull() ?: 0
-        val start = h1 + m1 / 60.0
-        var end = h2 + m2 / 60.0
-        if (end < start) end += 24.0
-        return (end - start).coerceAtLeast(0.25)
+        val h2 = range.groupValues[4].toIntOrNull() ?: return null
+        val m2 = range.groupValues[5].toIntOrNull() ?: 0
+        val startMer = range.groupValues[3].ifBlank { meridiemNear(timeText, range.range.first) }
+        val endMer = range.groupValues[6].ifBlank { meridiemNear(timeText, range.range.last) ?: startMer }
+        val startMin = clockToMinutesOfDay(h1, m1, startMer)
+        var endMin = clockToMinutesOfDay(h2, m2, endMer)
+        var diffMin = endMin - startMin
+        if (diffMin <= 0) diffMin += 24 * 60
+        val hours = diffMin / 60.0
+        return if (hours in 0.25..10.0) hours else null
     }
+
+    private fun meridiemNear(text: String, index: Int): String {
+        val slice = text.substring(index.coerceAtLeast(0).coerceAtMost(text.length))
+            .take(12)
+            .uppercase()
+        return when {
+            slice.contains("PM") -> "PM"
+            slice.contains("AM") -> "AM"
+            else -> ""
+        }
+    }
+
+    private fun clockToMinutesOfDay(hour: Int, minute: Int, meridiem: String): Int {
+        var h = hour
+        when (meridiem.uppercase()) {
+            "PM" -> if (h < 12) h += 12
+            "AM" -> if (h == 12) h = 0
+        }
+        return h * 60 + minute
+    }
+
+    /** Mejor estimación: etiqueta de duración primero, luego ventana horaria. */
+    fun resolveDurationHours(timeText: String, durationLabel: String): Double? =
+        parseDurationFromLabel(durationLabel)
+            ?: parseDurationFromLabel(timeText)
+            ?: parseDurationHours(timeText)
 
     fun hourlyFromPayAndTime(pay: Double, timeText: String, durationLabel: String = ""): Double? {
         val hours = parseDurationHours(timeText)

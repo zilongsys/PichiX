@@ -177,7 +177,7 @@ class PichixAccessibilityService : AccessibilityService() {
             postBotPaused()
         }
 
-        if (settings.flexAutoReturnToOffers && !flags.onOffersList && !flags.captcha) {
+        if (settings.flexAutoReturnToOffers && !flags.captcha && flags.shouldReturnToOffers) {
             val now = System.currentTimeMillis()
             if (now - lastReturnMs > 3000L) {
                 lastReturnMs = now
@@ -457,10 +457,25 @@ class PichixAccessibilityService : AccessibilityService() {
 
     private fun performReturnToOffers() {
         if (!isMotorForegroundAllowed()) return
-        repeat(2) { reader.clickBack() }
+        if (reader.isOnOffersListScreen()) return
+
+        when {
+            reader.shouldReturnToOffersScreen() && reader.clickTabByLabel("Schedule") ->
+                postObserver("Return → pestaña Schedule (ofertas)")
+            reader.clickTextButton("Offers", partial = true) ->
+                postObserver("Return → menú Offers")
+            else -> {
+                repeat(2) { reader.clickBack() }
+                postObserver("Return → 2× Atrás")
+            }
+        }
         handler.postDelayed({
-            if (!pausedAfterAccept && isMotorForegroundAllowed()) runGrabberTick()
-        }, 400)
+            if (!isMotorForegroundAllowed() || pausedAfterAccept) return@postDelayed
+            if (!reader.isOnOffersListScreen()) {
+                reader.clickTabByLabel("Schedule")
+            }
+            runGrabberTick()
+        }, 800)
     }
 
     private fun postObserver(message: String) {

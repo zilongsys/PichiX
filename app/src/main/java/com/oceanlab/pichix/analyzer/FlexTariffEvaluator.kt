@@ -24,7 +24,8 @@ class FlexTariffEvaluator(private val settings: AppSettings) {
             pay = pay,
             hourly = hourly,
             timeText = offer.timeText,
-            durationHours = offer.durationHours ?: FlexGrabberEvaluator.parseDurationHours(offer.timeText),
+            durationHours = offer.durationHours
+                ?: FlexGrabberEvaluator.resolveDurationHours(offer.timeText, ""),
             combinedText = "$screenText ${offer.stationText} ${offer.payText} ${offer.timeText}",
         )
     }

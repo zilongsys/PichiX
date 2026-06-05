@@ -12,6 +12,8 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ### Actualizado
 - **Historial / log**: cada ciclo del grabber registra todas las ofertas visibles como VISTA; dedup por estación+$+$/h+duración+horario (ventana por defecto 90 min, hasta 4 h). RECHAZADA también deduplicada; al aceptar no se repite la misma fila.
+- **Duración en log**: prioriza etiqueta `left_secondary_label` (1.5 hr, 90 min); ventana horaria con AM/PM correcto (evita 15 h cuando es 1.5 h / 10:30 AM–1:30 PM).
+- **Return 2 offers**: detecta pantalla Updates/Schedule, feed y detalle; pulsa Schedule u Offers o 2× Atrás (macro ObserverTX-Return_2_Offers).
 
 ### Corregido
 - **Clic Refresh (Smart/Basic)**: el botón `primaryButton` sube al ancestro clickable; respeta Contiene/Exacto en pantalla y botón; overlay PichiX ya no bloquea el motor; Config → Clics aplica intervalo y Refresh al cambiar (sin esperar Guardar).
