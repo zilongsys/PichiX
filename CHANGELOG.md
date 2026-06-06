@@ -8,6 +8,13 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.59 (Mayo 2026)
+
+### Corregido
+- **Config — foco y scroll**: retención unificada en hints colapsables, nota del motor, disparadores Return 2, toggles de visibilidad (Basic/Smart, ráfaga, offer rank) y al volver del selector de sonidos; eliminado doble `runRetainingScrollAndFocus` en motor de clics; RecyclerView y filas de disparador ya no roban foco.
+
+---
+
 ## v0.1.58 (Mayo 2026)
 
 ### Actualizado

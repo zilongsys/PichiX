@@ -26,8 +26,7 @@ object ConfigSectionBinder {
             .trim()
         header.text = baseTitle
         header.isClickable = true
-        header.isFocusable = false
-        header.isFocusableInTouchMode = false
+        header.preventCollapsibleHeaderFocusSteal()
         header.applySelectableForeground()
         applyExpandedState(header, content, open)
 

@@ -6,7 +6,8 @@
     android:layout_marginBottom="6dp"
     android:background="@drawable/card_bg_elevated"
     android:clickable="true"
-    android:focusable="true"
+    android:focusable="false"
+    android:focusableInTouchMode="false"
     android:foreground="?attr/selectableItemBackground"
     android:orientation="horizontal"
     android:padding="10dp">

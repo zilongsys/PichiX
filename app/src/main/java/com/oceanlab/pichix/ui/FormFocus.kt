@@ -25,9 +25,18 @@ import com.oceanlab.pichix.R
 /** ScrollView raíz + contenido interno: no robar foco al relayout. */
 fun View.setupFormFocus() {
     preventScrollFocusSteal()
-    if (this is ViewGroup && this is android.widget.ScrollView && childCount > 0) {
-        getChildAt(0).preventScrollFocusSteal()
+    if (this is ViewGroup) {
+        descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+        if (this is ScrollView && childCount > 0) {
+            getChildAt(0).preventScrollFocusSteal()
+        }
     }
+}
+
+/** Cabeceras de hint/sección: clicables pero sin robar foco del campo activo. */
+fun View.preventCollapsibleHeaderFocusSteal() {
+    isFocusable = false
+    isFocusableInTouchMode = false
 }
 
 /** ScrollView o NestedScrollView ancestro (formularios Config/Tarifas). */
@@ -61,10 +70,28 @@ fun View.runRetainingFocus(block: () -> Unit) {
 fun View.restoreFocus(target: View?) {
     target?.post {
         if (target.isShown && target.isEnabled &&
-            (target.isFocusable || target.isFocusableInTouchMode)
-        ) {
+            (target.isFocusable || target.isFocusableInTouchMode) &&
             target.requestFocus()
+        ) {
+            return@post
         }
+        restoreFocusNearby(target)
+    }
+}
+
+private fun restoreFocusNearby(from: View?) {
+    var origin: View? = from
+    repeat(8) {
+        val node = origin ?: return
+        val candidate = node.focusSearch(View.FOCUS_DOWN)
+        if (candidate != null && candidate !== node &&
+            candidate.isShown && candidate.isEnabled &&
+            (candidate.isFocusable || candidate.isFocusableInTouchMode) &&
+            candidate.requestFocus()
+        ) {
+            return
+        }
+        origin = node.parent as? View
     }
 }
 
@@ -116,13 +143,12 @@ private fun ViewGroup.runRetainingScrollAndFocusInternal(block: () -> Unit) {
     }
     block()
     post {
-        val targetScrollY = computeRetainedScrollY(scrollYBefore, focused, anchorTopBefore)
+        val anchor = focused?.takeIf { it.isShown && it.isEnabled } ?: focused
+        val targetScrollY = computeRetainedScrollY(scrollYBefore, anchor, anchorTopBefore)
         scrollTo(0, targetScrollY)
-        focused?.takeIf { it.isShown && it.isEnabled }?.let { anchor ->
-            anchor.requestFocus()
-            post {
-                scrollTo(0, computeRetainedScrollY(scrollYBefore, anchor, anchorTopBefore))
-            }
+        restoreFocus(focused)
+        post {
+            scrollTo(0, computeRetainedScrollY(scrollYBefore, anchor, anchorTopBefore))
         }
     }
 }

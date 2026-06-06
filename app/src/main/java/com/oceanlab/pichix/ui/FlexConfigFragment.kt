@@ -52,6 +52,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
     private lateinit var resumeSoundPicker: SoundPickerHelper
     private var suppressReturn2Sync = false
     private var swReturn2: SwitchMaterial? = null
+    private lateinit var configScroll: ScrollView
 
     private val return2Receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -75,21 +76,21 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         settings = AppSettings(requireContext())
-        val configScroll = view.findViewById<ScrollView>(R.id.configScroll)
+        configScroll = view.findViewById(R.id.configScroll)
         configScroll.setupFormFocus()
         setupExpandableSections(view, configScroll)
-        setupConfigFooterNote(view)
-        setupAutomationHints(view)
-        setupBotClickHints(view)
+        setupConfigFooterNote(view, configScroll)
+        setupAutomationHints(view, configScroll)
+        setupBotClickHints(view, configScroll)
 
         pauseSoundPicker = SoundPickerHelper(this) { uri ->
             pauseSoundUri = uri
-            refreshSoundLabels(view)
+            configScroll.runRetainingScrollAndFocus { refreshSoundLabels(view) }
             (requireActivity() as MainActivity).markDirty(1)
         }
         resumeSoundPicker = SoundPickerHelper(this) { uri ->
             resumeSoundUri = uri
-            refreshSoundLabels(view)
+            configScroll.runRetainingScrollAndFocus { refreshSoundLabels(view) }
             (requireActivity() as MainActivity).markDirty(1)
         }
 
@@ -316,14 +317,12 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         etReturnStepMax.onUserTextChanged(onDirty = { applyReturnTiming() })
         etReturnCooldown.onUserTextChanged(onDirty = { applyReturnTiming() })
         val applyClickMotor: () -> Unit = {
-            configScroll.runRetainingScrollAndFocus {
-                persistClickMotorSettings(
-                    toggleClickMode, etBasicSec, etSmartMin, etSmartMax, swClickRefresh,
-                    swBurstClick, etBurstMin, etBurstMax, etBurstClickMs, etBurstDurationMin, etBurstDurationMax,
-                    etRefreshBtn, etClickScreen, toggleRefreshMode, swRefreshIgnore,
-                    toggleScreenMode, swScreenIgnore,
-                )
-            }
+            persistClickMotorSettings(
+                toggleClickMode, etBasicSec, etSmartMin, etSmartMax, swClickRefresh,
+                swBurstClick, etBurstMin, etBurstMax, etBurstClickMs, etBurstDurationMin, etBurstDurationMax,
+                etRefreshBtn, etClickScreen, toggleRefreshMode, swRefreshIgnore,
+                toggleScreenMode, swScreenIgnore,
+            )
             markDirty()
         }
         swBurstClick.setOnCheckedChangeRetainingFocus(view) { checked ->
@@ -341,9 +340,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         swClickRefresh.setOnCheckedChangeRetainingFocus(view) { applyClickMotor() }
         swAutoScroll.setOnCheckedChangeRetainingFocus(view) { markDirty() }
         toggleOfferPick.addOnButtonCheckedRetainingFocus(view) {
-            configScroll.runRetainingScrollAndFocus {
-                updateOfferRankVisibility()
-            }
+            updateOfferRankVisibility()
             markDirty()
         }
         toggleOfferRank.addOnButtonCheckedRetainingFocus(view) { markDirty() }
@@ -361,29 +358,38 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         togglePauseMode.addOnButtonCheckedRetainingFocus(view) { markDirty() }
         swPauseIgnore.setOnCheckedChangeRetainingFocus(view) { markDirty() }
 
-        setupReturnTriggers(view)
+        setupReturnTriggers(view, configScroll)
         refreshPermissionStatuses()
     }
 
-    private fun setupReturnTriggers(view: View) {
+    private fun setupReturnTriggers(view: View, scrollHost: ScrollView) {
         if (settings.flexReturnTriggersJson.isBlank()) {
             FlexReturnTriggersStore.save(settings, FlexReturnTriggersStore.defaultTriggers())
         }
         returnTriggers = FlexReturnTriggersStore.load(settings).toMutableList()
         val rv = view.findViewById<RecyclerView>(R.id.rvReturnTriggers)
-        returnTriggersAdapter = FlexReturnTriggersAdapter(returnTriggers, object : FlexReturnTriggersAdapter.Callbacks {
-            override fun onToggle(trigger: FlexReturnScreenTrigger, enabled: Boolean) {
-                val idx = returnTriggers.indexOfFirst { it.id == trigger.id }
-                if (idx < 0) return
-                returnTriggers[idx] = trigger.copy(enabled = enabled)
-                persistReturnTriggers()
-            }
+        rv.isFocusable = false
+        rv.isFocusableInTouchMode = false
+        rv.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+        returnTriggersAdapter = FlexReturnTriggersAdapter(
+            returnTriggers,
+            object : FlexReturnTriggersAdapter.Callbacks {
+                override fun onToggle(trigger: FlexReturnScreenTrigger, enabled: Boolean) {
+                    val idx = returnTriggers.indexOfFirst { it.id == trigger.id }
+                    if (idx < 0) return
+                    returnTriggers[idx] = trigger.copy(enabled = enabled)
+                    FlexReturnTriggersStore.save(settings, returnTriggers)
+                    PichixAccessibilityService.syncEngine(requireContext())
+                    (requireActivity() as MainActivity).markDirty(1)
+                }
 
-            override fun onEdit(trigger: FlexReturnScreenTrigger) {
-                FlexReturnTriggerEditBottomSheet.newInstance(trigger.id)
-                    .show(childFragmentManager, "return_trigger_edit")
-            }
-        })
+                override fun onEdit(trigger: FlexReturnScreenTrigger) {
+                    FlexReturnTriggerEditBottomSheet.newInstance(trigger.id)
+                        .show(childFragmentManager, "return_trigger_edit")
+                }
+            },
+            view,
+        )
         rv.layoutManager = LinearLayoutManager(requireContext())
         rv.adapter = returnTriggersAdapter
         view.findViewById<MaterialButton>(R.id.btnAddReturnTrigger)?.setOnClickListener {
@@ -391,9 +397,11 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
                 .show(childFragmentManager, "return_trigger_add")
         }
         view.findViewById<MaterialButton>(R.id.btnResetReturnTriggers)?.setOnClickListener {
-            returnTriggers = FlexReturnTriggersStore.defaultTriggers().toMutableList()
-            persistReturnTriggers()
-            Toast.makeText(requireContext(), "Disparadores restaurados", Toast.LENGTH_SHORT).show()
+            scrollHost.runRetainingScrollAndFocus {
+                returnTriggers = FlexReturnTriggersStore.defaultTriggers().toMutableList()
+                persistReturnTriggers()
+                Toast.makeText(requireContext(), "Disparadores restaurados", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -405,10 +413,12 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
     }
 
     override fun onTriggersChanged() {
-        returnTriggers = FlexReturnTriggersStore.load(settings).toMutableList()
-        returnTriggersAdapter?.submit(returnTriggers.toList())
-        PichixAccessibilityService.syncEngine(requireContext())
-        (requireActivity() as MainActivity).markDirty(1)
+        configScroll.runRetainingScrollAndFocus {
+            returnTriggers = FlexReturnTriggersStore.load(settings).toMutableList()
+            returnTriggersAdapter?.submit(returnTriggers.toList())
+            PichixAccessibilityService.syncEngine(requireContext())
+            (requireActivity() as MainActivity).markDirty(1)
+        }
     }
 
     private fun setupExpandableSections(view: View, scrollHost: ScrollView) {
@@ -422,10 +432,11 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionUi), view.findViewById(R.id.sectionUi), scrollHost, sectionKey = "ui")
     }
 
-    private fun setupConfigFooterNote(view: View) {
+    private fun setupConfigFooterNote(view: View, scrollHost: ScrollView) {
         val note = view.findViewById<TextView>(R.id.tvConfigPhaseNote)
         val toggleLabel = view.findViewById<TextView>(R.id.tvConfigPhaseNoteToggle)
         val header = view.findViewById<View>(R.id.headerConfigPhaseNote)
+        header.preventCollapsibleHeaderFocusSteal()
 
         fun applyVisible(visible: Boolean) {
             note.visibility = if (visible) View.VISIBLE else View.GONE
@@ -436,19 +447,22 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
 
         applyVisible(settings.configPhaseNoteVisible)
         header.setOnClickListener {
-            val visible = note.visibility != View.VISIBLE
-            settings.configPhaseNoteVisible = visible
-            applyVisible(visible)
+            scrollHost.runRetainingScrollAndFocus {
+                val visible = note.visibility != View.VISIBLE
+                settings.configPhaseNoteVisible = visible
+                applyVisible(visible)
+            }
         }
     }
 
-    private fun setupAutomationHints(view: View) {
+    private fun setupAutomationHints(view: View, scrollHost: ScrollView) {
         ConfigCollapsibleHint.bind(
             view.findViewById(R.id.headerReturn2Hint),
             view.findViewById(R.id.tvReturn2HintToggle),
             view.findViewById(R.id.tvReturn2Hint),
             settings,
             "return2",
+            scrollHost,
         )
         ConfigCollapsibleHint.bind(
             view.findViewById(R.id.headerReturnTriggersHint),
@@ -456,6 +470,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             view.findViewById(R.id.tvReturnTriggersHint),
             settings,
             "return_triggers",
+            scrollHost,
         )
         ConfigCollapsibleHint.bind(
             view.findViewById(R.id.headerAutoAcceptHint),
@@ -463,6 +478,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             view.findViewById(R.id.tvAutoAcceptHint),
             settings,
             "auto_accept",
+            scrollHost,
         )
         ConfigCollapsibleHint.bind(
             view.findViewById(R.id.headerForegroundHint),
@@ -470,16 +486,18 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             view.findViewById(R.id.tvForegroundHint),
             settings,
             "foreground",
+            scrollHost,
         )
     }
 
-    private fun setupBotClickHints(view: View) {
+    private fun setupBotClickHints(view: View, scrollHost: ScrollView) {
         ConfigCollapsibleHint.bind(
             view.findViewById(R.id.headerClickRefreshHint),
             view.findViewById(R.id.tvClickRefreshHintToggle),
             view.findViewById(R.id.tvClickRefreshHint),
             settings,
             "click_refresh",
+            scrollHost,
         )
         ConfigCollapsibleHint.bind(
             view.findViewById(R.id.headerBurstClickHint),
@@ -487,6 +505,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             view.findViewById(R.id.tvBurstClickHint),
             settings,
             "burst_click",
+            scrollHost,
         )
         ConfigCollapsibleHint.bind(
             view.findViewById(R.id.headerAutoScrollHint),
@@ -494,6 +513,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             view.findViewById(R.id.tvAutoScrollHint),
             settings,
             "auto_scroll",
+            scrollHost,
         )
         ConfigCollapsibleHint.bind(
             view.findViewById(R.id.headerOfferPickHint),
@@ -501,6 +521,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             view.findViewById(R.id.tvOfferPickHint),
             settings,
             "offer_pick",
+            scrollHost,
         )
         ConfigCollapsibleHint.bind(
             view.findViewById(R.id.headerRefreshButtonHint),
@@ -508,6 +529,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             view.findViewById(R.id.tvRefreshButtonHint),
             settings,
             "refresh_button",
+            scrollHost,
         )
         ConfigCollapsibleHint.bind(
             view.findViewById(R.id.headerRefreshMatchHint),
@@ -515,6 +537,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             view.findViewById(R.id.tvRefreshMatchHint),
             settings,
             "refresh_match",
+            scrollHost,
         )
         ConfigCollapsibleHint.bind(
             view.findViewById(R.id.headerClickScreenHint),
@@ -522,6 +545,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             view.findViewById(R.id.tvClickScreenHint),
             settings,
             "click_screen",
+            scrollHost,
         )
         ConfigCollapsibleHint.bind(
             view.findViewById(R.id.headerScreenMatchHint),
@@ -529,6 +553,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             view.findViewById(R.id.tvScreenMatchHint),
             settings,
             "screen_match",
+            scrollHost,
         )
         ConfigCollapsibleHint.bind(
             view.findViewById(R.id.headerBotClicksHelperHint),
@@ -536,6 +561,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             view.findViewById(R.id.tvBotClicksHelperHint),
             settings,
             "bot_clicks_helper",
+            scrollHost,
         )
     }
 
@@ -811,8 +837,15 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
 
     override fun onResume() {
         super.onResume()
-        refreshPermissionStatuses()
-        swReturn2?.isChecked = settings.flexAutoReturnToOffers
+        if (::configScroll.isInitialized) {
+            configScroll.runRetainingScrollAndFocus {
+                refreshPermissionStatuses()
+                swReturn2?.isChecked = settings.flexAutoReturnToOffers
+            }
+        } else {
+            refreshPermissionStatuses()
+            swReturn2?.isChecked = settings.flexAutoReturnToOffers
+        }
         LocalBroadcastManager.getInstance(requireContext())
             .registerReceiver(return2Receiver, IntentFilter(MainActivity.RETURN2_SETTING_CHANGED))
     }

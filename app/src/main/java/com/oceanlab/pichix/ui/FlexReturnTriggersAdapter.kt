@@ -12,6 +12,7 @@ import com.oceanlab.pichix.data.FlexReturnScreenTrigger
 class FlexReturnTriggersAdapter(
     private var triggers: List<FlexReturnScreenTrigger>,
     private val callbacks: Callbacks,
+    private val focusRoot: View,
 ) : RecyclerView.Adapter<FlexReturnTriggersAdapter.Holder>() {
 
     interface Callbacks {
@@ -35,7 +36,7 @@ class FlexReturnTriggersAdapter(
         holder.tvHint.text = trigger.matchSummary()
         holder.swEnabled.setOnCheckedChangeListener(null)
         holder.swEnabled.isChecked = trigger.enabled
-        holder.swEnabled.setOnCheckedChangeListener { _, checked ->
+        holder.swEnabled.setOnCheckedChangeRetainingFocus(focusRoot) { checked ->
             callbacks.onToggle(trigger, checked)
         }
         holder.itemView.setOnClickListener { callbacks.onEdit(trigger) }
