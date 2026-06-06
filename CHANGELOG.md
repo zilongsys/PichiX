@@ -8,6 +8,13 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.58 (Mayo 2026)
+
+### Actualizado
+- **Config — Clics del bot (resto)**: botón Refresh, coincidencia de texto, pantalla de ofertas y nota final con hints colapsables; criterio «Mejor de pantalla» agrupado; separadores entre bloques.
+
+---
+
 ## v0.1.57 (Mayo 2026)
 
 ### Actualizado

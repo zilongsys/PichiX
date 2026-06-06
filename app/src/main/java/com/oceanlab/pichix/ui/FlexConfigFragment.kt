@@ -123,7 +123,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         val swAutoScroll = view.findViewById<SwitchMaterial>(R.id.switchAutoScroll)
         val toggleOfferPick = view.findViewById<MaterialButtonToggleGroup>(R.id.toggleOfferPickMode)
         val toggleOfferRank = view.findViewById<MaterialButtonToggleGroup>(R.id.toggleOfferRank)
-        val tvOfferRankLabel = view.findViewById<TextView>(R.id.tvOfferRankLabel)
+        val layoutOfferRank = view.findViewById<LinearLayout>(R.id.layoutOfferRank)
         val etRefreshBtn = view.findViewById<TextInputEditText>(R.id.etRefreshButtonText)
         val etClickScreen = view.findViewById<TextInputEditText>(R.id.etClickScreenText)
         val toggleRefreshMode = view.findViewById<MaterialButtonToggleGroup>(R.id.toggleRefreshButtonMatchMode)
@@ -180,8 +180,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         fun updateOfferRankVisibility() {
             val best = toggleOfferPick.checkedButtonId == R.id.btnOfferPickBest
             val vis = if (best) View.VISIBLE else View.GONE
-            tvOfferRankLabel.visibility = vis
-            toggleOfferRank.visibility = vis
+            layoutOfferRank.visibility = vis
         }
         updateOfferRankVisibility()
         etRefreshBtn.setText(settings.flexRefreshButtonText)
@@ -502,6 +501,41 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             view.findViewById(R.id.tvOfferPickHint),
             settings,
             "offer_pick",
+        )
+        ConfigCollapsibleHint.bind(
+            view.findViewById(R.id.headerRefreshButtonHint),
+            view.findViewById(R.id.tvRefreshButtonHintToggle),
+            view.findViewById(R.id.tvRefreshButtonHint),
+            settings,
+            "refresh_button",
+        )
+        ConfigCollapsibleHint.bind(
+            view.findViewById(R.id.headerRefreshMatchHint),
+            view.findViewById(R.id.tvRefreshMatchHintToggle),
+            view.findViewById(R.id.tvRefreshMatchHint),
+            settings,
+            "refresh_match",
+        )
+        ConfigCollapsibleHint.bind(
+            view.findViewById(R.id.headerClickScreenHint),
+            view.findViewById(R.id.tvClickScreenHintToggle),
+            view.findViewById(R.id.tvClickScreenHint),
+            settings,
+            "click_screen",
+        )
+        ConfigCollapsibleHint.bind(
+            view.findViewById(R.id.headerScreenMatchHint),
+            view.findViewById(R.id.tvScreenMatchHintToggle),
+            view.findViewById(R.id.tvScreenMatchHint),
+            settings,
+            "screen_match",
+        )
+        ConfigCollapsibleHint.bind(
+            view.findViewById(R.id.headerBotClicksHelperHint),
+            view.findViewById(R.id.tvBotClicksHelperHintToggle),
+            view.findViewById(R.id.tvBotClicksHelperHint),
+            settings,
+            "bot_clicks_helper",
         )
     }
 

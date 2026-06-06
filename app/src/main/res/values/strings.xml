@@ -121,6 +121,7 @@
     <string name="config_text_match_mode_label">Tipo de coincidencia</string>
     <string name="config_screen_match_mode_label">Pantalla de ofertas — tipo de coincidencia</string>
     <string name="config_screen_case_hint">Por defecto distingue mayúsculas (Offers ≠ offers). Activa «Ignorar mayúsculas» solo si lo necesitas.</string>
+    <string name="config_screen_match_hint">Por defecto distingue mayúsculas (Offers ≠ offers). Activa «Ignorar mayúsculas» solo si lo necesitas. Nota: el motor de clics usa siempre Contiene e ignora mayúsculas; estos toggles aplican a alertas y Pause by over clicks.</string>
     <string name="config_ignore_case_label">Ignorar mayúsculas</string>
     <string name="config_screen_match_contains">Parte del texto</string>
     <string name="config_screen_match_exact">Texto exacto</string>
@@ -130,7 +131,12 @@
     <string name="config_file_log_title">Guardar log en archivo</string>
     <string name="config_btn_share_logs">Compartir diagnóstico PichiX</string>
     <string name="config_refresh_button_text_label">Nombre exacto del botón a pulsar</string>
+    <string name="config_refresh_button_short">Botón Refresh</string>
+    <string name="config_refresh_button_hint">Texto visible en el botón Refresh de Flex que debe pulsar el bot (si «Pulsar Refresh» está activo). Ej.: Refresh.</string>
+    <string name="config_refresh_match_hint">Cómo comparar el texto del botón: Contiene = aparece en el nodo; Exacto = coincide al completo. «Ignorar mayúsculas» solo si lo necesitas.</string>
     <string name="config_click_screen_text_label">Texto que debe mostrar la pantalla</string>
+    <string name="config_click_screen_short">Texto pantalla</string>
+    <string name="config_click_screen_hint">Si no está vacío, el ciclo solo actúa cuando la pantalla muestra este texto (ej. Offers). Vacío = cualquier pantalla.</string>
     <string name="config_click_screen_text_hint">ej: Offers, ofertas (vacío = cualquier pantalla)</string>
     <string name="config_bot_clicks_helper">Clics del bot (Refresh, intervalo): independientes de Tarifas clásico o detallado. El grabber siempre evalúa reglas y puede tomar bloques.</string>
     <string name="config_click_refresh_title">Pulsar Refresh cada ciclo</string>

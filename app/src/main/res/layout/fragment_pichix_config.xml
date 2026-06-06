@@ -1219,63 +1219,75 @@
                     android:text="@string/config_offer_pick_best" />
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
-            <TextView
-                android:id="@+id/tvOfferRankLabel"
+            <LinearLayout
+                android:id="@+id/layoutOfferRank"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
-                android:layout_marginRight="16dp"
-                android:text="@string/config_offer_rank_label"
-                android:textColor="@color/text_secondary"
-                android:textSize="11sp" />
+                android:orientation="vertical"
+                android:visibility="gone">
 
-            <com.google.android.material.button.MaterialButtonToggleGroup
-                android:id="@+id/toggleOfferRank"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
-                android:layout_marginRight="16dp"
-                android:layout_marginBottom="8dp"
-                app:singleSelection="true"
-                app:selectionRequired="true">
+                <View style="@style/DividerFull" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnRankHourly"
-                    style="@style/SparkThemeToggleButton"
-                    android:layout_width="wrap_content"
+                <LinearLayout style="@style/Row">
+                    <TextView
+                        android:id="@+id/tvOfferRankLabel"
+                        style="@style/RowLabel"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/config_offer_rank_label" />
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/toggleOfferRank"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/config_offer_rank_hourly" />
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:layout_marginBottom="6dp"
+                    app:singleSelection="true"
+                    app:selectionRequired="true">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnRankBlockPay"
-                    style="@style/SparkThemeToggleButton"
-                    android:layout_width="wrap_content"
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRankHourly"
+                        style="@style/SparkThemeToggleButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/config_offer_rank_hourly" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRankBlockPay"
+                        style="@style/SparkThemeToggleButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/config_offer_rank_block" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRankDurationMin"
+                        style="@style/SparkThemeToggleButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/config_offer_rank_dur_min" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRankStartSoon"
+                        style="@style/SparkThemeToggleButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/config_offer_rank_start" />
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+            </LinearLayout>
+
+            <View style="@style/DividerFull" />
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="@string/config_offer_rank_block" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnRankDurationMin"
-                    style="@style/SparkThemeToggleButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/config_offer_rank_dur_min" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnRankStartSoon"
-                    style="@style/SparkThemeToggleButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/config_offer_rank_start" />
-            </com.google.android.material.button.MaterialButtonToggleGroup>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
-                android:layout_marginRight="16dp"
-                android:text="@string/config_refresh_button_text_label"
-                android:textColor="@color/text_secondary"
-                android:textSize="11sp" />
+                    android:layout_weight="1"
+                    android:text="@string/config_refresh_button_short" />
+            </LinearLayout>
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etRefreshButtonText"
@@ -1284,19 +1296,76 @@
                 android:layout_height="44dp"
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
-                android:layout_marginBottom="8dp"
+                android:layout_marginBottom="4dp"
                 android:hint="Refresh"
                 android:inputType="text" />
 
+            <LinearLayout
+                android:id="@+id/headerRefreshButtonHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="false"
+                android:gravity="end"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp">
+
+                <TextView
+                    android:id="@+id/tvRefreshButtonHintToggle"
+                    style="@style/ConfigHintToggle"
+                    android:text="@string/config_phase_note_show" />
+            </LinearLayout>
+
             <TextView
+                android:id="@+id/tvRefreshButtonHint"
+                style="@style/RowHint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
-                android:layout_marginTop="4dp"
-                android:text="@string/config_text_match_mode_label"
-                android:textColor="@color/text_secondary"
-                android:textSize="11sp" />
+                android:layout_marginBottom="6dp"
+                android:text="@string/config_refresh_button_hint"
+                android:visibility="gone" />
+
+            <View style="@style/DividerFull" />
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_text_match_mode_label" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/headerRefreshMatchHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="false"
+                android:gravity="end"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp">
+
+                <TextView
+                    android:id="@+id/tvRefreshMatchHintToggle"
+                    style="@style/ConfigHintToggle"
+                    android:text="@string/config_phase_note_show" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvRefreshMatchHint"
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="6dp"
+                android:text="@string/config_refresh_match_hint"
+                android:visibility="gone" />
 
             <com.google.android.material.button.MaterialButtonToggleGroup
                 android:id="@+id/toggleRefreshButtonMatchMode"
@@ -1304,7 +1373,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
-                android:layout_marginBottom="6dp"
+                android:layout_marginBottom="4dp"
                 app:singleSelection="true"
                 app:selectionRequired="true">
 
@@ -1337,14 +1406,16 @@
                     android:layout_height="wrap_content" />
             </LinearLayout>
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
-                android:layout_marginRight="16dp"
-                android:text="@string/config_click_screen_text_label"
-                android:textColor="@color/text_secondary"
-                android:textSize="11sp" />
+            <View style="@style/DividerFull" />
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_click_screen_short" />
+            </LinearLayout>
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etClickScreenText"
@@ -1353,29 +1424,76 @@
                 android:layout_height="44dp"
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
-                android:layout_marginBottom="8dp"
+                android:layout_marginBottom="4dp"
                 android:hint="@string/config_click_screen_text_hint"
                 android:inputType="text" />
 
-            <TextView
+            <LinearLayout
+                android:id="@+id/headerClickScreenHint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
-                android:layout_marginRight="16dp"
-                android:layout_marginBottom="4dp"
-                android:text="@string/config_screen_match_mode_label"
-                android:textColor="@color/text_secondary"
-                android:textSize="11sp" />
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="false"
+                android:gravity="end"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp">
+
+                <TextView
+                    android:id="@+id/tvClickScreenHintToggle"
+                    style="@style/ConfigHintToggle"
+                    android:text="@string/config_phase_note_show" />
+            </LinearLayout>
 
             <TextView
+                android:id="@+id/tvClickScreenHint"
+                style="@style/RowHint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
                 android:layout_marginBottom="6dp"
-                android:text="@string/config_screen_case_hint"
-                android:textColor="@color/text_hint"
-                android:textSize="10sp" />
+                android:text="@string/config_click_screen_hint"
+                android:visibility="gone" />
+
+            <View style="@style/DividerFull" />
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_screen_match_mode_label" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/headerScreenMatchHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="false"
+                android:gravity="end"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp">
+
+                <TextView
+                    android:id="@+id/tvScreenMatchHintToggle"
+                    style="@style/ConfigHintToggle"
+                    android:text="@string/config_phase_note_show" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvScreenMatchHint"
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="6dp"
+                android:text="@string/config_screen_match_hint"
+                android:visibility="gone" />
 
             <com.google.android.material.button.MaterialButtonToggleGroup
                 android:id="@+id/toggleScreenMatchMode"
@@ -1383,7 +1501,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
-                android:layout_marginBottom="12dp"
+                android:layout_marginBottom="4dp"
                 app:singleSelection="true"
                 app:selectionRequired="true">
 
@@ -1416,15 +1534,37 @@
                     android:layout_height="wrap_content" />
             </LinearLayout>
 
+            <View style="@style/DividerFull" />
+
+            <LinearLayout
+                android:id="@+id/headerBotClicksHelperHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="false"
+                android:gravity="end"
+                android:paddingLeft="16dp"
+                android:paddingTop="4dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="4dp">
+
+                <TextView
+                    android:id="@+id/tvBotClicksHelperHintToggle"
+                    style="@style/ConfigHintToggle"
+                    android:text="@string/config_phase_note_show" />
+            </LinearLayout>
+
             <TextView
+                android:id="@+id/tvBotClicksHelperHint"
+                style="@style/RowHint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
                 android:layout_marginBottom="14dp"
                 android:text="@string/config_bot_clicks_helper"
-                android:textColor="@color/text_secondary"
-                android:textSize="11sp" />
+                android:visibility="gone" />
         </LinearLayout>
 
         </LinearLayout>
