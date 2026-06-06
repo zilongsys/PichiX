@@ -201,7 +201,7 @@ class AppSettings(context: Context) {
     }
 
     var configPhaseNoteVisible: Boolean
-        get() = prefs.getBoolean(KEY_CONFIG_PHASE_NOTE_VISIBLE, true)
+        get() = prefs.getBoolean(KEY_CONFIG_PHASE_NOTE_VISIBLE, false)
         set(value) = prefs.edit().putBoolean(KEY_CONFIG_PHASE_NOTE_VISIBLE, value).apply()
 
     fun isConfigHintVisible(hintKey: String, defaultVisible: Boolean = false): Boolean {

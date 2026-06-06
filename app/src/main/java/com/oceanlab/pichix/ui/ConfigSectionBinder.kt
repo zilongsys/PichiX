@@ -59,4 +59,17 @@ object ConfigSectionBinder {
 
     private fun chevronFor(expanded: Boolean): Int =
         if (expanded) R.drawable.ic_chevron_up else R.drawable.ic_chevron_down
+
+    /** Expande la sección si está colapsada (p. ej. banner de permisos). */
+    fun ensureExpanded(
+        header: TextView,
+        content: View,
+        scrollHost: View?,
+        sectionKey: String,
+    ) {
+        if (content.visibility == View.VISIBLE) return
+        val settings = AppSettings(header.context)
+        settings.setConfigSectionExpanded(sectionKey, true)
+        applyExpandedState(header, content, true)
+    }
 }

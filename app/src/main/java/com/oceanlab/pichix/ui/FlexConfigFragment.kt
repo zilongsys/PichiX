@@ -53,6 +53,9 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
     private var suppressReturn2Sync = false
     private var swReturn2: SwitchMaterial? = null
     private lateinit var configScroll: ScrollView
+    private var tvPermissionBanner: TextView? = null
+    private var tvSaveDirty: TextView? = null
+    private var configRootView: View? = null
 
     private val return2Receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -76,12 +79,21 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         settings = AppSettings(requireContext())
+        configRootView = view
         configScroll = view.findViewById(R.id.configScroll)
+        tvSaveDirty = view.findViewById(R.id.tvConfigSaveDirty)
+        tvPermissionBanner = view.findViewById(R.id.tvConfigPermissionBanner)
         configScroll.setupFormFocus()
         setupExpandableSections(view, configScroll)
+        setupPermissionBanner(view, configScroll)
         setupConfigFooterNote(view, configScroll)
+        setupAmazonHint(view, configScroll)
+        setupOverlayHints(view, configScroll)
         setupAutomationHints(view, configScroll)
         setupBotClickHints(view, configScroll)
+        setupClickScreenHints(view, configScroll)
+        setupPauseHints(view, configScroll)
+        setupLogHints(view, configScroll)
 
         pauseSoundPicker = SoundPickerHelper(this) { uri ->
             pauseSoundUri = uri
@@ -218,7 +230,10 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         btnGoOverlay.setOnClickListener {
             OverlayPermissionHelper.openOverlaySettings(requireContext())
         }
-        val markDirty: () -> Unit = { (requireActivity() as MainActivity).markDirty(1) }
+        val markDirty: () -> Unit = {
+            (requireActivity() as MainActivity).markDirty(1)
+            refreshSaveFooter()
+        }
         val applyOverlayFab: (Boolean) -> Unit = { checked ->
             if (checked && !OverlayPermissionHelper.canDrawOverlays(requireContext())) {
                 OverlayPermissionHelper.openOverlaySettings(requireContext())
@@ -280,6 +295,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
                     applyCategoryUi()
                     clearDirty(1)
                 }
+                refreshSaveFooter()
                 LocalBroadcastManager.getInstance(requireContext())
                     .sendBroadcast(Intent(CategoryUiHelper.ACTION_CATEGORY_UI_CHANGED))
                 Toast.makeText(requireContext(), "Configuración guardada", Toast.LENGTH_SHORT).show()
@@ -360,6 +376,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
 
         setupReturnTriggers(view, configScroll)
         refreshPermissionStatuses()
+        refreshSaveFooter()
     }
 
     private fun setupReturnTriggers(view: View, scrollHost: ScrollView) {
@@ -422,14 +439,150 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
     }
 
     private fun setupExpandableSections(view: View, scrollHost: ScrollView) {
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionAmazon), view.findViewById(R.id.sectionAmazon), scrollHost, sectionKey = "amazon")
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionPermisos), view.findViewById(R.id.sectionPermisos), scrollHost, sectionKey = "permisos")
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionOverlay), view.findViewById(R.id.sectionOverlay), scrollHost, sectionKey = "overlay")
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionAuto), view.findViewById(R.id.sectionAuto), scrollHost, sectionKey = "auto")
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionClicks), view.findViewById(R.id.sectionClicks), scrollHost, sectionKey = "clicks", startExpanded = false)
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionPause), view.findViewById(R.id.sectionPause), scrollHost, sectionKey = "pause", startExpanded = false)
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionLog), view.findViewById(R.id.sectionLog), scrollHost, sectionKey = "log", startExpanded = false)
-        ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionUi), view.findViewById(R.id.sectionUi), scrollHost, sectionKey = "ui")
+        ConfigSectionBinder.bind(
+            view.findViewById(R.id.headerSectionPermisos),
+            view.findViewById(R.id.sectionPermisos),
+            scrollHost,
+            sectionKey = "permisos",
+            startExpanded = true,
+        )
+        ConfigSectionBinder.bind(
+            view.findViewById(R.id.headerSectionAmazon),
+            view.findViewById(R.id.sectionAmazon),
+            scrollHost,
+            sectionKey = "amazon",
+            startExpanded = false,
+        )
+        ConfigSectionBinder.bind(
+            view.findViewById(R.id.headerSectionOverlay),
+            view.findViewById(R.id.sectionOverlay),
+            scrollHost,
+            sectionKey = "overlay",
+            startExpanded = true,
+        )
+        ConfigSectionBinder.bind(
+            view.findViewById(R.id.headerSectionClickRhythm),
+            view.findViewById(R.id.sectionClickRhythm),
+            scrollHost,
+            sectionKey = "click_rhythm",
+            startExpanded = true,
+        )
+        ConfigSectionBinder.bind(
+            view.findViewById(R.id.headerSectionAuto),
+            view.findViewById(R.id.sectionAuto),
+            scrollHost,
+            sectionKey = "flex_behavior",
+            startExpanded = false,
+        )
+        ConfigSectionBinder.bind(
+            view.findViewById(R.id.headerSectionClickScreen),
+            view.findViewById(R.id.sectionClickScreen),
+            scrollHost,
+            sectionKey = "click_screen",
+            startExpanded = false,
+        )
+        ConfigSectionBinder.bind(
+            view.findViewById(R.id.headerSectionPause),
+            view.findViewById(R.id.sectionPause),
+            scrollHost,
+            sectionKey = "pause",
+            startExpanded = false,
+        )
+        ConfigSectionBinder.bind(
+            view.findViewById(R.id.headerSectionLog),
+            view.findViewById(R.id.sectionLog),
+            scrollHost,
+            sectionKey = "log",
+            startExpanded = false,
+        )
+        ConfigSectionBinder.bind(
+            view.findViewById(R.id.headerSectionUi),
+            view.findViewById(R.id.sectionUi),
+            scrollHost,
+            sectionKey = "ui",
+            startExpanded = false,
+        )
+    }
+
+    private fun setupPermissionBanner(view: View, scrollHost: ScrollView) {
+        val headerPermisos = view.findViewById<TextView>(R.id.headerSectionPermisos)
+        val sectionPermisos = view.findViewById<View>(R.id.sectionPermisos)
+        tvPermissionBanner?.preventCollapsibleHeaderFocusSteal()
+        tvPermissionBanner?.setOnClickListener {
+            ConfigSectionBinder.ensureExpanded(headerPermisos, sectionPermisos, scrollHost, "permisos")
+            scrollHost.post {
+                val content = scrollHost.getChildAt(0) ?: return@post
+                scrollHost.smoothScrollTo(0, contentOffsetTop(headerPermisos, content))
+            }
+        }
+    }
+
+    private fun setupAmazonHint(view: View, scrollHost: ScrollView) {
+        ConfigCollapsibleHint.bind(
+            view.findViewById(R.id.headerAmazonPackageHint),
+            view.findViewById(R.id.tvAmazonPackageHintToggle),
+            view.findViewById(R.id.tvAmazonPackageHint),
+            settings,
+            "amazon_package",
+            scrollHost,
+        )
+    }
+
+    private fun setupOverlayHints(view: View, scrollHost: ScrollView) {
+        ConfigCollapsibleHint.bind(
+            view.findViewById(R.id.headerOverlayOnOffHint),
+            view.findViewById(R.id.tvOverlayOnOffHintToggle),
+            view.findViewById(R.id.tvOverlayOnOffHint),
+            settings,
+            "overlay_onoff",
+            scrollHost,
+        )
+        ConfigCollapsibleHint.bind(
+            view.findViewById(R.id.headerOverlayPauseHint),
+            view.findViewById(R.id.tvOverlayPauseHintToggle),
+            view.findViewById(R.id.tvOverlayPauseHint),
+            settings,
+            "overlay_pause",
+            scrollHost,
+        )
+        ConfigCollapsibleHint.bind(
+            view.findViewById(R.id.headerOverlayTestReturnHint),
+            view.findViewById(R.id.tvOverlayTestReturnHintToggle),
+            view.findViewById(R.id.tvOverlayTestReturnHint),
+            settings,
+            "overlay_test_return",
+            scrollHost,
+        )
+    }
+
+    private fun setupPauseHints(view: View, scrollHost: ScrollView) {
+        ConfigCollapsibleHint.bind(
+            view.findViewById(R.id.headerPauseOverHint),
+            view.findViewById(R.id.tvPauseOverHintToggle),
+            view.findViewById(R.id.tvPauseOverHint),
+            settings,
+            "pause_over",
+            scrollHost,
+        )
+    }
+
+    private fun setupLogHints(view: View, scrollHost: ScrollView) {
+        ConfigCollapsibleHint.bind(
+            view.findViewById(R.id.headerDebugLogHint),
+            view.findViewById(R.id.tvDebugLogHintToggle),
+            view.findViewById(R.id.tvDebugLogHint),
+            settings,
+            "debug_log",
+            scrollHost,
+        )
+        ConfigCollapsibleHint.bind(
+            view.findViewById(R.id.headerFileLogHint),
+            view.findViewById(R.id.tvFileLogHintToggle),
+            view.findViewById(R.id.tvFileLogHint),
+            settings,
+            "file_log",
+            scrollHost,
+        )
     }
 
     private fun setupConfigFooterNote(view: View, scrollHost: ScrollView) {
@@ -515,6 +668,9 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             "auto_scroll",
             scrollHost,
         )
+    }
+
+    private fun setupClickScreenHints(view: View, scrollHost: ScrollView) {
         ConfigCollapsibleHint.bind(
             view.findViewById(R.id.headerOfferPickHint),
             view.findViewById(R.id.tvOfferPickHintToggle),
@@ -825,6 +981,31 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
 
         val overlayEnabled = OverlayPermissionHelper.canDrawOverlays(ctx)
         applyPermissionStatus(tvOverlayPermission, overlayEnabled)
+
+        updatePermissionBanner(accessEnabled, notificationEnabled, overlayEnabled)
+    }
+
+    private fun updatePermissionBanner(
+        accessEnabled: Boolean,
+        notificationEnabled: Boolean,
+        overlayEnabled: Boolean,
+    ) {
+        val banner = tvPermissionBanner ?: return
+        val ctx = requireContext()
+        val missing = listOf(!accessEnabled, !notificationEnabled, !overlayEnabled).count { it }
+        if (missing == 0) {
+            banner.text = getString(R.string.config_perm_banner_ok)
+            banner.setTextColor(ContextCompat.getColor(ctx, R.color.green_400))
+        } else {
+            banner.text = getString(R.string.config_perm_banner_missing, missing)
+            banner.setTextColor(ContextCompat.getColor(ctx, R.color.coral_600))
+        }
+    }
+
+    private fun refreshSaveFooter() {
+        val activity = activity as? MainActivity ?: return
+        tvSaveDirty?.visibility =
+            if (activity.isTabDirty(1)) View.VISIBLE else View.GONE
     }
 
     private fun applyPermissionStatus(label: TextView?, enabled: Boolean) {
@@ -841,10 +1022,12 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             configScroll.runRetainingScrollAndFocus {
                 refreshPermissionStatuses()
                 swReturn2?.isChecked = settings.flexAutoReturnToOffers
+                refreshSaveFooter()
             }
         } else {
             refreshPermissionStatuses()
             swReturn2?.isChecked = settings.flexAutoReturnToOffers
+            refreshSaveFooter()
         }
         LocalBroadcastManager.getInstance(requireContext())
             .registerReceiver(return2Receiver, IntentFilter(MainActivity.RETURN2_SETTING_CHANGED))

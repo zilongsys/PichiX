@@ -8,6 +8,13 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.62 (Mayo 2026)
+
+### Actualizado
+- **Config — reorganización completa**: orden por flujo del usuario (permisos → Flex → control → ritmo → en Flex → pantalla → pausas → diagnóstico); banner de permisos; hints colapsables unificados en Overlay, Pause y Log; sección Clics dividida en Ritmo y Pantalla/ofertas; títulos en español; footer con aviso de guardado.
+
+---
+
 ## v0.1.59 (Mayo 2026)
 
 ### Corregido

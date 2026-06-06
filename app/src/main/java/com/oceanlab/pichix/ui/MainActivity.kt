@@ -359,6 +359,8 @@ class MainActivity : AppCompatActivity() {
         refreshDirtyIndicators()
     }
 
+    fun isTabDirty(tabIndex: Int): Boolean = dirtyTabs.contains(tabIndex)
+
     private fun refreshDirtyIndicators() {
         val activeColor = ContextCompat.getColor(this, R.color.accent_teal)
         val mutedColor = ContextCompat.getColor(this, R.color.text_hint)
