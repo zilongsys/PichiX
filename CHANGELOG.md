@@ -8,6 +8,13 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.53 (Mayo 2026)
+
+### Actualizado
+- **Campos de texto**: fondo crema claro (`#FFF8F0`) en todos los inputs de la app (Config, Tarifas, filtros, bottom sheets); borde cálido acorde. En tema oscuro, tono ligeramente más claro que la tarjeta para distinguirlos.
+
+---
+
 ## v0.1.51 (Mayo 2026)
 
 ### Actualizado

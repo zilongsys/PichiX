@@ -19,6 +19,7 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        style="@style/PichiXTextInputLayout"
         android:hint="@string/config_return_trigger_label_hint">
 
         <com.google.android.material.textfield.TextInputEditText
@@ -32,6 +33,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
+        style="@style/PichiXTextInputLayout"
         android:hint="@string/config_return_trigger_phrases_hint">
 
         <com.google.android.material.textfield.TextInputEditText

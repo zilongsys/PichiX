@@ -18,6 +18,7 @@
         <item name="switchStyle">@style/SparkSwitch</item>
         <item name="materialAlertDialogTheme">@style/SparkAlertDialogTheme</item>
         <item name="alertDialogTheme">@style/SparkAlertDialogTheme</item>
+        <item name="textInputStyle">@style/PichiXTextInputLayout</item>
     </style>
 
     <style name="SparkAlertDialogTheme" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
@@ -198,7 +199,9 @@
         <item name="android:letterSpacing">0.06</item>
     </style>
 
-    <style name="TariffRuleInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+    <style name="TariffRuleInputLayout" parent="PichiXTextInputLayout" />
+
+    <style name="PichiXTextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
         <item name="boxBackgroundColor">@color/bg_input</item>
         <item name="boxStrokeColor">@color/border_input</item>
         <item name="hintTextColor">@color/text_secondary</item>
