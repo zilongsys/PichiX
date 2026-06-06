@@ -8,6 +8,13 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.51 (Mayo 2026)
+
+### Actualizado
+- **Config — layout**: nota del motor Flex al inicio del scroll (con Mostrar/Ocultar); permisos en una línea con botón icono; encabezados de sección más grandes; campos de tiempo con etiqueta a la izquierda y ancho para 4 dígitos; más aire en campos de entrada.
+
+---
+
 ## v0.1.48 (Mayo 2026)
 
 ### Actualizado

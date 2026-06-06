@@ -12,6 +12,17 @@
     <string name="config_phase_note_title">Información del motor Flex</string>
     <string name="config_phase_note_show">Mostrar</string>
     <string name="config_phase_note_hide">Ocultar</string>
+    <string name="config_time_min_sec">Mín (s)</string>
+    <string name="config_time_max_sec">Máx (s)</string>
+    <string name="config_time_cooldown_sec">Cooldown (s)</string>
+    <string name="config_time_interval_sec">Intervalo (s)</string>
+    <string name="config_time_min_min">Mín (min)</string>
+    <string name="config_time_max_min">Máx (min)</string>
+    <string name="config_time_interval_ms">Intervalo (ms)</string>
+    <string name="config_time_resume_min">Reanudar (min)</string>
+    <string name="config_perm_open_accessibility">Abrir ajustes de accesibilidad</string>
+    <string name="config_perm_open_notifications">Abrir acceso a notificaciones</string>
+    <string name="config_perm_open_overlay">Abrir permiso superponer apps</string>
     <string name="tarifas_flex_phase_note">Tarifa rápida = criterios globales. Modo Reglas = lista priorizada por estación (estilo Spark), con pago, $/h, tipo de bloque y horarios.</string>
     <string name="stub_common_note">Esta sección usará el mismo diseño que MakiX cuando se implemente la lógica para Flex.</string>
     <string name="config_monitor_not_configured">Configura el paquete de Amazon Flex en Config y guarda.</string>
