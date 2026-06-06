@@ -78,6 +78,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         val configScroll = view.findViewById<ScrollView>(R.id.configScroll)
         configScroll.setupFormFocus()
         setupExpandableSections(view, configScroll)
+        setupConfigFooterNote(view)
 
         pauseSoundPicker = SoundPickerHelper(this) { uri ->
             pauseSoundUri = uri
@@ -418,6 +419,26 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionPause), view.findViewById(R.id.sectionPause), scrollHost, sectionKey = "pause", startExpanded = false)
         ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionLog), view.findViewById(R.id.sectionLog), scrollHost, sectionKey = "log", startExpanded = false)
         ConfigSectionBinder.bind(view.findViewById(R.id.headerSectionUi), view.findViewById(R.id.sectionUi), scrollHost, sectionKey = "ui")
+    }
+
+    private fun setupConfigFooterNote(view: View) {
+        val note = view.findViewById<TextView>(R.id.tvConfigPhaseNote)
+        val toggleLabel = view.findViewById<TextView>(R.id.tvConfigPhaseNoteToggle)
+        val header = view.findViewById<View>(R.id.headerConfigPhaseNote)
+
+        fun applyVisible(visible: Boolean) {
+            note.visibility = if (visible) View.VISIBLE else View.GONE
+            toggleLabel.text = getString(
+                if (visible) R.string.config_phase_note_hide else R.string.config_phase_note_show,
+            )
+        }
+
+        applyVisible(settings.configPhaseNoteVisible)
+        header.setOnClickListener {
+            val visible = note.visibility != View.VISIBLE
+            settings.configPhaseNoteVisible = visible
+            applyVisible(visible)
+        }
     }
 
     private fun updateClickModeVisibility(basic: View, smart: View, smartMode: Boolean) {

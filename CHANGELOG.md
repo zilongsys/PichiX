@@ -8,6 +8,13 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.48 (Mayo 2026)
+
+### Actualizado
+- **Config — pie de pantalla**: nota informativa azul arriba del botón Guardar, con opción Mostrar/Ocultar (estado guardado); botón con icono de guardar y márgenes superior/inferior simétricos (14dp).
+
+---
+
 ## v0.1.47 (Mayo 2026)
 
 ### Corregido
