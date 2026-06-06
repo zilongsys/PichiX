@@ -8,6 +8,13 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.47 (Mayo 2026)
+
+### Corregido
+- **Foco en Config**: encabezados de sección ya no roban foco (un solo toque para colapsar); al usar switches/campos en INTERFAZ u otras secciones el scroll ya no salta a la primera sección.
+
+---
+
 ## v0.1.45 (Mayo 2026)
 
 ### Corregido

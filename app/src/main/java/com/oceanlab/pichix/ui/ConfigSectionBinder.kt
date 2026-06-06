@@ -26,8 +26,8 @@ object ConfigSectionBinder {
             .trim()
         header.text = baseTitle
         header.isClickable = true
-        header.isFocusable = true
-        header.isFocusableInTouchMode = true
+        header.isFocusable = false
+        header.isFocusableInTouchMode = false
         header.applySelectableForeground()
         applyExpandedState(header, content, open)
 
@@ -38,12 +38,9 @@ object ConfigSectionBinder {
                 settings.setConfigSectionExpanded(sectionKey, open)
             }
             when (scrollHost) {
-                is ScrollView -> scrollHost.runRetainingScrollAndFocus { toggle() }
-                is NestedScrollView -> scrollHost.runRetainingScrollAndFocus { toggle() }
+                is ScrollView -> scrollHost.runRetainingScrollForSectionToggle(header, toggle)
+                is NestedScrollView -> scrollHost.runRetainingScrollForSectionToggle(header, toggle)
                 else -> toggle()
-            }
-            header.post {
-                if (header.isShown) header.requestFocus()
             }
         }
     }

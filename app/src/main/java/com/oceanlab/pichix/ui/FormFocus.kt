@@ -10,19 +10,19 @@ import android.text.style.StyleSpan
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
-import android.widget.ImageButton
 import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.widget.NestedScrollView
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.textfield.TextInputEditText
 import com.oceanlab.pichix.R
 
-/** ScrollView raÃ­z + contenido interno: no robar foco al relayout. */
+/** ScrollView raíz + contenido interno: no robar foco al relayout. */
 fun View.setupFormFocus() {
     preventScrollFocusSteal()
     if (this is ViewGroup && this is android.widget.ScrollView && childCount > 0) {
@@ -40,7 +40,7 @@ fun View.findHostScrollView(): View? {
     return null
 }
 
-/** Vista raÃ­z del Ã¡rbol (activity / fragment) para restaurar foco tras cambios de UI. */
+/** Vista raíz del árbol (activity / fragment) para restaurar foco tras cambios de UI. */
 fun View.focusRoot(): View {
     var current: View = this
     var parent = current.parent as? View
@@ -51,7 +51,7 @@ fun View.focusRoot(): View {
     return current
 }
 
-/** Ejecuta [block] y devuelve el foco al control que lo tenÃ­a si sigue usable. */
+/** Ejecuta [block] y devuelve el foco al control que lo tenía si sigue usable. */
 fun View.runRetainingFocus(block: () -> Unit) {
     val focused = findFocus()
     block()
@@ -68,39 +68,61 @@ fun View.restoreFocus(target: View?) {
     }
 }
 
+/** Offset vertical de [view] respecto al contenido directo del scroll. */
+fun contentOffsetTop(view: View, scrollContent: View): Int {
+    var top = 0
+    var current: View? = view
+    while (current != null && current !== scrollContent) {
+        top += current.top
+        current = current.parent as? View
+    }
+    return top
+}
+
+private fun View.shouldRetainFormFocus(): Boolean = when (this) {
+    is TextInputEditText,
+    is SwitchMaterial,
+    is MaterialButton,
+    is Spinner,
+    is MaterialButtonToggleGroup -> true
+    is TextView -> false
+    else -> isFocusable || isFocusableInTouchMode
+}
+
+private fun ViewGroup.scrollContentChild(): View? = getChildAt(0)
+
+private fun ViewGroup.computeRetainedScrollY(
+    scrollYBefore: Int,
+    anchor: View?,
+    anchorTopBefore: Int?,
+): Int {
+    val scrollContent = scrollContentChild() ?: return scrollYBefore
+    val maxScroll = (scrollContent.height - height).coerceAtLeast(0)
+    if (anchor != null && anchor.isShown && anchorTopBefore != null) {
+        val anchorTopAfter = contentOffsetTop(anchor, scrollContent)
+        return (scrollYBefore + (anchorTopAfter - anchorTopBefore)).coerceIn(0, maxScroll)
+    }
+    return scrollYBefore.coerceIn(0, maxScroll)
+}
+
 private fun ViewGroup.runRetainingScrollAndFocusInternal(block: () -> Unit) {
-    val scrollY = scrollY
-    val focused = findFocus()
-    val anchor = focused?.takeIf {
-        it.isDescendantOf(this) &&
-            (it.isFocusable || it.isFocusableInTouchMode)
+    val scrollContent = scrollContentChild()
+    val scrollYBefore = scrollY
+    val focused = findFocus()?.takeIf {
+        it.shouldRetainFormFocus() && it.isDescendantOf(this)
     }
-    val anchorLoc = IntArray(2)
-    val hostLoc = IntArray(2)
-    var anchorOffsetInViewport = 0
-    if (anchor != null) {
-        anchor.getLocationOnScreen(anchorLoc)
-        getLocationOnScreen(hostLoc)
-        anchorOffsetInViewport = anchorLoc[1] - hostLoc[1]
+    val anchorTopBefore = focused?.let { f ->
+        scrollContent?.let { contentOffsetTop(f, it) }
     }
-    val shouldRestoreFocus = anchor != null &&
-        anchor.isShown &&
-        (anchor.isFocusable || anchor.isFocusableInTouchMode)
     block()
     post {
-        val child = getChildAt(0)
-        val maxScroll = ((child?.height ?: 0) - height).coerceAtLeast(0)
-        val newScrollY = if (anchor != null && anchor.isShown) {
-            anchor.getLocationOnScreen(anchorLoc)
-            getLocationOnScreen(hostLoc)
-            val delta = (anchorLoc[1] - hostLoc[1]) - anchorOffsetInViewport
-            (scrollY + delta).coerceIn(0, maxScroll)
-        } else {
-            scrollY.coerceIn(0, maxScroll)
-        }
-        scrollTo(0, newScrollY)
-        if (shouldRestoreFocus) {
-            anchor!!.requestFocus()
+        val targetScrollY = computeRetainedScrollY(scrollYBefore, focused, anchorTopBefore)
+        scrollTo(0, targetScrollY)
+        focused?.takeIf { it.isShown && it.isEnabled }?.let { anchor ->
+            anchor.requestFocus()
+            post {
+                scrollTo(0, computeRetainedScrollY(scrollYBefore, anchor, anchorTopBefore))
+            }
         }
     }
 }
@@ -113,29 +135,44 @@ fun ScrollView.runRetainingScrollAndFocus(block: () -> Unit) =
 fun NestedScrollView.runRetainingScrollAndFocus(block: () -> Unit) =
     runRetainingScrollAndFocusInternal(block)
 
+/** Conserva scroll al colapsar/expandir una sección (ancla el encabezado, sin robar foco). */
+fun ScrollView.runRetainingScrollForSectionToggle(anchor: View, block: () -> Unit) {
+    val scrollContent = getChildAt(0) ?: run { block(); return }
+    val scrollYBefore = scrollY
+    val anchorTopBefore = contentOffsetTop(anchor, scrollContent)
+    block()
+    post {
+        scrollTo(0, computeRetainedScrollY(scrollYBefore, anchor, anchorTopBefore))
+    }
+}
+
+fun NestedScrollView.runRetainingScrollForSectionToggle(anchor: View, block: () -> Unit) {
+    val scrollContent = getChildAt(0) ?: run { block(); return }
+    val scrollYBefore = scrollY
+    val anchorTopBefore = contentOffsetTop(anchor, scrollContent)
+    block()
+    post {
+        scrollTo(0, computeRetainedScrollY(scrollYBefore, anchor, anchorTopBefore))
+    }
+}
+
 inline fun SwitchMaterial.setOnCheckedChangeRetainingFocus(
     focusRoot: View,
     crossinline listener: (Boolean) -> Unit,
 ) {
     val scrollHost = focusRoot.findHostScrollView()
-    setOnCheckedChangeListener { switch, checked ->
+    setOnCheckedChangeListener { _, checked ->
         val run: () -> Unit = { listener(checked) }
         when (scrollHost) {
             is ScrollView -> scrollHost.runRetainingScrollAndFocus(run)
             is NestedScrollView -> scrollHost.runRetainingScrollAndFocus(run)
             else -> focusRoot.runRetainingFocus(run)
         }
-        switch.post {
-            if (switch.isShown && switch.isEnabled) {
-                switch.requestFocus()
-            }
-        }
     }
 }
 
 /** Toggle Material: conserva scroll y foco al cambiar modo (Contiene/Exacto, Basic/Smart). */
-inline fun com.google.android.material.button.MaterialButtonToggleGroup
-    .addOnButtonCheckedRetainingFocus(
+inline fun MaterialButtonToggleGroup.addOnButtonCheckedRetainingFocus(
     focusRoot: View,
     crossinline listener: () -> Unit,
 ) {
@@ -185,7 +222,7 @@ fun View.preventScrollFocusSteal() {
     isFocusableInTouchMode = false
 }
 
-/** True si [ancestor] contiene esta vista (recorriendo padres hasta la raÃ­z). */
+/** True si [ancestor] contiene esta vista (recorriendo padres hasta la raíz). */
 fun View.isDescendantOf(ancestor: View): Boolean {
     var p = parent as? View
     while (p != null) {
@@ -195,7 +232,7 @@ fun View.isDescendantOf(ancestor: View): Boolean {
     return false
 }
 
-/** Botones rectangulares 2Ã—2 de Historial: misma altura y alineaciÃ³n. */
+/** Botones rectangulares 2×2 de Historial: misma altura y alineación. */
 fun MaterialButton.centerHistorialActionContent() {
     gravity = android.view.Gravity.CENTER_VERTICAL or android.view.Gravity.CENTER_HORIZONTAL
     textAlignment = View.TEXT_ALIGNMENT_CENTER
@@ -208,7 +245,7 @@ fun MaterialButton.centerHistorialActionContent() {
     setPadding(h, v, h, v)
 }
 
-/** El ChipGroup no debe quedarse con el foco al aÃ±adir chips (solo los hijos editables). */
+/** El ChipGroup no debe quedarse con el foco al añadir chips (solo los hijos editables). */
 fun ChipGroup.preventChipGroupFocusSteal() {
     isFocusable = false
     isFocusableInTouchMode = false
@@ -238,10 +275,10 @@ fun TextInputEditText.onUserTextChanged(
     })
 }
 
-private val MIN_MAX_HIGHLIGHT = Regex("mÃ­n|mÃ¡x", RegexOption.IGNORE_CASE)
+private val MIN_MAX_HIGHLIGHT = Regex("mín|máx", RegexOption.IGNORE_CASE)
 private val MAX_MILES_VALUE = Regex("""(\d+\.\d+)\s*mi""")
 
-/** Hint de millas mÃ¡x.: resalta mÃ­n/mÃ¡x y pone en negrita las millas calculadas. */
+/** Hint de millas máx.: resalta mín/máx y pone en negrita las millas calculadas. */
 fun TextView.setTarifaMaxHint(text: String) {
     val spannable = SpannableString(text)
     val accent = ContextCompat.getColor(context, R.color.accent_teal)
@@ -273,4 +310,3 @@ inline fun Spinner.setSelectionSilently(position: Int, crossinline onSelected: (
         override fun onNothingSelected(parent: AdapterView<*>?) {}
     }
 }
-
