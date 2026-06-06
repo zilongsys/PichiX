@@ -8,6 +8,13 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.57 (Mayo 2026)
+
+### Actualizado
+- **Config — Clics del bot**: Basic/Smart compactos con iconos y leyendas; Refresh, ráfaga, scroll y elección de oferta en una línea con switch; hints colapsables antes de cada separador; tiempos de ráfaga en filas compactas.
+
+---
+
 ## v0.1.56 (Mayo 2026)
 
 ### Actualizado

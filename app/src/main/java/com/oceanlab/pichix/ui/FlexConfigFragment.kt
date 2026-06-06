@@ -80,6 +80,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         setupExpandableSections(view, configScroll)
         setupConfigFooterNote(view)
         setupAutomationHints(view)
+        setupBotClickHints(view)
 
         pauseSoundPicker = SoundPickerHelper(this) { uri ->
             pauseSoundUri = uri
@@ -470,6 +471,37 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             view.findViewById(R.id.tvForegroundHint),
             settings,
             "foreground",
+        )
+    }
+
+    private fun setupBotClickHints(view: View) {
+        ConfigCollapsibleHint.bind(
+            view.findViewById(R.id.headerClickRefreshHint),
+            view.findViewById(R.id.tvClickRefreshHintToggle),
+            view.findViewById(R.id.tvClickRefreshHint),
+            settings,
+            "click_refresh",
+        )
+        ConfigCollapsibleHint.bind(
+            view.findViewById(R.id.headerBurstClickHint),
+            view.findViewById(R.id.tvBurstClickHintToggle),
+            view.findViewById(R.id.tvBurstClickHint),
+            settings,
+            "burst_click",
+        )
+        ConfigCollapsibleHint.bind(
+            view.findViewById(R.id.headerAutoScrollHint),
+            view.findViewById(R.id.tvAutoScrollHintToggle),
+            view.findViewById(R.id.tvAutoScrollHint),
+            settings,
+            "auto_scroll",
+        )
+        ConfigCollapsibleHint.bind(
+            view.findViewById(R.id.headerOfferPickHint),
+            view.findViewById(R.id.tvOfferPickHintToggle),
+            view.findViewById(R.id.tvOfferPickHint),
+            settings,
+            "offer_pick",
         )
     }
 

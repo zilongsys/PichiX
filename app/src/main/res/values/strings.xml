@@ -100,6 +100,21 @@
     <string name="config_click_mode_basic">Basic click</string>
     <string name="config_click_mode_smart">Smart click</string>
     <string name="config_basic_interval_label">Basic click — intervalo (segundos)</string>
+    <string name="config_click_basic_short">Intervalo (s)</string>
+    <string name="config_click_basic_legend">Seg. fijos entre ciclos Basic</string>
+    <string name="config_smart_click_range_label">Smart click — espera aleatoria (segundos mín. y máx.)</string>
+    <string name="config_click_smart_short">Smart (s)</string>
+    <string name="config_click_smart_legend_min">Mín. seg. entre ciclos Smart</string>
+    <string name="config_click_smart_legend_max">Máx. seg. entre ciclos Smart</string>
+    <string name="config_burst_interval_short">Ráfagas (min)</string>
+    <string name="config_burst_ms_short">Clic (ms)</string>
+    <string name="config_burst_duration_short">Duración (s)</string>
+    <string name="config_burst_legend_interval_min">Mín. min. entre ráfagas</string>
+    <string name="config_burst_legend_interval_max">Máx. min. entre ráfagas</string>
+    <string name="config_burst_legend_click_ms">Ms entre clics en ráfaga</string>
+    <string name="config_burst_legend_dur_min">Mín. seg. duración ráfaga</string>
+    <string name="config_burst_legend_dur_max">Máx. seg. duración ráfaga</string>
+    <string name="config_offer_pick_hint">Primera válida: la primera fila que cumpla reglas. Mejor de pantalla: elige la de mayor $/h, pago de bloque, duración o la que empiece antes (según criterio).</string>
     <string name="config_flex_foreground_title">Solo con Flex en primer plano</string>
     <string name="config_flex_foreground_hint">Activo (recomendado): grabber, scroll, Refresh y Return 2 solo con Flex al frente. Detecta por ventana activa, ventanas del sistema, eventos de contenido/foco y marcadores de pantalla Flex (lista, Refresh, offer_pay).</string>
     <string name="config_screen_match_motor_note">Contiene/Exacto y mayúsculas en esta sección: el motor de clics usa siempre Contiene e ignora mayúsculas. Los toggles aplican a alertas y Pause by over clicks.</string>
@@ -114,7 +129,6 @@
     <string name="config_debug_log_hint">Logcat tag PichiXDebug (Info). En cada clic Refresh: volcado completo antes y después + TEXTO_PANTALLA aunque no cambie la vista.</string>
     <string name="config_file_log_title">Guardar log en archivo</string>
     <string name="config_btn_share_logs">Compartir diagnóstico PichiX</string>
-    <string name="config_smart_click_range_label">Smart click — espera aleatoria (segundos mín. y máx.)</string>
     <string name="config_refresh_button_text_label">Nombre exacto del botón a pulsar</string>
     <string name="config_click_screen_text_label">Texto que debe mostrar la pantalla</string>
     <string name="config_click_screen_text_hint">ej: Offers, ofertas (vacío = cualquier pantalla)</string>

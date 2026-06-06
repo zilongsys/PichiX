@@ -646,14 +646,14 @@
         <LinearLayout style="@style/Card">
 
             <TextView
+                style="@style/RowLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="16dp"
+                android:layout_marginTop="4dp"
                 android:layout_marginRight="16dp"
-                android:layout_marginBottom="8dp"
-                android:text="@string/config_click_mode_label"
-                android:textColor="@color/text_secondary"
-                android:textSize="11sp" />
+                android:layout_marginBottom="6dp"
+                android:text="@string/config_click_mode_label" />
 
             <com.google.android.material.button.MaterialButtonToggleGroup
                 android:id="@+id/toggleClickMode"
@@ -661,7 +661,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
-                android:layout_marginBottom="10dp"
+                android:layout_marginBottom="8dp"
                 app:singleSelection="true"
                 app:selectionRequired="true">
 
@@ -688,31 +688,46 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="16dp"
-                    android:layout_marginTop="4dp"
-                    android:layout_marginRight="16dp"
-                    android:layout_marginBottom="4dp"
-                    android:text="@string/config_basic_interval_label"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="11sp" />
-
                 <LinearLayout
                     style="@style/ConfigTimeRow"
-                    android:layout_marginBottom="8dp">
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp">
 
                     <TextView
-                        style="@style/ConfigTimeLabel"
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
-                        android:text="@string/config_time_interval_sec" />
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
+                        android:text="@string/config_click_basic_short"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="10sp" />
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etBasicClickIntervalSec"
-                        style="@style/TimeInput"
+                        style="@style/TimeInputCompact"
                         android:hint="3" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingBottom="6dp">
+
+                    <ImageView
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:src="@drawable/ic_input_cooldown"
+                        app:tint="@color/text_hint" />
+
+                    <TextView
+                        style="@style/ConfigIconLegend"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0"
+                        android:text="@string/config_click_basic_legend" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -723,85 +738,169 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="16dp"
-                    android:layout_marginTop="4dp"
-                    android:layout_marginRight="16dp"
-                    android:layout_marginBottom="4dp"
-                    android:text="@string/config_smart_click_range_label"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="11sp" />
-
                 <LinearLayout
                     style="@style/ConfigTimeRow"
-                    android:layout_marginBottom="8dp">
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp">
 
                     <TextView
-                        style="@style/ConfigTimeLabel"
-                        android:text="@string/config_time_min_sec" />
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
+                        android:text="@string/config_click_smart_short"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="10sp" />
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:contentDescription="@string/config_click_smart_legend_min"
+                        android:src="@drawable/ic_input_min"
+                        app:tint="@color/accent_teal" />
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etSmartClickMinSec"
-                        style="@style/TimeInput"
+                        style="@style/TimeInputCompact"
+                        android:layout_marginStart="2dp"
                         android:hint="1" />
 
-                    <TextView
-                        style="@style/ConfigTimeLabel"
-                        android:layout_marginStart="12dp"
-                        android:text="@string/config_time_max_sec" />
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:layout_marginStart="4dp"
+                        android:contentDescription="@string/config_click_smart_legend_max"
+                        android:src="@drawable/ic_input_max"
+                        app:tint="@color/accent_teal" />
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etSmartClickMaxSec"
-                        style="@style/TimeInput"
+                        style="@style/TimeInputCompact"
+                        android:layout_marginStart="2dp"
                         android:hint="6" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingBottom="6dp">
+
+                    <ImageView
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:layout_marginTop="2dp"
+                        android:src="@drawable/ic_input_min"
+                        app:tint="@color/text_hint" />
+
+                    <TextView
+                        style="@style/ConfigIconLegend"
+                        android:text="@string/config_click_smart_legend_min" />
+
+                    <ImageView
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="2dp"
+                        android:src="@drawable/ic_input_max"
+                        app:tint="@color/text_hint" />
+
+                    <TextView
+                        style="@style/ConfigIconLegend"
+                        android:text="@string/config_click_smart_legend_max" />
                 </LinearLayout>
             </LinearLayout>
 
+            <View style="@style/DividerFull" />
+
             <LinearLayout style="@style/Row">
-                <LinearLayout
+                <TextView
+                    style="@style/RowLabel"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical">
-                    <TextView
-                        style="@style/RowLabel"
-                        android:layout_width="match_parent"
-                        android:layout_weight="0"
-                        android:text="@string/config_click_refresh_title" />
-                    <TextView
-                        style="@style/RowHint"
-                        android:text="@string/config_click_refresh_hint" />
-                </LinearLayout>
+                    android:text="@string/config_click_refresh_title" />
                 <com.google.android.material.switchmaterial.SwitchMaterial
                     android:id="@+id/switchClickRefresh"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
             </LinearLayout>
 
+            <LinearLayout
+                android:id="@+id/headerClickRefreshHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="false"
+                android:gravity="end"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp">
+
+                <TextView
+                    android:id="@+id/tvClickRefreshHintToggle"
+                    style="@style/ConfigHintToggle"
+                    android:text="@string/config_phase_note_show" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvClickRefreshHint"
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="6dp"
+                android:text="@string/config_click_refresh_hint"
+                android:visibility="gone" />
+
             <View style="@style/DividerFull" />
 
             <LinearLayout style="@style/Row">
-                <LinearLayout
+                <TextView
+                    style="@style/RowLabel"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical">
-                    <TextView
-                        style="@style/RowLabel"
-                        android:layout_width="match_parent"
-                        android:layout_weight="0"
-                        android:text="@string/config_burst_click_title" />
-                    <TextView
-                        style="@style/RowHint"
-                        android:text="@string/config_burst_click_hint" />
-                </LinearLayout>
+                    android:text="@string/config_burst_click_title" />
                 <com.google.android.material.switchmaterial.SwitchMaterial
                     android:id="@+id/switchBurstClick"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
             </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/headerBurstClickHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="false"
+                android:gravity="end"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp">
+
+                <TextView
+                    android:id="@+id/tvBurstClickHintToggle"
+                    style="@style/ConfigHintToggle"
+                    android:text="@string/config_phase_note_show" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvBurstClickHint"
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="6dp"
+                android:text="@string/config_burst_click_hint"
+                android:visibility="gone" />
+
+            <View
+                style="@style/DividerFull"
+                android:layout_marginBottom="6dp" />
 
             <LinearLayout
                 android:id="@+id/layoutBurstClick"
@@ -810,123 +909,288 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="16dp"
-                    android:layout_marginTop="4dp"
-                    android:layout_marginRight="16dp"
-                    android:layout_marginBottom="4dp"
-                    android:text="@string/config_burst_interval_label"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="11sp" />
-
-                <LinearLayout style="@style/ConfigTimeRow">
+                <LinearLayout
+                    style="@style/ConfigTimeRow"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp">
 
                     <TextView
-                        style="@style/ConfigTimeLabel"
-                        android:text="@string/config_time_min_min" />
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
+                        android:text="@string/config_burst_interval_short"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="10sp" />
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:contentDescription="@string/config_burst_legend_interval_min"
+                        android:src="@drawable/ic_input_min"
+                        app:tint="@color/accent_teal" />
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etBurstIntervalMinMin"
-                        style="@style/TimeInput"
+                        style="@style/TimeInputCompact"
+                        android:layout_marginStart="2dp"
                         android:hint="5" />
 
-                    <TextView
-                        style="@style/ConfigTimeLabel"
-                        android:layout_marginStart="12dp"
-                        android:text="@string/config_time_max_min" />
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:layout_marginStart="4dp"
+                        android:contentDescription="@string/config_burst_legend_interval_max"
+                        android:src="@drawable/ic_input_max"
+                        app:tint="@color/accent_teal" />
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etBurstIntervalMaxMin"
-                        style="@style/TimeInput"
+                        style="@style/TimeInputCompact"
+                        android:layout_marginStart="2dp"
                         android:hint="15" />
                 </LinearLayout>
 
                 <LinearLayout
-                    style="@style/ConfigTimeRow"
-                    android:layout_marginBottom="4dp">
-
-                    <TextView
-                        style="@style/ConfigTimeLabel"
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
-                        android:text="@string/config_time_interval_ms" />
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etBurstClickIntervalMs"
-                        style="@style/TimeInput"
-                        android:hint="500" />
-                </LinearLayout>
-
-                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="16dp"
-                    android:layout_marginRight="16dp"
-                    android:layout_marginBottom="4dp"
-                    android:text="@string/config_burst_duration_label"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="11sp" />
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingBottom="4dp">
+
+                    <ImageView
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:layout_marginTop="2dp"
+                        android:src="@drawable/ic_input_min"
+                        app:tint="@color/text_hint" />
+
+                    <TextView
+                        style="@style/ConfigIconLegend"
+                        android:text="@string/config_burst_legend_interval_min" />
+
+                    <ImageView
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_marginTop="2dp"
+                        android:src="@drawable/ic_input_max"
+                        app:tint="@color/text_hint" />
+
+                    <TextView
+                        style="@style/ConfigIconLegend"
+                        android:text="@string/config_burst_legend_interval_max" />
+                </LinearLayout>
 
                 <LinearLayout
                     style="@style/ConfigTimeRow"
-                    android:layout_marginBottom="8dp">
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp">
 
                     <TextView
-                        style="@style/ConfigTimeLabel"
-                        android:text="@string/config_time_min_sec" />
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
+                        android:text="@string/config_burst_ms_short"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="10sp" />
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:contentDescription="@string/config_burst_legend_click_ms"
+                        android:src="@drawable/ic_input_cooldown"
+                        app:tint="@color/accent_teal" />
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etBurstClickIntervalMs"
+                        style="@style/TimeInputCompact"
+                        android:layout_marginStart="2dp"
+                        android:hint="500" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingBottom="4dp">
+
+                    <ImageView
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:src="@drawable/ic_input_cooldown"
+                        app:tint="@color/text_hint" />
+
+                    <TextView
+                        style="@style/ConfigIconLegend"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0"
+                        android:text="@string/config_burst_legend_click_ms" />
+                </LinearLayout>
+
+                <LinearLayout
+                    style="@style/ConfigTimeRow"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
+                        android:text="@string/config_burst_duration_short"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="10sp" />
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:contentDescription="@string/config_burst_legend_dur_min"
+                        android:src="@drawable/ic_input_min"
+                        app:tint="@color/accent_teal" />
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etBurstDurationMinSec"
-                        style="@style/TimeInput"
+                        style="@style/TimeInputCompact"
+                        android:layout_marginStart="2dp"
                         android:hint="20" />
 
-                    <TextView
-                        style="@style/ConfigTimeLabel"
-                        android:layout_marginStart="12dp"
-                        android:text="@string/config_time_max_sec" />
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:layout_marginStart="4dp"
+                        android:contentDescription="@string/config_burst_legend_dur_max"
+                        android:src="@drawable/ic_input_max"
+                        app:tint="@color/accent_teal" />
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etBurstDurationMaxSec"
-                        style="@style/TimeInput"
+                        style="@style/TimeInputCompact"
+                        android:layout_marginStart="2dp"
                         android:hint="40" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingBottom="6dp">
+
+                    <ImageView
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:layout_marginTop="2dp"
+                        android:src="@drawable/ic_input_min"
+                        app:tint="@color/text_hint" />
+
+                    <TextView
+                        style="@style/ConfigIconLegend"
+                        android:text="@string/config_burst_legend_dur_min" />
+
+                    <ImageView
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_marginTop="2dp"
+                        android:src="@drawable/ic_input_max"
+                        app:tint="@color/text_hint" />
+
+                    <TextView
+                        style="@style/ConfigIconLegend"
+                        android:text="@string/config_burst_legend_dur_max" />
                 </LinearLayout>
             </LinearLayout>
 
             <View style="@style/DividerFull" />
 
             <LinearLayout style="@style/Row">
-                <LinearLayout
+                <TextView
+                    style="@style/RowLabel"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical">
-                    <TextView
-                        style="@style/RowLabel"
-                        android:layout_width="match_parent"
-                        android:layout_weight="0"
-                        android:text="@string/config_auto_scroll_title" />
-                    <TextView
-                        style="@style/RowHint"
-                        android:text="@string/config_auto_scroll_hint" />
-                </LinearLayout>
+                    android:text="@string/config_auto_scroll_title" />
                 <com.google.android.material.switchmaterial.SwitchMaterial
                     android:id="@+id/switchAutoScroll"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
             </LinearLayout>
 
-            <View style="@style/DividerFull" />
+            <LinearLayout
+                android:id="@+id/headerAutoScrollHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="false"
+                android:gravity="end"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp">
+
+                <TextView
+                    android:id="@+id/tvAutoScrollHintToggle"
+                    style="@style/ConfigHintToggle"
+                    android:text="@string/config_phase_note_show" />
+            </LinearLayout>
 
             <TextView
+                android:id="@+id/tvAutoScrollHint"
+                style="@style/RowHint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
-                android:text="@string/config_offer_pick_label"
-                android:textColor="@color/text_secondary"
-                android:textSize="11sp" />
+                android:layout_marginBottom="6dp"
+                android:text="@string/config_auto_scroll_hint"
+                android:visibility="gone" />
+
+            <View style="@style/DividerFull" />
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_offer_pick_label" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/headerOfferPickHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="false"
+                android:gravity="end"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp">
+
+                <TextView
+                    android:id="@+id/tvOfferPickHintToggle"
+                    style="@style/ConfigHintToggle"
+                    android:text="@string/config_phase_note_show" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvOfferPickHint"
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="6dp"
+                android:text="@string/config_offer_pick_hint"
+                android:visibility="gone" />
+
+            <View
+                style="@style/DividerFull"
+                android:layout_marginBottom="6dp" />
 
             <com.google.android.material.button.MaterialButtonToggleGroup
                 android:id="@+id/toggleOfferPickMode"
