@@ -338,21 +338,20 @@
 
             <LinearLayout
                 style="@style/ConfigTimeRow"
-                android:paddingTop="4dp">
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp">
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:ellipsize="end"
-                    android:maxLines="1"
+                    android:layout_marginEnd="6dp"
                     android:text="@string/config_return_step_range_short"
                     android:textColor="@color/text_secondary"
-                    android:textSize="11sp" />
+                    android:textSize="10sp" />
 
                 <ImageView
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
                     android:contentDescription="@string/config_return_time_legend_min"
                     android:src="@drawable/ic_input_min"
                     app:tint="@color/accent_teal" />
@@ -360,13 +359,13 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etReturnStepMinSec"
                     style="@style/TimeInputCompact"
-                    android:layout_marginStart="4dp"
+                    android:layout_marginStart="2dp"
                     android:hint="1" />
 
                 <ImageView
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
-                    android:layout_marginStart="6dp"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:layout_marginStart="4dp"
                     android:contentDescription="@string/config_return_time_legend_max"
                     android:src="@drawable/ic_input_max"
                     app:tint="@color/accent_teal" />
@@ -374,13 +373,13 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etReturnStepMaxSec"
                     style="@style/TimeInputCompact"
-                    android:layout_marginStart="4dp"
+                    android:layout_marginStart="2dp"
                     android:hint="3" />
 
                 <ImageView
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
-                    android:layout_marginStart="6dp"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:layout_marginStart="4dp"
                     android:contentDescription="@string/config_return_time_legend_cooldown"
                     android:src="@drawable/ic_input_cooldown"
                     app:tint="@color/accent_teal" />
@@ -388,79 +387,53 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etReturnDetectCooldownSec"
                     style="@style/TimeInputCompact"
-                    android:layout_marginStart="4dp"
+                    android:layout_marginStart="2dp"
                     android:hint="3" />
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:paddingLeft="16dp"
                 android:paddingRight="16dp"
-                android:paddingBottom="8dp">
+                android:paddingBottom="6dp">
 
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                <ImageView
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:layout_marginTop="2dp"
+                    android:src="@drawable/ic_input_min"
+                    app:tint="@color/text_hint" />
 
-                    <ImageView
-                        android:layout_width="14dp"
-                        android:layout_height="14dp"
-                        android:src="@drawable/ic_input_min"
-                        app:tint="@color/text_hint" />
+                <TextView
+                    style="@style/ConfigIconLegend"
+                    android:text="@string/config_return_time_legend_min" />
 
-                    <TextView
-                        style="@style/ConfigIconLegend"
-                        android:text="@string/config_return_time_legend_min" />
-                </LinearLayout>
+                <ImageView
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="2dp"
+                    android:src="@drawable/ic_input_max"
+                    app:tint="@color/text_hint" />
 
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:orientation="horizontal">
+                <TextView
+                    style="@style/ConfigIconLegend"
+                    android:text="@string/config_return_time_legend_max" />
 
-                    <ImageView
-                        android:layout_width="14dp"
-                        android:layout_height="14dp"
-                        android:src="@drawable/ic_input_max"
-                        app:tint="@color/text_hint" />
+                <ImageView
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="2dp"
+                    android:src="@drawable/ic_input_cooldown"
+                    app:tint="@color/text_hint" />
 
-                    <TextView
-                        style="@style/ConfigIconLegend"
-                        android:layout_marginStart="4dp"
-                        android:text="@string/config_return_time_legend_max" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="end|center_vertical"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="14dp"
-                        android:layout_height="14dp"
-                        android:src="@drawable/ic_input_cooldown"
-                        app:tint="@color/text_hint" />
-
-                    <TextView
-                        style="@style/ConfigIconLegend"
-                        android:text="@string/config_return_time_legend_cooldown" />
-                </LinearLayout>
+                <TextView
+                    style="@style/ConfigIconLegend"
+                    android:text="@string/config_return_time_legend_cooldown" />
             </LinearLayout>
-
-            <View
-                style="@style/DividerFull"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="8dp" />
 
             <LinearLayout style="@style/Row">
                 <TextView
@@ -498,6 +471,10 @@
                 android:layout_marginBottom="6dp"
                 android:text="@string/config_return_triggers_label"
                 android:visibility="gone" />
+
+            <View
+                style="@style/DividerFull"
+                android:layout_marginBottom="8dp" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvReturnTriggers"
@@ -539,50 +516,34 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
                 android:orientation="horizontal"
                 android:paddingLeft="16dp"
                 android:paddingRight="16dp"
                 android:paddingBottom="10dp">
 
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:orientation="horizontal">
+                <ImageView
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:layout_marginTop="2dp"
+                    android:src="@drawable/ic_config_add"
+                    app:tint="@color/text_hint" />
 
-                    <ImageView
-                        android:layout_width="14dp"
-                        android:layout_height="14dp"
-                        android:src="@drawable/ic_config_add"
-                        app:tint="@color/text_hint" />
+                <TextView
+                    style="@style/ConfigIconLegend"
+                    android:text="@string/config_return_trigger_legend_add" />
 
-                    <TextView
-                        style="@style/ConfigIconLegend"
-                        android:text="@string/config_return_trigger_legend_add" />
-                </LinearLayout>
+                <ImageView
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="2dp"
+                    android:src="@drawable/ic_config_reset"
+                    app:tint="@color/text_hint" />
 
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="14dp"
-                        android:layout_height="14dp"
-                        android:src="@drawable/ic_config_reset"
-                        app:tint="@color/text_hint" />
-
-                    <TextView
-                        style="@style/ConfigIconLegend"
-                        android:text="@string/config_return_trigger_legend_reset" />
-                </LinearLayout>
+                <TextView
+                    style="@style/ConfigIconLegend"
+                    android:text="@string/config_return_trigger_legend_reset" />
             </LinearLayout>
-
-            <View style="@style/DividerFull" />
 
             <LinearLayout style="@style/Row">
                 <TextView
@@ -621,11 +582,11 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
-                android:layout_marginBottom="8dp"
+                android:layout_marginBottom="6dp"
                 android:text="@string/config_auto_accept_hint"
                 android:visibility="gone" />
 
-            <View style="@style/Divider" />
+            <View style="@style/DividerFull" />
 
             <LinearLayout style="@style/Row">
                 <TextView

@@ -58,15 +58,15 @@
     <string name="config_return_2_offers_title">Return 2 offers</string>
     <string name="config_return_2_offers_hint">Automático ON: sin ids de oferta/detalle en pantalla (offer_pay, offer_details_station, etc.) y algún disparador coincide → Return 2. No actúa en lista ni en Offer Details (Schedule). Tras volver, pausa breve y reinicia el motor limpio.</string>
     <string name="config_return_step_range_label">Espera aleatoria entre pasos Return 2 (seg, mín – máx)</string>
-    <string name="config_return_step_range_short">Pausa entre pasos (s)</string>
+    <string name="config_return_step_range_short">Pausa (s)</string>
     <string name="config_return_cooldown_label">Mínimo entre detecciones automáticas (seg)</string>
-    <string name="config_return_time_legend_min">Mín (s)</string>
-    <string name="config_return_time_legend_max">Máx (s)</string>
-    <string name="config_return_time_legend_cooldown">Cooldown (s)</string>
+    <string name="config_return_time_legend_min">Mín. seg. entre pasos Return</string>
+    <string name="config_return_time_legend_max">Máx. seg. entre pasos Return</string>
+    <string name="config_return_time_legend_cooldown">Seg. mín. entre detecciones</string>
     <string name="config_return_triggers_title">Disparadores</string>
     <string name="config_return_triggers_label">Disparadores: si la pantalla contiene alguno (y no estás en ofertas) → Return 2. Varias líneas en un disparador = todas deben salir (AND). Usa textos que NO salgan en la lista de ofertas.</string>
-    <string name="config_return_trigger_legend_add">Añadir disparador</string>
-    <string name="config_return_trigger_legend_reset">Restaurar defaults</string>
+    <string name="config_return_trigger_legend_add">Añadir disparador de pantalla</string>
+    <string name="config_return_trigger_legend_reset">Restaurar disparadores default</string>
     <string name="config_return_trigger_add">+ Añadir disparador</string>
     <string name="config_return_trigger_reset_defaults">Restaurar disparadores del macro Return 2</string>
     <string name="config_return_trigger_add_title">Nuevo disparador</string>

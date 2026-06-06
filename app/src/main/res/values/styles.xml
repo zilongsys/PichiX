@@ -402,17 +402,23 @@
     </style>
 
     <style name="TimeInputCompact" parent="TimeInput">
-        <item name="android:layout_width">68dp</item>
-        <item name="android:minWidth">68dp</item>
-        <item name="android:textSize">13sp</item>
+        <item name="android:layout_width">50dp</item>
+        <item name="android:minWidth">50dp</item>
+        <item name="android:layout_height">34dp</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:paddingLeft">4dp</item>
+        <item name="android:paddingRight">4dp</item>
     </style>
 
     <style name="ConfigIconLegend">
-        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:textSize">10sp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:textSize">9sp</item>
         <item name="android:textColor">@color/text_hint</item>
-        <item name="android:layout_marginStart">4dp</item>
+        <item name="android:layout_marginStart">3dp</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:lineSpacingExtra">1dp</item>
     </style>
 
     <style name="ConfigHintToggle">

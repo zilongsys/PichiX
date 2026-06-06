@@ -8,6 +8,13 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.56 (Mayo 2026)
+
+### Actualizado
+- **Config — Automatización Flex**: campos de tiempo más compactos (50×34dp); leyendas más descriptivas; textos colapsables antes de cada separador.
+
+---
+
 ## v0.1.54 (Mayo 2026)
 
 ### Actualizado
