@@ -79,6 +79,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         configScroll.setupFormFocus()
         setupExpandableSections(view, configScroll)
         setupConfigFooterNote(view)
+        setupAutomationHints(view)
 
         pauseSoundPicker = SoundPickerHelper(this) { uri ->
             pauseSoundUri = uri
@@ -439,6 +440,37 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             settings.configPhaseNoteVisible = visible
             applyVisible(visible)
         }
+    }
+
+    private fun setupAutomationHints(view: View) {
+        ConfigCollapsibleHint.bind(
+            view.findViewById(R.id.headerReturn2Hint),
+            view.findViewById(R.id.tvReturn2HintToggle),
+            view.findViewById(R.id.tvReturn2Hint),
+            settings,
+            "return2",
+        )
+        ConfigCollapsibleHint.bind(
+            view.findViewById(R.id.headerReturnTriggersHint),
+            view.findViewById(R.id.tvReturnTriggersHintToggle),
+            view.findViewById(R.id.tvReturnTriggersHint),
+            settings,
+            "return_triggers",
+        )
+        ConfigCollapsibleHint.bind(
+            view.findViewById(R.id.headerAutoAcceptHint),
+            view.findViewById(R.id.tvAutoAcceptHintToggle),
+            view.findViewById(R.id.tvAutoAcceptHint),
+            settings,
+            "auto_accept",
+        )
+        ConfigCollapsibleHint.bind(
+            view.findViewById(R.id.headerForegroundHint),
+            view.findViewById(R.id.tvForegroundHintToggle),
+            view.findViewById(R.id.tvForegroundHint),
+            settings,
+            "foreground",
+        )
     }
 
     private fun updateClickModeVisibility(basic: View, smart: View, smartMode: Boolean) {

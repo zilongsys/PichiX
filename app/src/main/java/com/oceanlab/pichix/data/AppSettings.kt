@@ -204,6 +204,19 @@ class AppSettings(context: Context) {
         get() = prefs.getBoolean(KEY_CONFIG_PHASE_NOTE_VISIBLE, true)
         set(value) = prefs.edit().putBoolean(KEY_CONFIG_PHASE_NOTE_VISIBLE, value).apply()
 
+    fun isConfigHintVisible(hintKey: String, defaultVisible: Boolean = false): Boolean {
+        val key = KEY_CONFIG_HINT_PREFIX + hintKey
+        return if (prefs.contains(key)) {
+            prefs.getBoolean(key, defaultVisible)
+        } else {
+            defaultVisible
+        }
+    }
+
+    fun setConfigHintVisible(hintKey: String, visible: Boolean) {
+        prefs.edit().putBoolean(KEY_CONFIG_HINT_PREFIX + hintKey, visible).apply()
+    }
+
     var debugLogEnabled: Boolean
         get() = prefs.getBoolean(KEY_DEBUG_LOG, false)
         set(value) = prefs.edit().putBoolean(KEY_DEBUG_LOG, value).apply()
@@ -445,6 +458,7 @@ class AppSettings(context: Context) {
         private const val KEY_FLEX_ONLY_FOREGROUND = "flex_only_foreground"
         private const val KEY_CONFIG_SECTION_PREFIX = "config_section_expanded_"
         private const val KEY_CONFIG_PHASE_NOTE_VISIBLE = "config_phase_note_visible"
+        private const val KEY_CONFIG_HINT_PREFIX = "config_hint_visible_"
         private const val KEY_FOREGROUND_MOTOR_RESET = "flex_foreground_motor_reset_v12"
         private const val KEY_DEBUG_LOG = "debug_log"
         private const val KEY_FILE_LOG = "file_log"

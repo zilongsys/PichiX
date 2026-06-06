@@ -8,6 +8,13 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.54 (Mayo 2026)
+
+### Actualizado
+- **Config — Automatización Flex**: Return 2, aceptar auto y solo primer plano en una línea con switch; textos explicativos colapsables; tiempos Return 2 en una fila con iconos min/máx/cooldown y leyenda; disparadores con descripción colapsable; botones añadir/restaurar compactos con iconos y leyenda.
+
+---
+
 ## v0.1.53 (Mayo 2026)
 
 ### Actualizado

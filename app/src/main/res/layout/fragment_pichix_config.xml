@@ -296,86 +296,208 @@
         <LinearLayout style="@style/Card">
 
             <LinearLayout style="@style/Row">
-                <LinearLayout
+                <TextView
+                    style="@style/RowLabel"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical">
-                    <TextView
-                        style="@style/RowLabel"
-                        android:layout_width="match_parent"
-                        android:layout_weight="0"
-                        android:text="@string/config_return_2_offers_title" />
-                    <TextView
-                        style="@style/RowHint"
-                        android:text="@string/config_return_2_offers_hint" />
-                </LinearLayout>
+                    android:text="@string/config_return_2_offers_title" />
                 <com.google.android.material.switchmaterial.SwitchMaterial
                     android:id="@+id/switchReturn2Offers"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
             </LinearLayout>
 
-            <View style="@style/Divider" />
+            <LinearLayout
+                android:id="@+id/headerReturn2Hint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="false"
+                android:gravity="end"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp">
+
+                <TextView
+                    android:id="@+id/tvReturn2HintToggle"
+                    style="@style/ConfigHintToggle"
+                    android:text="@string/config_phase_note_show" />
+            </LinearLayout>
 
             <TextView
+                android:id="@+id/tvReturn2Hint"
+                style="@style/RowHint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="16dp"
-                android:layout_marginTop="4dp"
                 android:layout_marginRight="16dp"
-                android:layout_marginBottom="4dp"
-                android:text="@string/config_return_step_range_label"
-                android:textColor="@color/text_secondary"
-                android:textSize="11sp" />
+                android:layout_marginBottom="8dp"
+                android:text="@string/config_return_2_offers_hint"
+                android:visibility="gone" />
 
-            <LinearLayout style="@style/ConfigTimeRow">
+            <LinearLayout
+                style="@style/ConfigTimeRow"
+                android:paddingTop="4dp">
 
                 <TextView
-                    style="@style/ConfigTimeLabel"
-                    android:text="@string/config_time_min_sec" />
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="@string/config_return_step_range_short"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp" />
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:contentDescription="@string/config_return_time_legend_min"
+                    android:src="@drawable/ic_input_min"
+                    app:tint="@color/accent_teal" />
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etReturnStepMinSec"
-                    style="@style/TimeInput"
+                    style="@style/TimeInputCompact"
+                    android:layout_marginStart="4dp"
                     android:hint="1" />
 
-                <TextView
-                    style="@style/ConfigTimeLabel"
-                    android:layout_marginStart="12dp"
-                    android:text="@string/config_time_max_sec" />
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginStart="6dp"
+                    android:contentDescription="@string/config_return_time_legend_max"
+                    android:src="@drawable/ic_input_max"
+                    app:tint="@color/accent_teal" />
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etReturnStepMaxSec"
-                    style="@style/TimeInput"
+                    style="@style/TimeInputCompact"
+                    android:layout_marginStart="4dp"
+                    android:hint="3" />
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginStart="6dp"
+                    android:contentDescription="@string/config_return_time_legend_cooldown"
+                    android:src="@drawable/ic_input_cooldown"
+                    app:tint="@color/accent_teal" />
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etReturnDetectCooldownSec"
+                    style="@style/TimeInputCompact"
+                    android:layout_marginStart="4dp"
                     android:hint="3" />
             </LinearLayout>
 
             <LinearLayout
-                style="@style/ConfigTimeRow"
-                android:layout_marginBottom="4dp">
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="8dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_input_min"
+                        app:tint="@color/text_hint" />
+
+                    <TextView
+                        style="@style/ConfigIconLegend"
+                        android:text="@string/config_return_time_legend_min" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_input_max"
+                        app:tint="@color/text_hint" />
+
+                    <TextView
+                        style="@style/ConfigIconLegend"
+                        android:layout_marginStart="4dp"
+                        android:text="@string/config_return_time_legend_max" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="end|center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_input_cooldown"
+                        app:tint="@color/text_hint" />
+
+                    <TextView
+                        style="@style/ConfigIconLegend"
+                        android:text="@string/config_return_time_legend_cooldown" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View
+                style="@style/DividerFull"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_return_triggers_title" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/headerReturnTriggersHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="false"
+                android:gravity="end"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp">
 
                 <TextView
-                    style="@style/ConfigTimeLabel"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:text="@string/config_time_cooldown_sec" />
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etReturnDetectCooldownSec"
-                    style="@style/TimeInput"
-                    android:hint="3" />
+                    android:id="@+id/tvReturnTriggersHintToggle"
+                    style="@style/ConfigHintToggle"
+                    android:text="@string/config_phase_note_show" />
             </LinearLayout>
 
             <TextView
+                android:id="@+id/tvReturnTriggersHint"
+                style="@style/RowHint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
                 android:layout_marginBottom="6dp"
                 android:text="@string/config_return_triggers_label"
-                android:textColor="@color/text_secondary"
-                android:textSize="11sp" />
+                android:visibility="gone" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvReturnTriggers"
@@ -386,73 +508,165 @@
                 android:nestedScrollingEnabled="false"
                 android:overScrollMode="never" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnAddReturnTrigger"
-                style="@style/SparkButtonSecondary"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
-                android:layout_marginRight="16dp"
-                android:layout_marginBottom="6dp"
-                android:text="@string/config_return_trigger_add" />
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingLeft="16dp"
+                android:paddingTop="6dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="4dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnResetReturnTriggers"
-                style="@style/SparkButtonSecondary"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAddReturnTrigger"
+                    style="@style/SparkIconButtonCompact"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:contentDescription="@string/config_return_trigger_legend_add"
+                    app:icon="@drawable/ic_config_add" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnResetReturnTriggers"
+                    style="@style/SparkIconButtonCompact"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="12dp"
+                    android:contentDescription="@string/config_return_trigger_legend_reset"
+                    app:icon="@drawable/ic_config_reset" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
-                android:layout_marginRight="16dp"
-                android:layout_marginBottom="12dp"
-                android:text="@string/config_return_trigger_reset_defaults" />
-        </LinearLayout>
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="10dp">
 
-        <LinearLayout style="@style/Card">
-
-            <LinearLayout style="@style/Row">
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_config_add"
+                        app:tint="@color/text_hint" />
+
                     <TextView
-                        style="@style/RowLabel"
-                        android:layout_width="match_parent"
-                        android:layout_weight="0"
-                        android:text="@string/config_auto_accept_title" />
-                    <TextView
-                        style="@style/RowHint"
-                        android:text="@string/config_auto_accept_hint" />
+                        style="@style/ConfigIconLegend"
+                        android:text="@string/config_return_trigger_legend_add" />
                 </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_config_reset"
+                        app:tint="@color/text_hint" />
+
+                    <TextView
+                        style="@style/ConfigIconLegend"
+                        android:text="@string/config_return_trigger_legend_reset" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View style="@style/DividerFull" />
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_auto_accept_title" />
                 <com.google.android.material.switchmaterial.SwitchMaterial
                     android:id="@+id/switchFlexAutoAccept"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
             </LinearLayout>
-        </LinearLayout>
 
-        <LinearLayout style="@style/Card">
+            <LinearLayout
+                android:id="@+id/headerAutoAcceptHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="false"
+                android:gravity="end"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp">
+
+                <TextView
+                    android:id="@+id/tvAutoAcceptHintToggle"
+                    style="@style/ConfigHintToggle"
+                    android:text="@string/config_phase_note_show" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvAutoAcceptHint"
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/config_auto_accept_hint"
+                android:visibility="gone" />
+
+            <View style="@style/Divider" />
 
             <LinearLayout style="@style/Row">
-                <LinearLayout
+                <TextView
+                    style="@style/RowLabel"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical">
-                    <TextView
-                        style="@style/RowLabel"
-                        android:layout_width="match_parent"
-                        android:layout_weight="0"
-                        android:text="@string/config_flex_foreground_title" />
-                    <TextView
-                        style="@style/RowHint"
-                        android:text="@string/config_flex_foreground_hint" />
-                </LinearLayout>
+                    android:text="@string/config_flex_foreground_title" />
                 <com.google.android.material.switchmaterial.SwitchMaterial
                     android:id="@+id/switchFlexOnlyForeground"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
             </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/headerForegroundHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="false"
+                android:gravity="end"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp">
+
+                <TextView
+                    android:id="@+id/tvForegroundHintToggle"
+                    style="@style/ConfigHintToggle"
+                    android:text="@string/config_phase_note_show" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvForegroundHint"
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="12dp"
+                android:text="@string/config_flex_foreground_hint"
+                android:visibility="gone" />
         </LinearLayout>
 
         </LinearLayout>

@@ -401,6 +401,29 @@
         <item name="android:textColor">@color/accent_teal</item>
     </style>
 
+    <style name="TimeInputCompact" parent="TimeInput">
+        <item name="android:layout_width">68dp</item>
+        <item name="android:minWidth">68dp</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+
+    <style name="ConfigIconLegend">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:textColor">@color/text_hint</item>
+        <item name="android:layout_marginStart">4dp</item>
+    </style>
+
+    <style name="ConfigHintToggle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">@color/accent_teal</item>
+        <item name="android:paddingTop">2dp</item>
+        <item name="android:paddingBottom">4dp</item>
+    </style>
+
     <style name="ConfigTimeLabel">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
@@ -539,6 +562,14 @@
         <item name="android:insetBottom">0dp</item>
         <item name="android:insetLeft">0dp</item>
         <item name="android:insetRight">0dp</item>
+    </style>
+
+    <style name="SparkIconButtonCompact" parent="SparkIconButton">
+        <item name="android:minWidth">40dp</item>
+        <item name="android:minHeight">40dp</item>
+        <item name="android:padding">8dp</item>
+        <item name="cornerRadius">10dp</item>
+        <item name="iconSize">20dp</item>
     </style>
 
     <style name="SparkIconButtonPrimary" parent="SparkIconButton">
