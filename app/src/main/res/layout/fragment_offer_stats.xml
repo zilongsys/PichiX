@@ -12,6 +12,73 @@
         android:orientation="vertical"
         android:padding="10dp">
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/offer_stats_title"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/offer_stats_range_hint"
+            android:textColor="@color/text_hint"
+            android:textSize="10sp"
+            android:layout_marginBottom="6dp" />
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/toggleOfferStatsRange"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            app:singleSelection="true"
+            app:selectionRequired="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStatsRangeAll"
+                style="@style/SparkButtonSecondary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/offer_stats_range_all"
+                android:textSize="11sp"
+                android:checked="true" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStatsRangeDay"
+                style="@style/SparkButtonSecondary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/offer_stats_range_day"
+                android:textSize="11sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStatsRangePeriod"
+                style="@style/SparkButtonSecondary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/offer_stats_range_period"
+                android:textSize="11sp" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <TextView
+            android:id="@+id/tvOfferStatsRangeLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/stat_card"
+            android:padding="8dp"
+            android:text="@string/offer_stats_range_all_label"
+            android:textColor="@color/text_secondary"
+            android:textSize="11sp"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="8dp" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -19,25 +86,35 @@
             android:gravity="center_vertical"
             android:layout_marginBottom="8dp">
 
-            <TextView
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPickOfferStatsDate"
+                style="@style/SparkButtonSecondary"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/offer_stats_title"
-                android:textColor="@color/text_primary"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:fontFamily="monospace" />
+                android:layout_marginEnd="6dp"
+                android:text="@string/offer_stats_pick_day"
+                android:textSize="11sp"
+                android:visibility="gone"
+                app:icon="@drawable/ic_hist_calendar"
+                app:iconGravity="textStart"
+                app:iconPadding="6dp"
+                app:iconSize="16dp"
+                app:iconTint="@color/text_primary" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnRefreshOfferStats"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="wrap_content"
+                style="@style/SparkButtonPrimary"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="@string/offer_stats_refresh"
-                android:textSize="11sp"
+                android:layout_weight="1"
+                android:text="@string/offer_stats_analyze"
+                android:textSize="12sp"
                 app:icon="@drawable/ic_hist_calendar"
-                app:iconSize="16dp" />
+                app:iconGravity="textStart"
+                app:iconPadding="6dp"
+                app:iconSize="16dp"
+                app:iconTint="@color/button_primary_text" />
         </LinearLayout>
 
         <TextView
@@ -53,6 +130,7 @@
             android:layout_marginBottom="8dp" />
 
         <TextView
+            android:id="@+id/tvOfferStatsDailyHeader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/offer_stats_daily_header"
@@ -97,6 +175,7 @@
             android:layout_marginBottom="10dp" />
 
         <TextView
+            android:id="@+id/tvOfferStatsWeekdayHeader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/offer_stats_weekday_header"

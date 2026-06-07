@@ -8,6 +8,13 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.66 (Mayo 2026)
+
+### Actualizado
+- **Estadísticas de ofertas**: botones con estilo legible; selector Todo / Un día / Rango con calendario Material; filtro por fecha en el analizador.
+
+---
+
 ## v0.1.64 (Mayo 2026)
 
 ### Añadido

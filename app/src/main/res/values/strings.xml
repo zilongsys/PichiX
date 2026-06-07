@@ -203,8 +203,24 @@
     <string name="bot_log_clear">Vaciar</string>
 
     <string name="offer_stats_title">Estadísticas de ofertas</string>
-    <string name="offer_stats_refresh">Actualizar</string>
-    <string name="offer_stats_empty">Pulsa Actualizar para analizar el historial CSV. Aún no hay ofertas registradas.</string>
+    <string name="offer_stats_analyze">Analizar</string>
+    <string name="offer_stats_empty">Elige periodo y pulsa Analizar para ver estadísticas del CSV.</string>
+    <string name="offer_stats_no_data_for_filter">No hay ofertas en el periodo seleccionado.</string>
+    <string name="offer_stats_range_hint">Todo el historial, un día concreto o un rango de fechas.</string>
+    <string name="offer_stats_range_all">Todo</string>
+    <string name="offer_stats_range_day">Un día</string>
+    <string name="offer_stats_range_period">Rango</string>
+    <string name="offer_stats_range_all_label">Analizando todo el historial CSV</string>
+    <string name="offer_stats_pick_day">Elegir día</string>
+    <string name="offer_stats_pick_range">Elegir rango</string>
+    <string name="offer_stats_pick_day_hint">Pulsa «Elegir día» y selecciona una fecha en el calendario.</string>
+    <string name="offer_stats_pick_range_hint">Pulsa «Elegir rango» y marca inicio y fin en el calendario.</string>
+    <string name="offer_stats_selected_day">Día: %1$s</string>
+    <string name="offer_stats_selected_range">Desde %1$s hasta %2$s</string>
+    <string name="offer_stats_filter_all">Filtro: todo el historial</string>
+    <string name="offer_stats_filter_day">Filtro: %1$s</string>
+    <string name="offer_stats_filter_range">Filtro: %1$s → %2$s</string>
+    <string name="offer_stats_day_summary_header">Resumen del día</string>
     <string name="offer_stats_daily_header">Ofertas por día</string>
     <string name="offer_stats_hourly_header">Mejores franjas horarias</string>
     <string name="offer_stats_weekday_header">Por día de la semana</string>

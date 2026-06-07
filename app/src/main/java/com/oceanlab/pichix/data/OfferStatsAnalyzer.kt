@@ -44,6 +44,8 @@ object OfferStatsAnalyzer {
         val countedOffers: Int,
         val dateFrom: String?,
         val dateTo: String?,
+        val filterFrom: String?,
+        val filterTo: String?,
         val bestDay: DayBucket?,
         val bestHour: HourBucket?,
         val topHours: List<HourBucket>,
@@ -53,17 +55,27 @@ object OfferStatsAnalyzer {
         val topStations: List<StationBucket>,
     )
 
+    data class DateFilter(
+        val from: String? = null,
+        val to: String? = null,
+    ) {
+        val isActive: Boolean get() = !from.isNullOrBlank() || !to.isNullOrBlank()
+    }
+
     private val dayFmt = SimpleDateFormat("yyyy-MM-dd", Locale.US)
     private val weekdayNames = listOf("Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb")
 
-    fun analyze(entries: List<OfferLogEntry>): Report {
-        val relevant = entries.filter { isCountable(it.status) }
+    fun analyze(entries: List<OfferLogEntry>, filter: DateFilter = DateFilter()): Report {
+        val scoped = if (!filter.isActive) entries else entries.filter { entryInFilter(it, filter) }
+        val relevant = scoped.filter { isCountable(it.status) }
         if (relevant.isEmpty()) {
             return Report(
                 totalRaw = entries.size,
                 countedOffers = 0,
                 dateFrom = null,
                 dateTo = null,
+                filterFrom = filter.from,
+                filterTo = filter.to,
                 bestDay = null,
                 bestHour = null,
                 topHours = emptyList(),
@@ -125,6 +137,8 @@ object OfferStatsAnalyzer {
             countedOffers = relevant.size,
             dateFrom = dates.minOrNull(),
             dateTo = dates.maxOrNull(),
+            filterFrom = filter.from,
+            filterTo = filter.to,
             bestDay = daily.maxByOrNull { it.count * (1.0 + it.avgRate / 100.0) },
             bestHour = hourly.firstOrNull { it.count > 0 },
             topHours = hourly.filter { it.count > 0 }.take(8),
@@ -140,6 +154,13 @@ object OfferStatsAnalyzer {
             status == OfferStatus.ACCEPTED ||
             status == OfferStatus.REJECTED ||
             status == OfferStatus.SIMULATED
+
+    private fun entryInFilter(entry: OfferLogEntry, filter: DateFilter): Boolean {
+        val day = dayFmt.format(entry.timestamp)
+        filter.from?.let { if (day < it) return false }
+        filter.to?.let { if (day > it) return false }
+        return true
+    }
 
     private fun hourOf(ts: Long): Int {
         val cal = Calendar.getInstance()
