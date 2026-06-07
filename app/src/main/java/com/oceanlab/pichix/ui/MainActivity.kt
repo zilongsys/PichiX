@@ -30,6 +30,7 @@ import com.google.android.material.tabs.TabLayoutMediator
 import com.oceanlab.pichix.BuildConfig
 import com.oceanlab.pichix.R
 import com.oceanlab.pichix.data.AppSettings
+import com.oceanlab.pichix.data.BotEventLog
 import com.oceanlab.pichix.data.MonitorPackages
 import com.oceanlab.pichix.data.OfferLogger
 import com.oceanlab.pichix.service.BotServiceCoordinator
@@ -46,14 +47,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvTotalMiles: TextView
     lateinit var tabLayout: TabLayout
 
-    private val tabNames = arrayOf("Home", "Config", "Tarifas", "Alertas", "Historial", "Simulador", "Revisión")
+    private val tabNames = arrayOf(
+        "Home", "Config", "Tarifas", "Alertas", "Historial",
+        "Estadísticas", "Log bot", "Simulador", "Revisión",
+    )
     private val dirtyTabs = mutableSetOf<Int>()
     private var isInternalSwitchUpdate = false
     private var currentTab = 0
 
-    private val sidebarContainers = arrayOfNulls<LinearLayout>(7)
-    private val sidebarIcons = arrayOfNulls<ImageView>(7)
-    private val sidebarLabels = arrayOfNulls<TextView>(7)
+    private val sidebarContainers = arrayOfNulls<LinearLayout>(TAB_COUNT)
+    private val sidebarIcons = arrayOfNulls<ImageView>(TAB_COUNT)
+    private val sidebarLabels = arrayOfNulls<TextView>(TAB_COUNT)
     private var sidebarHelpContainer: LinearLayout? = null
     private var sidebarHelpIcon: ImageView? = null
     private var sidebarHelpLabel: TextView? = null
@@ -66,6 +70,8 @@ class MainActivity : AppCompatActivity() {
         R.drawable.ic_sidebar_tarifas,
         R.drawable.ic_alert_notifications,
         R.drawable.ic_sidebar_historial,
+        R.drawable.ic_hist_calendar,
+        R.drawable.ic_hist_txt,
         R.drawable.ic_sidebar_simulador,
         R.drawable.ic_sidebar_revision,
     )
@@ -75,6 +81,8 @@ class MainActivity : AppCompatActivity() {
         R.drawable.ic_sidebar_tarifas_filled,
         R.drawable.ic_alert_notifications,
         R.drawable.ic_sidebar_historial_filled,
+        R.drawable.ic_hist_calendar,
+        R.drawable.ic_hist_txt,
         R.drawable.ic_sidebar_simulador,
         R.drawable.ic_sidebar_revision_filled,
     )
@@ -134,6 +142,11 @@ class MainActivity : AppCompatActivity() {
             }
             if (checked) PichixAccessibilityService.pausedAfterAccept = false
             settings.isBotEnabled = checked
+            BotEventLog.log(
+                this,
+                BotEventLog.CAT_BOT,
+                if (checked) "Bot activado (usuario)" else "Bot desactivado (usuario)",
+            )
             if (checked) {
                 BotServiceCoordinator.syncForegroundService(this)
                 PichixAccessibilityService.syncEngine(this)
@@ -148,15 +161,17 @@ class MainActivity : AppCompatActivity() {
         }
 
         viewPager.adapter = object : FragmentStateAdapter(this) {
-            override fun getItemCount() = 7
+            override fun getItemCount() = TAB_COUNT
             override fun createFragment(pos: Int): Fragment = when (pos) {
                 0 -> HomeFragment()
                 1 -> FlexConfigFragment()
                 2 -> FlexTarifasFragment()
                 3 -> FlexAlertasFragment()
                 4 -> FlexHistorialFragment()
-                5 -> StubTabFragment.newInstance("Simulador", "Probar criterios sin aceptar bloques reales.")
-                6 -> StubTabFragment.newInstance("Revisión", "Revisión detallada de bloques antes de aceptar.")
+                5 -> FlexOfferStatsFragment()
+                6 -> FlexBotLogFragment()
+                7 -> StubTabFragment.newInstance("Simulador", "Probar criterios sin aceptar bloques reales.")
+                8 -> StubTabFragment.newInstance("Revisión", "Revisión detallada de bloques antes de aceptar.")
                 else -> HomeFragment()
             }
         }
@@ -200,20 +215,23 @@ class MainActivity : AppCompatActivity() {
         val containerIds = intArrayOf(
             R.id.sidebarHome, R.id.sidebarConfig, R.id.sidebarTarifas,
             R.id.sidebarAlertas, R.id.sidebarHistorial,
+            R.id.sidebarEstadisticas, R.id.sidebarBotLog,
             R.id.sidebarSimulador, R.id.sidebarRevision,
         )
         val iconIds = intArrayOf(
             R.id.sidebarIconHome, R.id.sidebarIconConfig, R.id.sidebarIconTarifas,
             R.id.sidebarIconAlertas, R.id.sidebarIconHistorial,
+            R.id.sidebarIconEstadisticas, R.id.sidebarIconBotLog,
             R.id.sidebarIconSimulador, R.id.sidebarIconRevision,
         )
         val labelIds = intArrayOf(
             R.id.sidebarLabelHome, R.id.sidebarLabelConfig, R.id.sidebarLabelTarifas,
             R.id.sidebarLabelAlertas, R.id.sidebarLabelHistorial,
+            R.id.sidebarLabelEstadisticas, R.id.sidebarLabelBotLog,
             R.id.sidebarLabelSimulador, R.id.sidebarLabelRevision,
         )
 
-        for (i in 0..6) {
+        for (i in 0 until TAB_COUNT) {
             sidebarContainers[i] = findViewById(containerIds[i])
             sidebarIcons[i] = findViewById(iconIds[i])
             sidebarLabels[i] = findViewById(labelIds[i])
@@ -261,7 +279,7 @@ class MainActivity : AppCompatActivity() {
         val activeColor = ContextCompat.getColor(this, R.color.accent_teal)
         val mutedColor = ContextCompat.getColor(this, R.color.text_hint)
 
-        for (i in 0..6) {
+        for (i in 0 until TAB_COUNT) {
             val isActive = i == index
             sidebarIcons[i]?.setBackgroundResource(
                 if (isActive) R.drawable.sidebar_icon_active else R.drawable.sidebar_icon_inactive
@@ -411,6 +429,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
+        const val TAB_COUNT = 9
         const val BOT_STATE_CHANGED = "com.oceanlab.pichix.BOT_STATE_CHANGED"
         const val BOT_PAUSED = "com.oceanlab.pichix.BOT_PAUSED"
         const val RETURN2_SETTING_CHANGED = "com.oceanlab.pichix.RETURN2_SETTING_CHANGED"

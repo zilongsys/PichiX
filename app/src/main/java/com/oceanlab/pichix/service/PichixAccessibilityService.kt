@@ -13,6 +13,7 @@ import com.oceanlab.pichix.analyzer.FlexGrabResult
 import com.oceanlab.pichix.analyzer.FlexBlockOffer
 import com.oceanlab.pichix.analyzer.FlexGrabberEvaluator
 import com.oceanlab.pichix.data.AppSettings
+import com.oceanlab.pichix.data.BotEventLog
 import com.oceanlab.pichix.data.PichiFileLog
 import com.oceanlab.pichix.data.FlexState
 import com.oceanlab.pichix.data.FlexReturnTriggersEvaluator
@@ -58,6 +59,7 @@ class PichixAccessibilityService : AccessibilityService() {
         fun resumeFromPause(context: Context) {
             pausedAfterAccept = false
             syncEngine(context)
+            BotEventLog.log(context, BotEventLog.CAT_PAUSE, "Bot reanudado")
             LocalBroadcastManager.getInstance(context).sendBroadcast(Intent(BOT_RESUMED))
             LocalBroadcastManager.getInstance(context).sendBroadcast(Intent(BOT_STATE_CHANGED))
             PichixForegroundService.refreshNotification(context)
@@ -103,6 +105,8 @@ class PichixAccessibilityService : AccessibilityService() {
     private var burstActive = false
     private var nextBurstAtMs = 0L
     private var burstEndsAtMs = 0L
+    private var lastScreenKind: String? = null
+    private var lastLoggedBotRunning: Boolean? = null
 
     private val grabLoopRunnable = Runnable { runGrabberTick() }
     private val timerRunnable = Runnable { runFlexTimerTick() }
@@ -149,8 +153,10 @@ class PichixAccessibilityService : AccessibilityService() {
         when (event.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED,
+            AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED,
             AccessibilityEvent.TYPE_VIEW_FOCUSED,
-            AccessibilityEvent.TYPE_WINDOWS_CHANGED -> {
+            AccessibilityEvent.TYPE_WINDOWS_CHANGED,
+            AccessibilityEvent.TYPE_ANNOUNCEMENT -> {
                 handler.removeCallbacks(observerRunnable)
                 handler.postDelayed(observerRunnable, 200)
             }
@@ -176,6 +182,8 @@ class PichixAccessibilityService : AccessibilityService() {
         FlexState.resetScrollCycle()
         scrollSigsBefore = ""
         scrollingDown = true
+        lastScreenKind = null
+        logBotRunningState(force = true)
     }
 
     private fun updateBurstState() {
@@ -216,7 +224,10 @@ class PichixAccessibilityService : AccessibilityService() {
         burstMode: Boolean,
     ): Boolean {
         val flags = reader.detectScreenFlags(text, settings)
-        if (flags.captcha) return false
+        if (flags.captcha) {
+            PauseByOverClicksController.onScreenText(this, text)
+            return false
+        }
 
         val offers = reader.readOffersFromList()
         if (settings.debugLogEnabled && offers.isNotEmpty()) {
@@ -279,6 +290,8 @@ class PichixAccessibilityService : AccessibilityService() {
 
     private fun tryRefreshClick(screenText: String, burstMode: Boolean) {
         if (!settings.flexClickRefreshEnabled) return
+        if (PauseByOverClicksController.wouldBlockClicks(this, screenText)) return
+        if (reader.isBlockingOverlayText(screenText.lowercase())) return
         val screenOk = reader.screenMatchesForClick(
             settings.flexClickScreenText,
             screenText,
@@ -327,8 +340,35 @@ class PichixAccessibilityService : AccessibilityService() {
         handler.removeCallbacks(grabLoopRunnable)
         handler.removeCallbacks(timerRunnable)
         if (!settings.isBotEnabled) return
+        logBotRunningState()
         handler.postDelayed(grabLoopRunnable, nextGrabberDelayMs())
         handler.postDelayed(timerRunnable, FlexState.flexTimerSec * 1000L)
+    }
+
+    private fun logBotRunningState(force: Boolean = false) {
+        val running = settings.isBotEnabled && !pausedAfterAccept && !motorPausedForNavigation
+        if (!force && lastLoggedBotRunning == running) return
+        lastLoggedBotRunning = running
+        when {
+            !settings.isBotEnabled -> BotEventLog.log(this, BotEventLog.CAT_BOT, "Bot desactivado")
+            pausedAfterAccept -> BotEventLog.log(this, BotEventLog.CAT_PAUSE, "Bot pausado")
+            motorPausedForNavigation -> BotEventLog.log(this, BotEventLog.CAT_PAUSE, "Motor pausado (navegación)")
+            else -> BotEventLog.log(this, BotEventLog.CAT_BOT, "Bot activo")
+        }
+    }
+
+    private fun trackScreenChange(text: String, flags: FlexScreenReader.ScreenFlags) {
+        val kind = when {
+            flags.captcha -> "bloqueo"
+            flags.onOffersList -> "lista ofertas"
+            reader.isOnOfferDetailScreen() -> "detalle bloque"
+            flags.shouldReturnToOffers -> "fuera de ofertas"
+            flags.onFlexHomeTabs -> "inicio Flex"
+            else -> "otra"
+        }
+        if (kind == lastScreenKind) return
+        lastScreenKind = kind
+        BotEventLog.log(this, BotEventLog.CAT_SCREEN, "Pantalla → $kind")
     }
 
     private fun nextGrabberDelayMs(): Long {
@@ -354,19 +394,32 @@ class PichixAccessibilityService : AccessibilityService() {
         if (!isMotorForegroundAllowed()) return
         val text = reader.readFullScreenText()
         val flags = reader.detectScreenFlags(text, settings)
+        trackScreenChange(text, flags)
 
         when {
-            flags.captcha -> postObserver("Captcha detectado")
+            flags.captcha -> postObserver("Banner flotante de bloqueo detectado (captcha / demasiados clics)")
             flags.blockUnavailable -> postObserver("Bloque no disponible en pantalla")
             flags.offerScheduled -> postObserver("Oferta programada en pantalla")
         }
 
-        if (flags.captcha && settings.autoPauseOnCaptcha) {
-            pausedAfterAccept = true
-            postBotPaused()
-        }
+        if (handleBlockingScreen(text, flags)) return
 
         maybeAutoReturnToOffers(text, flags)
+    }
+
+    /** Detiene clics si hay banner flotante de bloqueo dibujado sobre Flex. */
+    private fun handleBlockingScreen(
+        text: String,
+        flags: FlexScreenReader.ScreenFlags,
+    ): Boolean {
+        if (PauseByOverClicksController.onScreenText(this, text)) return true
+        if (!flags.captcha) return pausedAfterAccept
+        if (settings.autoPauseOnCaptcha && !pausedAfterAccept) {
+            pausedAfterAccept = true
+            postBotPaused()
+            BotEventLog.log(this, BotEventLog.CAT_PAUSE, "Pausado (bloqueo en pantalla)")
+        }
+        return true
     }
 
     private var lastReturnProbeLogMs = 0L
@@ -421,7 +474,10 @@ class PichixAccessibilityService : AccessibilityService() {
         }
         scheduleWork()
         val text = reader.readFullScreenText()
-        maybeAutoReturnToOffers(text)
+        val flags = reader.detectScreenFlags(text, settings)
+        trackScreenChange(text, flags)
+        if (handleBlockingScreen(text, flags)) return
+        maybeAutoReturnToOffers(text, flags)
         if (returnInFlight) return
         grabInFlight = true
         try {
@@ -444,6 +500,12 @@ class PichixAccessibilityService : AccessibilityService() {
     private fun handleAccept(offer: FlexBlockOffer) {
         val simulation = settings.dryRunMode
         val shouldSchedule = settings.flexAutoAccept && !simulation
+        BotEventLog.log(
+            this,
+            BotEventLog.CAT_OFFER,
+            "Intento: ${offer.stationText} ${offer.payText} " +
+                "(${offer.hourlyRate?.let { "%.1f".format(it) } ?: "?"} \$/h)",
+        )
 
         if (!reader.clickOfferCardAtIndex(offer.index)) {
             postObserver("No se pudo abrir la oferta en la lista")
@@ -532,6 +594,7 @@ class PichixAccessibilityService : AccessibilityService() {
     private fun finishBlockTakeFlow() {
         pausedAfterAccept = true
         postBotPaused()
+        BotEventLog.log(this, BotEventLog.CAT_PAUSE, "Pausado tras flujo de oferta")
         broadcastState()
     }
 
@@ -687,6 +750,26 @@ class PichixAccessibilityService : AccessibilityService() {
             Intent(OBSERVER_EVENT).putExtra("message", message),
         )
         Log.d(TAG, "Observer: $message")
+        routeObserverToBotLog(message)
+    }
+
+    private fun routeObserverToBotLog(message: String) {
+        val category = when {
+            message.contains("Ráfaga", ignoreCase = true) -> BotEventLog.CAT_BURST
+            message.contains("Return", ignoreCase = true) -> BotEventLog.CAT_RETURN
+            message.contains("Clic", ignoreCase = true) ||
+                message.contains("Refresh", ignoreCase = true) -> BotEventLog.CAT_CLICK
+            message.contains("ACEPTADA", ignoreCase = true) ||
+                message.contains("SIMULACIÓN", ignoreCase = true) ||
+                message.contains("Detalle:", ignoreCase = true) ||
+                message.contains("Rechazada", ignoreCase = true) ||
+                message.contains("Intento:", ignoreCase = true) -> BotEventLog.CAT_OFFER
+            message.contains("Captcha", ignoreCase = true) ||
+                message.contains("bloqueo", ignoreCase = true) ||
+                message.contains("Pantalla", ignoreCase = true) -> BotEventLog.CAT_SCREEN
+            else -> BotEventLog.CAT_BOT
+        }
+        BotEventLog.log(this, category, message)
     }
 
     private fun postBotPaused() {

@@ -103,6 +103,9 @@ class OfferLogCsvStore(context: Context) {
             }
     }
 
+    fun readAllEntries(): List<OfferLogEntry> =
+        readAllLines().drop(1).filter { it.isNotBlank() }.mapNotNull { parseLine(it) }
+
     private fun String?.toLongOrZero(): Long = this?.trim()?.toLongOrNull() ?: 0L
 
     private fun statusToCsv(status: OfferStatus): String = when (status) {

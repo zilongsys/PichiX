@@ -56,12 +56,47 @@ class FlexScreenReader(private val service: AccessibilityService) {
         return candidates.firstOrNull()
     }
 
-    fun readFullScreenText(): String {
+    /**
+     * Texto dibujado en Flex: lista, detalle y avisos flotantes (snackbar/banner sobre la UI).
+     * Lee todas las ventanas del paquete Flex, no solo [activeRoot] (evita perder el banner si
+     * el foco está en el overlay de PichiX).
+     */
+    fun readFullScreenText(): String = readFlexDrawnText()
+
+    fun readFlexDrawnText(): String {
+        val target = appPackage
+        val chunks = linkedSetOf<String>()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            collectDrawnTextFromFlexWindows(chunks, target)
+        }
+        if (chunks.isNotEmpty()) {
+            return chunks.joinToString(" ")
+        }
         val root = activeRoot() ?: return ""
         return try {
-            root.getAllVisibleText()
+            if (root.packageName?.toString() == target) root.getAllVisibleText() else ""
         } finally {
-            try { root.recycle() } catch (_: Exception) {}
+            try {
+                root.recycle()
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    private fun collectDrawnTextFromFlexWindows(out: MutableSet<String>, target: String) {
+        val windows = service.windows ?: return
+        for (window in windows) {
+            val root = window.root ?: continue
+            try {
+                if (root.packageName?.toString() != target) continue
+                val drawn = root.getAllVisibleText()
+                if (drawn.isNotBlank()) out.add(drawn)
+            } finally {
+                try {
+                    root.recycle()
+                } catch (_: Exception) {
+                }
+            }
         }
     }
 
@@ -84,8 +119,7 @@ class FlexScreenReader(private val service: AccessibilityService) {
             blockUnavailable = lower.contains("no longer available") ||
                 lower.contains("not available") ||
                 lower.contains("unavailable"),
-            captcha = lower.contains("captcha") || lower.contains("robot") ||
-                lower.contains("puzzle") || lower.contains("verify"),
+            captcha = isBlockingOverlayText(lower),
             offerScheduled = lower.contains("scheduled") && lower.contains("offer"),
             onOffersList = isOnOffersListScreen(lower),
             onFlexHomeTabs = lower.contains("updates") && lower.contains("schedule") && !isOnOffersListScreen(lower),
@@ -120,9 +154,7 @@ class FlexScreenReader(private val service: AccessibilityService) {
     ): Boolean {
         val text = screenText ?: readFullScreenText()
         val lower = text.lowercase()
-        if (lower.contains("captcha") || lower.contains("robot") ||
-            lower.contains("puzzle") || lower.contains("verify")
-        ) {
+        if (isBlockingOverlayText(lower)) {
             return false
         }
         if (isOnOfferFlowScreen(text)) return false
@@ -597,6 +629,26 @@ class FlexScreenReader(private val service: AccessibilityService) {
             onFinished?.invoke(ok)
         }
         return dispatched
+    }
+
+    /** Banner flotante o texto en pantalla: captcha, demasiados clics, slow down, etc. */
+    fun isBlockingOverlayText(lowerScreenText: String): Boolean {
+        if (lowerScreenText.isBlank()) return false
+        return lowerScreenText.contains("captcha") ||
+            lowerScreenText.contains("robot") ||
+            lowerScreenText.contains("puzzle") ||
+            lowerScreenText.contains("verify") ||
+            lowerScreenText.contains("too many click") ||
+            lowerScreenText.contains("too many tap") ||
+            lowerScreenText.contains("clicked too quickly") ||
+            lowerScreenText.contains("click too fast") ||
+            lowerScreenText.contains("tap too fast") ||
+            lowerScreenText.contains("slow down") ||
+            lowerScreenText.contains("try again later") ||
+            lowerScreenText.contains("demasiados clic") ||
+            lowerScreenText.contains("demasiados toque") ||
+            lowerScreenText.contains("has hecho demasiados") ||
+            lowerScreenText.contains("verification required")
     }
 
     data class ScreenFlags(

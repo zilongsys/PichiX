@@ -99,10 +99,10 @@
     <string name="config_burst_interval_label">Intervalo entre ráfagas (min, mín – máx)</string>
     <string name="config_burst_click_interval_label">Intervalo entre clics durante la ráfaga (ms)</string>
     <string name="config_burst_duration_label">Duración de cada ráfaga (seg, mín – máx, aleatorio; hasta 3600 = 1 h)</string>
-    <string name="config_pause_over_clicks_title">Pausar por notificación</string>
-    <string name="config_pause_over_clicks_hint">Pausa el bot si una notificación Flex contiene el texto indicado; reanuda solo tras el tiempo configurado.</string>
-    <string name="config_pause_over_clicks_match_label">Texto en la notificación</string>
-    <string name="config_pause_over_clicks_match_hint">ej: captcha, verification</string>
+    <string name="config_pause_over_clicks_title">Pausar por bloqueo (pantalla / notificación)</string>
+    <string name="config_pause_over_clicks_hint">Pausa el bot si Flex muestra un banner flotante (texto dibujado sobre la pantalla: demasiados clics, captcha, slow down…) o si una notificación contiene el texto indicado. Lee el árbol de accesibilidad, no ventanas modales. Si dejas el campo vacío, usa frases habituales. Reanuda tras el tiempo configurado.</string>
+    <string name="config_pause_over_clicks_match_label">Texto a detectar (opcional)</string>
+    <string name="config_pause_over_clicks_match_hint">Vacío = frases por defecto. Varios textos separados por coma.</string>
     <string name="config_pause_over_clicks_minutes_label">Minutos hasta reanudar</string>
     <string name="config_pause_sound_pause_label">Sonido al pausar</string>
     <string name="config_pause_sound_resume_label">Sonido al reanudar</string>
@@ -192,7 +192,21 @@
         <item>Tarifas</item>
         <item>Alertas</item>
         <item>Historial</item>
+        <item>Estadísticas</item>
+        <item>Log bot</item>
         <item>Simulador</item>
         <item>Revisión</item>
     </string-array>
+
+    <string name="bot_log_title">Log del bot</string>
+    <string name="bot_log_hint">Actividad en tiempo real: activación, pausas, ofertas, pantalla, ráfaga y Return.</string>
+    <string name="bot_log_clear">Vaciar</string>
+
+    <string name="offer_stats_title">Estadísticas de ofertas</string>
+    <string name="offer_stats_refresh">Actualizar</string>
+    <string name="offer_stats_empty">Pulsa Actualizar para analizar el historial CSV. Aún no hay ofertas registradas.</string>
+    <string name="offer_stats_daily_header">Ofertas por día</string>
+    <string name="offer_stats_hourly_header">Mejores franjas horarias</string>
+    <string name="offer_stats_weekday_header">Por día de la semana</string>
+    <string name="offer_stats_stations_header">Estaciones con más ofertas</string>
 </resources>

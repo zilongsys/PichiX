@@ -7,11 +7,12 @@ import android.os.Looper
 import android.util.Log
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.oceanlab.pichix.data.AppSettings
+import com.oceanlab.pichix.data.BotEventLog
 import com.oceanlab.pichix.util.AlertManager
 import com.oceanlab.pichix.util.TextMatcher
 
 /**
- * Pausa el bot al detectar una notificación con texto configurado; reanuda tras N minutos.
+ * Pausa el bot al detectar texto de bloqueo flotante en pantalla Flex o en notificación.
  */
 object PauseByOverClicksController {
 
@@ -19,22 +20,94 @@ object PauseByOverClicksController {
     private val handler = Handler(Looper.getMainLooper())
     private var resumeRunnable: Runnable? = null
 
+    /** Frases por defecto si el campo de texto está vacío (cartel en pantalla / aviso Flex). */
+    private val DEFAULT_BLOCK_PHRASES = listOf(
+        "too many click",
+        "too many tap",
+        "too many taps",
+        "clicked too quickly",
+        "click too fast",
+        "tap too fast",
+        "slow down",
+        "try again later",
+        "demasiados clic",
+        "demasiados toque",
+        "demasiados toques",
+        "has hecho demasiados",
+        "verification required",
+        "verify you're",
+        "verify you are",
+        "captcha",
+        "robot check",
+        "not a robot",
+        "puzzle",
+    )
+
+    /** Evalúa texto dibujado en pantalla (banner flotante, no ventana modal). */
+    fun onScreenText(context: Context, screenText: String): Boolean {
+        val settings = AppSettings(context)
+        if (!settings.isBotEnabled) return false
+        if (PichixAccessibilityService.pausedAfterAccept) return true
+        val needle = findMatchingNeedle(screenText, settings) ?: return false
+        return triggerPause(context, settings, needle, "pantalla")
+    }
+
+    /** Comprueba bloqueo sin pausar (p. ej. antes de un clic en el mismo tick). */
+    fun wouldBlockClicks(context: Context, screenText: String): Boolean {
+        if (PichixAccessibilityService.pausedAfterAccept) return true
+        val settings = AppSettings(context)
+        if (!settings.isBotEnabled || !settings.pauseByOverClicksEnabled) return false
+        return findMatchingNeedle(screenText, settings) != null
+    }
+
     fun onNotification(context: Context, notificationText: String) {
         val settings = AppSettings(context)
-        if (!settings.pauseByOverClicksEnabled) return
-        if (!settings.isBotEnabled) return
-        val needle = settings.pauseByOverClicksMatchText.trim()
-        if (needle.isBlank()) return
-        if (!TextMatcher.matches(
-                notificationText,
-                needle,
-                settings.pauseByOverClicksMatchMode,
-                settings.pauseByOverClicksIgnoreCase,
-            )
-        ) return
+        if (!settings.isBotEnabled || !settings.pauseByOverClicksEnabled) return
+        val needle = findMatchingNeedle(notificationText, settings) ?: return
+        triggerPause(context, settings, needle, "notificación")
+    }
+
+    fun cancelScheduledResume() {
+        resumeRunnable?.let { handler.removeCallbacks(it) }
+        resumeRunnable = null
+    }
+
+    private fun findMatchingNeedle(text: String, settings: AppSettings): String? {
+        if (!settings.pauseByOverClicksEnabled) return null
+        if (text.isBlank()) return null
+        for (needle in needlesFromSettings(settings)) {
+            if (TextMatcher.matches(
+                    text,
+                    needle,
+                    settings.pauseByOverClicksMatchMode,
+                    settings.pauseByOverClicksIgnoreCase,
+                )
+            ) {
+                return needle
+            }
+        }
+        return null
+    }
+
+    private fun needlesFromSettings(settings: AppSettings): List<String> {
+        val raw = settings.pauseByOverClicksMatchText.trim()
+        if (raw.isNotBlank()) {
+            return raw.split(',', '\n', ';')
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+        }
+        return DEFAULT_BLOCK_PHRASES
+    }
+
+    private fun triggerPause(
+        context: Context,
+        settings: AppSettings,
+        needle: String,
+        source: String,
+    ): Boolean {
         if (PichixAccessibilityService.pausedAfterAccept) {
             rescheduleResume(context, settings)
-            return
+            return true
         }
 
         PichixAccessibilityService.pausedAfterAccept = true
@@ -44,13 +117,10 @@ object PauseByOverClicksController {
         PichixForegroundService.refreshNotification(context)
 
         AlertManager(context).playSoundOnce(settings.pauseByOverClicksPauseSoundUri)
-        Log.i(TAG, "Bot pausado por notificación: contiene \"$needle\"")
+        BotEventLog.log(context, BotEventLog.CAT_PAUSE, "Pausado ($source): «$needle»")
+        Log.i(TAG, "Bot pausado por $source: contiene \"$needle\"")
         rescheduleResume(context, settings)
-    }
-
-    fun cancelScheduledResume() {
-        resumeRunnable?.let { handler.removeCallbacks(it) }
-        resumeRunnable = null
+        return true
     }
 
     private fun rescheduleResume(context: Context, settings: AppSettings) {
@@ -62,6 +132,7 @@ object PauseByOverClicksController {
             if (!PichixAccessibilityService.pausedAfterAccept) return@Runnable
             AlertManager(context).playSoundOnce(settings.pauseByOverClicksResumeSoundUri)
             PichixAccessibilityService.resumeFromPause(context)
+            BotEventLog.log(context, BotEventLog.CAT_PAUSE, "Reanudado tras $minutes min (auto)")
             Log.i(TAG, "Bot reanudado tras $minutes min")
         }
         resumeRunnable = runnable

@@ -8,6 +8,17 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.64 (Mayo 2026)
+
+### Añadido
+- **Log del bot** (pestaña lateral): registro en vivo de activación, pausas, intentos de oferta, cambios de pantalla, ráfaga, Return y clics.
+- **Estadísticas de ofertas** (pestaña lateral): botón Actualizar con ofertas por día, mejores franjas horarias, días de la semana y estaciones top (desde CSV).
+
+### Corregido
+- **Demasiados clics / captcha**: aviso flotante dibujado sobre Flex (snackbar/banner), no ventana modal — lectura desde todas las ventanas Flex + hint/stateDescription; reacción más rápida a cambios de texto en pantalla.
+
+---
+
 ## v0.1.62 (Mayo 2026)
 
 ### Actualizado

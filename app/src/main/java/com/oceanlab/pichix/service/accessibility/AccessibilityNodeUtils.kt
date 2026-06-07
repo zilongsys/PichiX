@@ -1,5 +1,6 @@
 package com.oceanlab.pichix.service.accessibility
 
+import android.os.Build
 import android.view.accessibility.AccessibilityNodeInfo
 
 object AccessibilityNodeUtils {
@@ -115,14 +116,16 @@ object AccessibilityNodeUtils {
 
     fun AccessibilityNodeInfo.getAllText(): String = getAllVisibleText()
 
-    /** Texto + contentDescription de todos los nodos (aunque la pantalla no cambie de aspecto). */
+    /**
+     * Todo el texto dibujado accesible en el árbol (incluye banners/snackbars flotantes
+     * sobre la lista, no solo ventanas modales).
+     */
     fun AccessibilityNodeInfo.getAllVisibleText(): String {
         val sb = StringBuilder()
         val seen = linkedSetOf<String>()
         withAllObtainedNodes { nodes ->
             for (n in nodes) {
-                for (raw in listOf(n.text?.toString(), n.contentDescription?.toString())) {
-                    val part = raw?.trim()?.takeIf { it.isNotEmpty() } ?: continue
+                for (part in nodeDrawnTextParts(n)) {
                     if (!seen.add(part)) continue
                     if (sb.isNotEmpty()) sb.append(' ')
                     sb.append(part)
@@ -130,5 +133,26 @@ object AccessibilityNodeUtils {
             }
         }
         return sb.toString()
+    }
+
+    private fun nodeDrawnTextParts(node: AccessibilityNodeInfo): List<String> {
+        val out = mutableListOf<String>()
+        fun add(raw: CharSequence?) {
+            val part = raw?.toString()?.trim()?.takeIf { it.isNotEmpty() } ?: return
+            out.add(part)
+        }
+        add(node.text)
+        add(node.contentDescription)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            add(node.hintText)
+            add(node.tooltipText)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            add(node.paneTitle)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            add(node.stateDescription)
+        }
+        return out
     }
 }
