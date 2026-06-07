@@ -610,6 +610,7 @@ class PichixAccessibilityService : AccessibilityService() {
         FlexState.counterScroll++
         scrollSigsBefore = reader.offerListSignature()
         pendingScrollWasDown = down
+        postObserver("Scroll ${if (down) "↓" else "↑"} (#${FlexState.counterScroll})")
         val onScrollDone: (Boolean) -> Unit = { dispatched ->
             if (!dispatched) {
                 scrollInFlight = false
@@ -741,6 +742,8 @@ class PichixAccessibilityService : AccessibilityService() {
         val category = when {
             message.contains("Ráfaga", ignoreCase = true) -> BotEventLog.CAT_BURST
             message.contains("Return", ignoreCase = true) -> BotEventLog.CAT_RETURN
+            message.contains("Scroll", ignoreCase = true) ||
+                message.contains("Fin de lista", ignoreCase = true) -> BotEventLog.CAT_SCROLL
             message.contains("Clic", ignoreCase = true) ||
                 message.contains("Refresh", ignoreCase = true) -> BotEventLog.CAT_CLICK
             message.contains("ACEPTADA", ignoreCase = true) ||

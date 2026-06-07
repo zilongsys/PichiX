@@ -8,6 +8,13 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.73 (Mayo 2026)
+
+### Añadido
+- **Log del bot — scroll del listado**: cada scroll automático en la lista de ofertas se registra (categoría SCROLL); barra de desplazamiento en el log; botones ↑ Inicio / ↓ Reciente; auto-scroll al final solo si no has subido manualmente.
+
+---
+
 ## v0.1.72 (Mayo 2026)
 
 ### Añadido

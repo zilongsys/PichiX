@@ -25,6 +25,30 @@
             android:fontFamily="monospace" />
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnBotLogScrollTop"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:text="@string/bot_log_scroll_top"
+            android:textSize="11sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnBotLogScrollBottom"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:text="@string/bot_log_scroll_bottom"
+            android:textSize="11sp" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnClearBotLog"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
@@ -44,12 +68,21 @@
         android:textSize="10sp"
         android:layout_marginBottom="8dp" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvBotLog"
+    <LinearLayout
+        style="@style/Card"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:clipToPadding="false"
-        android:paddingBottom="8dp" />
+        android:orientation="vertical">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvBotLog"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:fadeScrollbars="true"
+            android:paddingBottom="8dp"
+            android:scrollbars="vertical" />
+    </LinearLayout>
 
 </LinearLayout>

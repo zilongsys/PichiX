@@ -45,6 +45,7 @@ object BotEventLog {
     const val CAT_OFFER = "OFERTA"
     const val CAT_SCREEN = "PANTALLA"
     const val CAT_BURST = "RÁFAGA"
+    const val CAT_SCROLL = "SCROLL"
     const val CAT_RETURN = "RETURN"
     const val CAT_CLICK = "CLIC"
 

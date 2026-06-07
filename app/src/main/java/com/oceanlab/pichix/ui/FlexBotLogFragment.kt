@@ -28,6 +28,7 @@ class FlexBotLogFragment : Fragment() {
 
     private var adapter: BotLogAdapter? = null
     private var loading = false
+    private var followTail = true
     private val mainHandler = Handler(Looper.getMainLooper())
     private val reloadRunnable = Runnable { reloadLogInternal() }
     private val expandedBurstIds = mutableSetOf<Long>()
@@ -47,6 +48,15 @@ class FlexBotLogFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val rv = view.findViewById<RecyclerView>(R.id.rvBotLog)
+        rv.layoutManager = LinearLayoutManager(requireContext()).apply { stackFromEnd = true }
+        rv.isVerticalScrollBarEnabled = true
+        rv.setHasFixedSize(false)
+        rv.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                if (dy < 0) followTail = false
+                else if (!recyclerView.canScrollVertically(1)) followTail = true
+            }
+        })
         adapter = BotLogAdapter(
             isBurstExpanded = { id -> id in expandedBurstIds },
             onExpandBurst = { id ->
@@ -58,8 +68,16 @@ class FlexBotLogFragment : Fragment() {
                 adapter?.submit(latestEntries, expandedBurstIds)
             },
         )
-        rv.layoutManager = LinearLayoutManager(requireContext()).apply { stackFromEnd = true }
         rv.adapter = adapter
+
+        view.findViewById<MaterialButton>(R.id.btnBotLogScrollTop).setOnClickListener {
+            followTail = false
+            scrollLogToTop()
+        }
+        view.findViewById<MaterialButton>(R.id.btnBotLogScrollBottom).setOnClickListener {
+            followTail = true
+            scrollLogToBottom()
+        }
 
         view.findViewById<MaterialButton>(R.id.btnClearBotLog).setOnClickListener {
             BotEventLog.clear()
@@ -100,11 +118,21 @@ class FlexBotLogFragment : Fragment() {
                 .toSet())
             adapter?.submit(items, expandedBurstIds)
             val rv = view?.findViewById<RecyclerView>(R.id.rvBotLog) ?: return@loadForUi
-            rv.post {
-                val count = adapter?.itemCount ?: 0
-                if (count > 0) rv.scrollToPosition(count - 1)
+            if (followTail) {
+                rv.post { scrollLogToBottom() }
             }
         }
+    }
+
+    private fun scrollLogToTop() {
+        val rv = view?.findViewById<RecyclerView>(R.id.rvBotLog) ?: return
+        if ((adapter?.itemCount ?: 0) > 0) rv.scrollToPosition(0)
+    }
+
+    private fun scrollLogToBottom() {
+        val rv = view?.findViewById<RecyclerView>(R.id.rvBotLog) ?: return
+        val count = adapter?.itemCount ?: 0
+        if (count > 0) rv.scrollToPosition(count - 1)
     }
 
     private enum class RowKind { NORMAL, BURST_HEADER, BURST_DETAIL }

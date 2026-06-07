@@ -199,8 +199,10 @@
     </string-array>
 
     <string name="bot_log_title">Log del bot</string>
-    <string name="bot_log_hint">Actividad en tiempo real (async). RAM ~200 eventos; el resto se vuelca a archivo y libera memoria.</string>
+    <string name="bot_log_hint">Actividad en tiempo real (async). Incluye scroll del listado. RAM ~200 eventos; el resto se vuelca a archivo.</string>
     <string name="bot_log_clear">Vaciar</string>
+    <string name="bot_log_scroll_top">↑ Inicio</string>
+    <string name="bot_log_scroll_bottom">↓ Reciente</string>
 
     <string name="offer_stats_title">Estadísticas de ofertas</string>
     <string name="offer_stats_analyze">Analizar</string>
