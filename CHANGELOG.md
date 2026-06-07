@@ -8,6 +8,13 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.72 (Mayo 2026)
+
+### Añadido
+- **Log del bot — ráfaga agrupada**: mientras dura el modo ráfaga se muestra una sola línea resumen; toque para desplegar el detalle; doble toque en cualquier línea de la ráfaga para volver a comprimir.
+
+---
+
 ## v0.1.71 (Mayo 2026)
 
 ### Actualizado

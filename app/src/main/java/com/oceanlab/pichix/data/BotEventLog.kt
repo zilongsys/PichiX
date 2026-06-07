@@ -67,6 +67,13 @@ object BotEventLog {
     private val storeLock = Any()
     private val mainHandler = Handler(Looper.getMainLooper())
     private val timeFmt = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+    private const val CAT_BURST_START = "__BURST_START__"
+    private const val CAT_BURST_END = "__BURST_END__"
+    private const val CAT_BURST_CANCEL = "__BURST_CANCEL__"
+
+    private var burstSessionOpen = false
+    private val burstPendingLines = mutableListOf<Pending>()
+    private var burstStartedMs = 0L
     private var uiBroadcastScheduled = false
 
     fun init(context: Context) {
@@ -107,10 +114,23 @@ object BotEventLog {
         synchronized(storeLock) {
             hotEvents.clear()
             hotBytes = 0
+            burstSessionOpen = false
+            burstPendingLines.clear()
+            burstStartedMs = 0L
         }
         queue.clear()
         appContext?.let { sessionFile(it).writeText("") }
         broadcastUiNow()
+    }
+
+    /** Cierra una ráfaga abierta (p. ej. al parar el motor). */
+    fun cancelOpenBurst(context: Context) {
+        if (appContext == null) init(context)
+        if (!queue.offer(Pending(System.currentTimeMillis(), CAT_BURST_CANCEL, ""))) {
+            queue.poll()
+            queue.offer(Pending(System.currentTimeMillis(), CAT_BURST_CANCEL, ""))
+        }
+        startWorkerIfNeeded()
     }
 
     fun formatTime(ms: Long): String = timeFmt.format(Date(ms))
@@ -141,7 +161,111 @@ object BotEventLog {
     }
 
     private fun processOne(pending: Pending) {
-        val entry = BotEventEntry(pending.ts, pending.category, pending.message)
+        when (pending.category) {
+            CAT_BURST_START -> openBurstSession(pending)
+            CAT_BURST_END -> closeBurstSession(pending)
+            CAT_BURST_CANCEL -> finalizeBurstSession(live = false, endMessage = null)
+            else -> {
+                if (burstSessionOpen) {
+                    burstPendingLines.add(pending)
+                    upsertLiveBurstEntry()
+                    scheduleUiBroadcast()
+                    return
+                }
+                if (isBurstStartMessage(pending)) {
+                    openBurstSession(pending)
+                    return
+                }
+                if (isBurstEndMessage(pending)) {
+                    burstPendingLines.add(pending)
+                    finalizeBurstSession(live = false, endMessage = pending.message)
+                    return
+                }
+                addNormalEntry(BotEventEntry(pending.ts, pending.category, pending.message))
+            }
+        }
+    }
+
+    private fun isBurstStartMessage(pending: Pending): Boolean =
+        pending.category == CAT_BURST &&
+            pending.message.contains("iniciada", ignoreCase = true)
+
+    private fun isBurstEndMessage(pending: Pending): Boolean =
+        pending.category == CAT_BURST &&
+            pending.message.contains("finalizada", ignoreCase = true)
+
+    private fun openBurstSession(pending: Pending) {
+        finalizeBurstSession(live = false, endMessage = null)
+        burstSessionOpen = true
+        burstStartedMs = pending.ts
+        burstPendingLines.clear()
+        burstPendingLines.add(pending)
+        upsertLiveBurstEntry()
+        scheduleUiBroadcast()
+    }
+
+    private fun closeBurstSession(pending: Pending) {
+        if (!burstSessionOpen) {
+            addNormalEntry(BotEventEntry(pending.ts, pending.category, pending.message))
+            return
+        }
+        burstPendingLines.add(pending)
+        finalizeBurstSession(live = false, endMessage = pending.message)
+    }
+
+    private fun finalizeBurstSession(live: Boolean, endMessage: String?) {
+        if (!burstSessionOpen && burstPendingLines.isEmpty()) return
+        removeLiveBurstEntry()
+        if (burstPendingLines.isEmpty()) {
+            burstSessionOpen = false
+            return
+        }
+        val lines = burstPendingLines.map { BotEventEntry(it.ts, it.category, it.message) }
+        val summary = buildBurstSummary(lines, endMessage, live)
+        val group = BotEventBurstCodec.encodeGroup(burstStartedMs, summary, lines, live = live)
+        addNormalEntry(group)
+        burstSessionOpen = false
+        burstPendingLines.clear()
+        burstStartedMs = 0L
+        scheduleUiBroadcast()
+    }
+
+    private fun buildBurstSummary(
+        lines: List<BotEventEntry>,
+        endMessage: String?,
+        live: Boolean,
+    ): String {
+        val start = formatTime(burstStartedMs)
+        val end = formatTime(lines.last().timestampMs)
+        val suffix = when {
+            live -> " · en curso"
+            endMessage != null -> ""
+            else -> " · interrumpida"
+        }
+        return "Ráfaga $start–$end · ${lines.size} eventos$suffix"
+    }
+
+    private fun upsertLiveBurstEntry() {
+        val lines = burstPendingLines.map { BotEventEntry(it.ts, it.category, it.message) }
+        val summary = buildBurstSummary(lines, endMessage = null, live = true)
+        val liveEntry = BotEventBurstCodec.encodeGroup(burstStartedMs, summary, lines, live = true)
+        synchronized(storeLock) {
+            removeLiveBurstEntryLocked()
+            hotEvents.addFirst(liveEntry)
+            hotBytes += liveEntry.message.length + liveEntry.category.length + 24
+        }
+    }
+
+    private fun removeLiveBurstEntry() = synchronized(storeLock) { removeLiveBurstEntryLocked() }
+
+    private fun removeLiveBurstEntryLocked() {
+        val first = hotEvents.firstOrNull() ?: return
+        if (!BotEventBurstCodec.isLive(first)) return
+        hotEvents.removeFirst()
+        hotBytes = max(0, hotBytes - (first.message.length + first.category.length + 24))
+    }
+
+    private fun addNormalEntry(entry: BotEventEntry) {
         val toFlush = mutableListOf<BotEventEntry>()
         synchronized(storeLock) {
             hotEvents.addFirst(entry)

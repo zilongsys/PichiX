@@ -184,6 +184,7 @@ class PichixAccessibilityService : AccessibilityService() {
         scrollingDown = true
         lastScreenKind = null
         logBotRunningState(force = true)
+        BotEventLog.cancelOpenBurst(this)
     }
 
     private fun updateBurstState() {
