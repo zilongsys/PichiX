@@ -57,33 +57,31 @@ class FlexScreenReader(private val service: AccessibilityService) {
     }
 
     /**
-     * Texto dibujado en Flex: lista, detalle y avisos flotantes (snackbar/banner sobre la UI).
-     * Lee todas las ventanas del paquete Flex, no solo [activeRoot] (evita perder el banner si
-     * el foco está en el overlay de PichiX).
+     * Texto de la ventana activa (motor de clics / Refresh). Comportamiento v0.1.7–v0.1.62.
      */
-    fun readFullScreenText(): String = readFlexDrawnText()
-
-    fun readFlexDrawnText(): String {
-        val target = appPackage
-        val chunks = linkedSetOf<String>()
-
-        activeRoot()?.let { root ->
+    fun readFullScreenText(): String {
+        val root = activeRoot() ?: return ""
+        return try {
+            root.getAllVisibleText()
+        } finally {
             try {
-                if (root.packageName?.toString() == target) {
-                    root.getAllVisibleText().takeIf { it.isNotBlank() }?.let { chunks.add(it) }
-                }
-            } finally {
-                try {
-                    root.recycle()
-                } catch (_: Exception) {
-                }
+                root.recycle()
+            } catch (_: Exception) {
             }
         }
+    }
 
+    /**
+     * Texto de todas las ventanas Flex (solo pausa por banner flotante / demasiados clics).
+     * No usar en el bucle de clics Refresh — alteraba la detección de «Offers».
+     */
+    fun readFlexOverlayText(): String {
+        val target = appPackage
+        val chunks = linkedSetOf<String>()
+        readFullScreenText().takeIf { it.isNotBlank() }?.let { chunks.add(it) }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             collectDrawnTextFromFlexWindows(chunks, target)
         }
-
         return chunks.joinToString(" ")
     }
 
@@ -123,7 +121,8 @@ class FlexScreenReader(private val service: AccessibilityService) {
             blockUnavailable = lower.contains("no longer available") ||
                 lower.contains("not available") ||
                 lower.contains("unavailable"),
-            captcha = isBlockingOverlayText(lower),
+            captcha = lower.contains("captcha") || lower.contains("robot") ||
+                lower.contains("puzzle") || lower.contains("verify"),
             offerScheduled = lower.contains("scheduled") && lower.contains("offer"),
             onOffersList = isOnOffersListScreen(lower),
             onFlexHomeTabs = lower.contains("updates") && lower.contains("schedule") && !isOnOffersListScreen(lower),
@@ -158,7 +157,9 @@ class FlexScreenReader(private val service: AccessibilityService) {
     ): Boolean {
         val text = screenText ?: readFullScreenText()
         val lower = text.lowercase()
-        if (isBlockingOverlayText(lower)) {
+        if (lower.contains("captcha") || lower.contains("robot") ||
+            lower.contains("puzzle") || lower.contains("verify")
+        ) {
             return false
         }
         if (isOnOfferFlowScreen(text)) return false
@@ -180,35 +181,15 @@ class FlexScreenReader(private val service: AccessibilityService) {
 
     private fun hasViewIdInTree(suffix: String): Boolean {
         val id = resolveId(suffix) ?: return false
-        return anyFlexRoot { it.hasViewId(id) }
-    }
-
-    private fun anyFlexRoot(predicate: (AccessibilityNodeInfo) -> Boolean): Boolean {
-        val target = appPackage
-        activeRoot()?.let { root ->
+        val root = activeRoot() ?: return false
+        return try {
+            root.hasViewId(id)
+        } finally {
             try {
-                if (root.packageName?.toString() == target && predicate(root)) return true
-            } finally {
-                try {
-                    root.recycle()
-                } catch (_: Exception) {
-                }
+                root.recycle()
+            } catch (_: Exception) {
             }
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            for (window in service.windows ?: emptyList()) {
-                val root = window.root ?: continue
-                try {
-                    if (root.packageName?.toString() == target && predicate(root)) return true
-                } finally {
-                    try {
-                        root.recycle()
-                    } catch (_: Exception) {
-                    }
-                }
-            }
-        }
-        return false
     }
 
     fun readOffersFromList(): List<FlexBlockOffer> {
@@ -386,14 +367,12 @@ class FlexScreenReader(private val service: AccessibilityService) {
         }
     }
 
-    /**
-     * Filtro de pantalla para clic Refresh.
-     * El motor usa siempre Contiene + ignora mayúsculas; los toggles de Config no aplican aquí.
-     * Si el texto del tab no está en el árbol, acepta lista de ofertas por ids/texto típico.
-     */
+    /** Filtro de pantalla para clic Refresh (ventana activa). Motor: Contiene + ignora mayúsculas. */
     fun screenMatchesForClick(
         requiredScreenText: String,
         screenText: String? = null,
+        @Suppress("UNUSED_PARAMETER") matchMode: String = AppSettings.TEXT_MATCH_CONTAINS,
+        @Suppress("UNUSED_PARAMETER") ignoreCase: Boolean = true,
     ): Boolean {
         if (requiredScreenText.isBlank()) return true
         val text = screenText ?: readFullScreenText()
@@ -406,18 +385,7 @@ class FlexScreenReader(private val service: AccessibilityService) {
         ) {
             return true
         }
-        if (!isOffersScreenNeedle(requiredScreenText)) return false
-        if (isOnOffersListScreen(text)) return true
-        return hasOfferListMarkers()
-    }
-
-    private fun isOffersScreenNeedle(needle: String): Boolean {
-        val n = needle.trim().lowercase()
-        return n == "offers" ||
-            n == "offer" ||
-            n == "ofertas" ||
-            n.contains("filter offers") ||
-            n.contains("filtrar")
+        return isOnOffersListScreen(text)
     }
 
     fun clickTargetButton(
@@ -680,7 +648,7 @@ class FlexScreenReader(private val service: AccessibilityService) {
         return dispatched
     }
 
-    /** Banner flotante o texto en pantalla: captcha, demasiados clics, slow down, etc. */
+    /** Banner flotante (demasiados clics, captcha…). Solo para pausa, no para flags del grabber. */
     fun isBlockingOverlayText(lowerScreenText: String): Boolean {
         if (lowerScreenText.isBlank()) return false
         return lowerScreenText.contains("captcha") ||

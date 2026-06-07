@@ -8,6 +8,13 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.68 (Mayo 2026)
+
+### Corregido
+- **Clic Refresh / Offers**: revertido el bucle de clics a `rootInActiveWindow` (v0.1.62); lectura multi-ventana solo para pausa por banner; eliminado bloqueo del grabber por `handleBlockingScreen` y campos extra de accesibilidad que falseaban la coincidencia.
+
+---
+
 ## v0.1.67 (Mayo 2026)
 
 ### Corregido

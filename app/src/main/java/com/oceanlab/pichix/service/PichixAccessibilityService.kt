@@ -224,10 +224,7 @@ class PichixAccessibilityService : AccessibilityService() {
         burstMode: Boolean,
     ): Boolean {
         val flags = reader.detectScreenFlags(text, settings)
-        if (flags.captcha) {
-            PauseByOverClicksController.onScreenText(this, text)
-            return false
-        }
+        if (flags.captcha) return false
 
         val offers = reader.readOffersFromList()
         if (settings.debugLogEnabled && offers.isNotEmpty()) {
@@ -290,16 +287,17 @@ class PichixAccessibilityService : AccessibilityService() {
 
     private fun tryRefreshClick(screenText: String, burstMode: Boolean) {
         if (!settings.flexClickRefreshEnabled) return
-        if (PauseByOverClicksController.wouldBlockClicks(this, screenText)) return
-        if (reader.isBlockingOverlayText(screenText.lowercase())) return
-        val screenOk = reader.screenMatchesForClick(settings.flexClickScreenText, screenText)
+        val screenOk = reader.screenMatchesForClick(
+            settings.flexClickScreenText,
+            screenText,
+            settings.flexClickScreenMatchMode,
+            settings.flexClickScreenIgnoreCase,
+        )
         if (!screenOk && settings.flexClickScreenText.isNotBlank()) {
             if (!burstMode) {
-                val onList = reader.isOnOffersListScreen(screenText)
-                val snippet = screenText.replace('\n', ' ').take(100)
                 logGrabEvalThrottled(
                     "Clic omitido: pantalla no coincide con «${settings.flexClickScreenText}» " +
-                        "(lista=$onList; texto: «$snippet»)",
+                        "(lista=${reader.isOnOffersListScreen(screenText)})",
                 )
             }
             return
@@ -394,29 +392,19 @@ class PichixAccessibilityService : AccessibilityService() {
         trackScreenChange(text, flags)
 
         when {
-            flags.captcha -> postObserver("Banner flotante de bloqueo detectado (captcha / demasiados clics)")
+            flags.captcha -> postObserver("Captcha detectado")
             flags.blockUnavailable -> postObserver("Bloque no disponible en pantalla")
             flags.offerScheduled -> postObserver("Oferta programada en pantalla")
         }
 
-        if (handleBlockingScreen(text, flags)) return
-
-        maybeAutoReturnToOffers(text, flags)
-    }
-
-    /** Detiene clics si hay banner flotante de bloqueo dibujado sobre Flex. */
-    private fun handleBlockingScreen(
-        text: String,
-        flags: FlexScreenReader.ScreenFlags,
-    ): Boolean {
-        if (PauseByOverClicksController.onScreenText(this, text)) return true
-        if (!flags.captcha) return pausedAfterAccept
-        if (settings.autoPauseOnCaptcha && !pausedAfterAccept) {
+        if (flags.captcha && settings.autoPauseOnCaptcha) {
             pausedAfterAccept = true
             postBotPaused()
-            BotEventLog.log(this, BotEventLog.CAT_PAUSE, "Pausado (bloqueo en pantalla)")
         }
-        return true
+
+        PauseByOverClicksController.onScreenText(this, reader.readFlexOverlayText())
+
+        maybeAutoReturnToOffers(text, flags)
     }
 
     private var lastReturnProbeLogMs = 0L
@@ -471,10 +459,8 @@ class PichixAccessibilityService : AccessibilityService() {
         }
         scheduleWork()
         val text = reader.readFullScreenText()
-        val flags = reader.detectScreenFlags(text, settings)
-        trackScreenChange(text, flags)
-        if (handleBlockingScreen(text, flags)) return
-        maybeAutoReturnToOffers(text, flags)
+        trackScreenChange(text, reader.detectScreenFlags(text, settings))
+        maybeAutoReturnToOffers(text)
         if (returnInFlight) return
         grabInFlight = true
         try {
