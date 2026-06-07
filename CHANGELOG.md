@@ -8,6 +8,13 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.67 (Mayo 2026)
+
+### Corregido
+- **Clic Refresh / pantalla Offers**: regresión v0.1.64 — lectura une ventana activa + ventanas Flex; motor usa siempre Contiene sin mayúsculas; fallback por ids de lista de ofertas cuando el tab no aparece en el árbol.
+
+---
+
 ## v0.1.66 (Mayo 2026)
 
 ### Actualizado

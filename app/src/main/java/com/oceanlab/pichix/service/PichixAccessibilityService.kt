@@ -292,17 +292,14 @@ class PichixAccessibilityService : AccessibilityService() {
         if (!settings.flexClickRefreshEnabled) return
         if (PauseByOverClicksController.wouldBlockClicks(this, screenText)) return
         if (reader.isBlockingOverlayText(screenText.lowercase())) return
-        val screenOk = reader.screenMatchesForClick(
-            settings.flexClickScreenText,
-            screenText,
-            settings.flexClickScreenMatchMode,
-            settings.flexClickScreenIgnoreCase,
-        )
+        val screenOk = reader.screenMatchesForClick(settings.flexClickScreenText, screenText)
         if (!screenOk && settings.flexClickScreenText.isNotBlank()) {
             if (!burstMode) {
+                val onList = reader.isOnOffersListScreen(screenText)
+                val snippet = screenText.replace('\n', ' ').take(100)
                 logGrabEvalThrottled(
                     "Clic omitido: pantalla no coincide con «${settings.flexClickScreenText}» " +
-                        "(modo ${settings.flexClickScreenMatchMode})",
+                        "(lista=$onList; texto: «$snippet»)",
                 )
             }
             return

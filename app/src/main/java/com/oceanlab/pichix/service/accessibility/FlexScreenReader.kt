@@ -66,21 +66,25 @@ class FlexScreenReader(private val service: AccessibilityService) {
     fun readFlexDrawnText(): String {
         val target = appPackage
         val chunks = linkedSetOf<String>()
+
+        activeRoot()?.let { root ->
+            try {
+                if (root.packageName?.toString() == target) {
+                    root.getAllVisibleText().takeIf { it.isNotBlank() }?.let { chunks.add(it) }
+                }
+            } finally {
+                try {
+                    root.recycle()
+                } catch (_: Exception) {
+                }
+            }
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             collectDrawnTextFromFlexWindows(chunks, target)
         }
-        if (chunks.isNotEmpty()) {
-            return chunks.joinToString(" ")
-        }
-        val root = activeRoot() ?: return ""
-        return try {
-            if (root.packageName?.toString() == target) root.getAllVisibleText() else ""
-        } finally {
-            try {
-                root.recycle()
-            } catch (_: Exception) {
-            }
-        }
+
+        return chunks.joinToString(" ")
     }
 
     private fun collectDrawnTextFromFlexWindows(out: MutableSet<String>, target: String) {
@@ -176,12 +180,35 @@ class FlexScreenReader(private val service: AccessibilityService) {
 
     private fun hasViewIdInTree(suffix: String): Boolean {
         val id = resolveId(suffix) ?: return false
-        val root = activeRoot() ?: return false
-        return try {
-            root.hasViewId(id)
-        } finally {
-            try { root.recycle() } catch (_: Exception) {}
+        return anyFlexRoot { it.hasViewId(id) }
+    }
+
+    private fun anyFlexRoot(predicate: (AccessibilityNodeInfo) -> Boolean): Boolean {
+        val target = appPackage
+        activeRoot()?.let { root ->
+            try {
+                if (root.packageName?.toString() == target && predicate(root)) return true
+            } finally {
+                try {
+                    root.recycle()
+                } catch (_: Exception) {
+                }
+            }
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            for (window in service.windows ?: emptyList()) {
+                val root = window.root ?: continue
+                try {
+                    if (root.packageName?.toString() == target && predicate(root)) return true
+                } finally {
+                    try {
+                        root.recycle()
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+        }
+        return false
     }
 
     fun readOffersFromList(): List<FlexBlockOffer> {
@@ -359,16 +386,38 @@ class FlexScreenReader(private val service: AccessibilityService) {
         }
     }
 
-    /** Filtro de pantalla para el clic Refresh: vacío = siempre; si no, usa modo e ignoreCase de Config. */
+    /**
+     * Filtro de pantalla para clic Refresh.
+     * El motor usa siempre Contiene + ignora mayúsculas; los toggles de Config no aplican aquí.
+     * Si el texto del tab no está en el árbol, acepta lista de ofertas por ids/texto típico.
+     */
     fun screenMatchesForClick(
         requiredScreenText: String,
         screenText: String? = null,
-        matchMode: String = AppSettings.TEXT_MATCH_CONTAINS,
-        ignoreCase: Boolean = true,
     ): Boolean {
         if (requiredScreenText.isBlank()) return true
         val text = screenText ?: readFullScreenText()
-        return ScreenTextMatcher.matches(text, requiredScreenText, matchMode, ignoreCase)
+        if (ScreenTextMatcher.matches(
+                text,
+                requiredScreenText,
+                AppSettings.TEXT_MATCH_CONTAINS,
+                ignoreCase = true,
+            )
+        ) {
+            return true
+        }
+        if (!isOffersScreenNeedle(requiredScreenText)) return false
+        if (isOnOffersListScreen(text)) return true
+        return hasOfferListMarkers()
+    }
+
+    private fun isOffersScreenNeedle(needle: String): Boolean {
+        val n = needle.trim().lowercase()
+        return n == "offers" ||
+            n == "offer" ||
+            n == "ofertas" ||
+            n.contains("filter offers") ||
+            n.contains("filtrar")
     }
 
     fun clickTargetButton(
