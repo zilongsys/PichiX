@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,14 +19,17 @@ import com.google.android.material.button.MaterialButton
 import com.oceanlab.pichix.R
 import com.oceanlab.pichix.data.BotEventEntry
 import com.oceanlab.pichix.data.BotEventLog
-import com.oceanlab.pichix.service.PichixAccessibilityService
 
 class FlexBotLogFragment : Fragment() {
 
     private var adapter: BotLogAdapter? = null
+    private var loading = false
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val reloadRunnable = Runnable { reloadLogInternal() }
+
     private val eventReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            reloadLog()
+            scheduleReload()
         }
     }
 
@@ -42,34 +47,40 @@ class FlexBotLogFragment : Fragment() {
 
         view.findViewById<MaterialButton>(R.id.btnClearBotLog).setOnClickListener {
             BotEventLog.clear()
-            reloadLog()
+            scheduleReload()
         }
 
-        reloadLog()
+        scheduleReload()
     }
 
     override fun onStart() {
         super.onStart()
-        val filter = IntentFilter().apply {
-            addAction(BotEventLog.ACTION_EVENT)
-            addAction(PichixAccessibilityService.OBSERVER_EVENT)
-        }
         LocalBroadcastManager.getInstance(requireContext())
-            .registerReceiver(eventReceiver, filter)
+            .registerReceiver(eventReceiver, IntentFilter(BotEventLog.ACTION_EVENT))
     }
 
     override fun onStop() {
         LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(eventReceiver)
+        mainHandler.removeCallbacks(reloadRunnable)
         super.onStop()
     }
 
-    private fun reloadLog() {
-        val items = BotEventLog.snapshot()
-        adapter?.submit(items)
-        view?.findViewById<RecyclerView>(R.id.rvBotLog)?.post {
-            val count = items.size
-            if (count > 0) {
-                view?.findViewById<RecyclerView>(R.id.rvBotLog)?.scrollToPosition(count - 1)
+    private fun scheduleReload() {
+        if (!isAdded) return
+        mainHandler.removeCallbacks(reloadRunnable)
+        mainHandler.postDelayed(reloadRunnable, 150)
+    }
+
+    private fun reloadLogInternal() {
+        if (!isAdded || loading) return
+        loading = true
+        BotEventLog.loadForUi { items ->
+            loading = false
+            if (!isAdded) return@loadForUi
+            adapter?.submit(items)
+            val rv = view?.findViewById<RecyclerView>(R.id.rvBotLog) ?: return@loadForUi
+            rv.post {
+                if (items.isNotEmpty()) rv.scrollToPosition(items.size - 1)
             }
         }
     }

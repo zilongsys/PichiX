@@ -8,6 +8,13 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.71 (Mayo 2026)
+
+### Actualizado
+- **Log del bot**: encolado async sin bloquear el motor; buffer RAM (~200 eventos / ~280 KB) con volcado a `pichix_bot_events.log` al llenarse; UI con debounce y lectura en hilo de fondo.
+
+---
+
 ## v0.1.68 (Mayo 2026)
 
 ### Corregido
