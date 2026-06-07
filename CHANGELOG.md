@@ -8,6 +8,13 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.75 (Mayo 2026)
+
+### Añadido
+- **Log del bot — borrar Hoy / Todo**: botones con diálogo de confirmación (como Historial); texto descriptivo en una sola línea.
+
+---
+
 ## v0.1.73 (Mayo 2026)
 
 ### Añadido

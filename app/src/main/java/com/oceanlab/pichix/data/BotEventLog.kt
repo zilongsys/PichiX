@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat
 import java.util.ArrayDeque
 import java.util.Date
 import java.util.Locale
+import java.util.Calendar
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
@@ -115,13 +116,52 @@ object BotEventLog {
         synchronized(storeLock) {
             hotEvents.clear()
             hotBytes = 0
-            burstSessionOpen = false
-            burstPendingLines.clear()
-            burstStartedMs = 0L
+            resetBurstSessionLocked()
         }
         queue.clear()
         appContext?.let { sessionFile(it).writeText("") }
         broadcastUiNow()
+    }
+
+    /** Elimina solo los eventos del día local actual (RAM + archivo). */
+    fun clearToday() {
+        synchronized(storeLock) {
+            val kept = hotEvents.filterNot { isSameLocalDay(it.timestampMs) }
+            hotEvents.clear()
+            hotEvents.addAll(kept)
+            hotBytes = kept.sumOf { it.message.length + it.category.length + 24 }
+            if (burstSessionOpen && burstStartedMs > 0L && isSameLocalDay(burstStartedMs)) {
+                resetBurstSessionLocked()
+            }
+        }
+        appContext?.let { ctx ->
+            val file = sessionFile(ctx)
+            if (file.exists()) {
+                val keptLines = file.readLines().filter { line ->
+                    val entry = BotEventEntry.fromLine(line) ?: return@filter true
+                    !isSameLocalDay(entry.timestampMs)
+                }
+                file.writeText(
+                    if (keptLines.isEmpty()) "" else keptLines.joinToString("\n") + "\n",
+                )
+            }
+        }
+        broadcastUiNow()
+    }
+
+    private fun resetBurstSessionLocked() {
+        burstSessionOpen = false
+        burstPendingLines.clear()
+        burstStartedMs = 0L
+    }
+
+    private fun isSameLocalDay(ms: Long, refMs: Long = System.currentTimeMillis()): Boolean {
+        val cal = Calendar.getInstance()
+        fun dayKey(t: Long): Int {
+            cal.timeInMillis = t
+            return cal.get(Calendar.YEAR) * 1000 + cal.get(Calendar.DAY_OF_YEAR)
+        }
+        return dayKey(ms) == dayKey(refMs)
     }
 
     /** Cierra una ráfaga abierta (p. ej. al parar el motor). */

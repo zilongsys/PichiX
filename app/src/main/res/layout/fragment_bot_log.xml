@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="8dp">
+        android:layout_marginBottom="4dp">
 
         <TextView
             android:layout_width="0dp"
@@ -22,7 +22,9 @@
             android:textColor="@color/text_primary"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:fontFamily="monospace" />
+            android:fontFamily="monospace"
+            android:singleLine="true"
+            android:ellipsize="end" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnBotLogScrollTop"
@@ -31,10 +33,10 @@
             android:layout_height="wrap_content"
             android:minWidth="0dp"
             android:minHeight="0dp"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
             android:text="@string/bot_log_scroll_top"
-            android:textSize="11sp" />
+            android:textSize="10sp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnBotLogScrollBottom"
@@ -43,20 +45,10 @@
             android:layout_height="wrap_content"
             android:minWidth="0dp"
             android:minHeight="0dp"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
             android:text="@string/bot_log_scroll_bottom"
-            android:textSize="11sp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnClearBotLog"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/bot_log_clear"
-            android:textSize="11sp"
-            app:icon="@drawable/ic_hist_trash_today"
-            app:iconSize="16dp" />
+            android:textSize="10sp" />
     </LinearLayout>
 
     <TextView
@@ -66,6 +58,8 @@
         android:text="@string/bot_log_hint"
         android:textColor="@color/text_hint"
         android:textSize="10sp"
+        android:singleLine="true"
+        android:ellipsize="end"
         android:layout_marginBottom="8dp" />
 
     <LinearLayout
@@ -73,7 +67,8 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:layout_marginBottom="8dp">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvBotLog"
@@ -84,5 +79,43 @@
             android:paddingBottom="8dp"
             android:scrollbars="vertical" />
     </LinearLayout>
+
+    <android.widget.GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="2"
+        android:rowCount="1"
+        android:alignmentMode="alignBounds"
+        android:columnOrderPreserved="false"
+        android:useDefaultMargins="false">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnBotLogClearToday"
+            style="@style/HistorialActionButton"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/hist_action_btn_height"
+            android:layout_columnWeight="1"
+            android:layout_row="0"
+            android:layout_column="0"
+            android:layout_marginEnd="3dp"
+            android:backgroundTint="@color/hist_action_today_bg"
+            android:contentDescription="@string/bot_log_clear_today"
+            android:text="@string/bot_log_clear_today"
+            app:icon="@drawable/ic_hist_trash_today" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnBotLogClearAll"
+            style="@style/HistorialActionButton"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/hist_action_btn_height"
+            android:layout_columnWeight="1"
+            android:layout_row="0"
+            android:layout_column="1"
+            android:layout_marginStart="3dp"
+            android:backgroundTint="@color/hist_action_all_bg"
+            android:contentDescription="@string/bot_log_clear_all"
+            android:text="@string/bot_log_clear_all"
+            app:icon="@drawable/ic_hist_trash_all" />
+    </android.widget.GridLayout>
 
 </LinearLayout>

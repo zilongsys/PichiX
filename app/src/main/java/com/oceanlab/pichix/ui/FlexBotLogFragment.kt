@@ -13,6 +13,8 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.GestureDetectorCompat
 import androidx.fragment.app.Fragment
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -79,10 +81,33 @@ class FlexBotLogFragment : Fragment() {
             scrollLogToBottom()
         }
 
-        view.findViewById<MaterialButton>(R.id.btnClearBotLog).setOnClickListener {
-            BotEventLog.clear()
-            expandedBurstIds.clear()
-            scheduleReload()
+        view.findViewById<MaterialButton>(R.id.btnBotLogClearToday).setOnClickListener {
+            AlertDialog.Builder(requireContext(), R.style.SparkAlertDialogTheme)
+                .setTitle(R.string.bot_log_clear_today_title)
+                .setMessage(R.string.bot_log_clear_today_message)
+                .setPositiveButton(R.string.bot_log_clear_today) { _, _ ->
+                    BotEventLog.clearToday()
+                    expandedBurstIds.clear()
+                    followTail = true
+                    scheduleReload()
+                    Toast.makeText(requireContext(), R.string.bot_log_cleared_today, Toast.LENGTH_SHORT).show()
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        }
+        view.findViewById<MaterialButton>(R.id.btnBotLogClearAll).setOnClickListener {
+            AlertDialog.Builder(requireContext(), R.style.SparkAlertDialogTheme)
+                .setTitle(R.string.bot_log_clear_all_title)
+                .setMessage(R.string.bot_log_clear_all_message)
+                .setPositiveButton(R.string.bot_log_clear_all) { _, _ ->
+                    BotEventLog.clear()
+                    expandedBurstIds.clear()
+                    followTail = true
+                    scheduleReload()
+                    Toast.makeText(requireContext(), R.string.bot_log_cleared_all, Toast.LENGTH_SHORT).show()
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
         }
 
         scheduleReload()

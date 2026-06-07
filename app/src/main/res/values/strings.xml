@@ -199,10 +199,17 @@
     </string-array>
 
     <string name="bot_log_title">Log del bot</string>
-    <string name="bot_log_hint">Actividad en tiempo real (async). Incluye scroll del listado. RAM ~200 eventos; el resto se vuelca a archivo.</string>
-    <string name="bot_log_clear">Vaciar</string>
+    <string name="bot_log_hint">Tiempo real · scroll incluido · ~200 eventos en RAM, resto en archivo</string>
     <string name="bot_log_scroll_top">↑ Inicio</string>
     <string name="bot_log_scroll_bottom">↓ Reciente</string>
+    <string name="bot_log_clear_today">Hoy</string>
+    <string name="bot_log_clear_all">Todo</string>
+    <string name="bot_log_clear_today_title">Borrar log de hoy</string>
+    <string name="bot_log_clear_today_message">Se eliminarán todos los eventos del log registrados hoy. Los días anteriores se conservan.\n\n¿Continuar?</string>
+    <string name="bot_log_clear_all_title">Borrar todo el log</string>
+    <string name="bot_log_clear_all_message">¿Seguro? Se eliminarán todos los eventos del log del bot.</string>
+    <string name="bot_log_cleared_today">✓ Log de hoy eliminado</string>
+    <string name="bot_log_cleared_all">Log del bot borrado</string>
 
     <string name="offer_stats_title">Estadísticas de ofertas</string>
     <string name="offer_stats_analyze">Analizar</string>
