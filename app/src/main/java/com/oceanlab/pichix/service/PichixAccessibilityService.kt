@@ -189,6 +189,11 @@ class PichixAccessibilityService : AccessibilityService() {
 
     private fun updateBurstState() {
         if (!settings.flexBurstClickEnabled) {
+            if (burstActive) {
+                BotEventLog.onBurstEnd(this, "Ráfaga desactivada en ajustes")
+            } else {
+                BotEventLog.cancelOpenBurst(this)
+            }
             burstActive = false
             nextBurstAtMs = 0L
             burstEndsAtMs = 0L
@@ -203,14 +208,16 @@ class PichixAccessibilityService : AccessibilityService() {
             val burstDurationMs = settings.nextBurstDurationMs()
             burstEndsAtMs = now + burstDurationMs
             val burstSec = (burstDurationMs / 1000L).coerceAtLeast(1)
-            postObserver(
-                "Ráfaga iniciada (~${burstSec}s, cada ${settings.flexBurstClickIntervalMs}ms)",
-            )
+            val msg = "Ráfaga iniciada (~${burstSec}s, cada ${settings.flexBurstClickIntervalMs}ms)"
+            BotEventLog.onBurstStart(this, msg)
+            postObserver(msg)
         } else if (burstActive && now >= burstEndsAtMs) {
             burstActive = false
             nextBurstAtMs = now + settings.nextBurstIntervalMs()
             val mins = ((nextBurstAtMs - now) / 60_000L).coerceAtLeast(1)
-            postObserver("Ráfaga finalizada — próxima en ~$mins min")
+            val msg = "Ráfaga finalizada — próxima en ~$mins min"
+            BotEventLog.onBurstEnd(this, msg)
+            postObserver(msg)
         }
     }
 
@@ -739,6 +746,11 @@ class PichixAccessibilityService : AccessibilityService() {
     }
 
     private fun routeObserverToBotLog(message: String) {
+        if (message.contains("Ráfaga iniciada", ignoreCase = true) ||
+            message.contains("Ráfaga finalizada", ignoreCase = true)
+        ) {
+            return
+        }
         val category = when {
             message.contains("Ráfaga", ignoreCase = true) -> BotEventLog.CAT_BURST
             message.contains("Return", ignoreCase = true) -> BotEventLog.CAT_RETURN

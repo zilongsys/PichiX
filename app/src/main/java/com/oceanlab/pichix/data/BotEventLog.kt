@@ -174,6 +174,24 @@ object BotEventLog {
         startWorkerIfNeeded()
     }
 
+    fun onBurstStart(context: Context, message: String) {
+        if (appContext == null) init(context)
+        enqueueControl(CAT_BURST_START, message)
+    }
+
+    fun onBurstEnd(context: Context, message: String) {
+        if (appContext == null) init(context)
+        enqueueControl(CAT_BURST_END, message)
+    }
+
+    private fun enqueueControl(category: String, message: String) {
+        if (!queue.offer(Pending(System.currentTimeMillis(), category, message))) {
+            queue.poll()
+            queue.offer(Pending(System.currentTimeMillis(), category, message))
+        }
+        startWorkerIfNeeded()
+    }
+
     fun formatTime(ms: Long): String = timeFmt.format(Date(ms))
 
     private fun startWorkerIfNeeded() {
@@ -207,24 +225,35 @@ object BotEventLog {
             CAT_BURST_END -> closeBurstSession(pending)
             CAT_BURST_CANCEL -> finalizeBurstSession(live = false, endMessage = null)
             else -> {
-                if (burstSessionOpen) {
+                if (burstSessionOpen && isBurstEndMessage(pending)) {
                     burstPendingLines.add(pending)
-                    upsertLiveBurstEntry()
-                    scheduleUiBroadcast()
+                    finalizeBurstSession(live = false, endMessage = pending.message)
                     return
                 }
                 if (isBurstStartMessage(pending)) {
                     openBurstSession(pending)
                     return
                 }
-                if (isBurstEndMessage(pending)) {
+                if (burstSessionOpen && shouldIncludeInBurst(pending)) {
                     burstPendingLines.add(pending)
-                    finalizeBurstSession(live = false, endMessage = pending.message)
+                    upsertLiveBurstEntry()
+                    scheduleUiBroadcast()
                     return
+                }
+                if (burstSessionOpen) {
+                    finalizeBurstSession(live = false, endMessage = null)
                 }
                 addNormalEntry(BotEventEntry(pending.ts, pending.category, pending.message))
             }
         }
+    }
+
+    private fun shouldIncludeInBurst(pending: Pending): Boolean {
+        if (pending.category == CAT_BURST) return true
+        val message = pending.message
+        return message.startsWith("Ráfaga") ||
+            message.contains("Ráfaga →") ||
+            message.contains("Ráfaga:")
     }
 
     private fun isBurstStartMessage(pending: Pending): Boolean =
@@ -240,18 +269,26 @@ object BotEventLog {
         burstSessionOpen = true
         burstStartedMs = pending.ts
         burstPendingLines.clear()
-        burstPendingLines.add(pending)
+        if (pending.message.isNotBlank()) {
+            burstPendingLines.add(
+                Pending(pending.ts, CAT_BURST, pending.message),
+            )
+        }
         upsertLiveBurstEntry()
         scheduleUiBroadcast()
     }
 
     private fun closeBurstSession(pending: Pending) {
         if (!burstSessionOpen) {
-            addNormalEntry(BotEventEntry(pending.ts, pending.category, pending.message))
+            if (pending.message.isNotBlank()) {
+                addNormalEntry(BotEventEntry(pending.ts, CAT_BURST, pending.message))
+            }
             return
         }
-        burstPendingLines.add(pending)
-        finalizeBurstSession(live = false, endMessage = pending.message)
+        if (pending.message.isNotBlank()) {
+            burstPendingLines.add(Pending(pending.ts, CAT_BURST, pending.message))
+        }
+        finalizeBurstSession(live = false, endMessage = pending.message.ifBlank { null })
     }
 
     private fun finalizeBurstSession(live: Boolean, endMessage: String?) {

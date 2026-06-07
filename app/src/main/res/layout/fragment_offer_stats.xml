@@ -79,6 +79,58 @@
             android:fontFamily="monospace"
             android:layout_marginBottom="8dp" />
 
+        <android.widget.GridLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:columnCount="3"
+            android:rowCount="1"
+            android:alignmentMode="alignBounds"
+            android:layout_marginBottom="8dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStatsExportAll"
+                style="@style/HistorialActionButton"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/hist_action_btn_height"
+                android:layout_columnWeight="1"
+                android:layout_row="0"
+                android:layout_column="0"
+                android:layout_marginEnd="3dp"
+                android:backgroundTint="@color/hist_action_csv_bg"
+                android:text="@string/offer_stats_export_all"
+                android:textSize="10sp"
+                app:icon="@drawable/ic_hist_csv" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStatsClearToday"
+                style="@style/HistorialActionButton"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/hist_action_btn_height"
+                android:layout_columnWeight="1"
+                android:layout_row="0"
+                android:layout_column="1"
+                android:layout_marginStart="3dp"
+                android:layout_marginEnd="3dp"
+                android:backgroundTint="@color/hist_action_today_bg"
+                android:text="@string/offer_stats_clear_today"
+                android:textSize="10sp"
+                app:icon="@drawable/ic_hist_trash_today" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStatsClearAll"
+                style="@style/HistorialActionButton"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/hist_action_btn_height"
+                android:layout_columnWeight="1"
+                android:layout_row="0"
+                android:layout_column="2"
+                android:layout_marginStart="3dp"
+                android:backgroundTint="@color/hist_action_all_bg"
+                android:text="@string/offer_stats_clear_all"
+                android:textSize="10sp"
+                app:icon="@drawable/ic_hist_trash_all" />
+        </android.widget.GridLayout>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -187,6 +239,28 @@
 
         <TextView
             android:id="@+id/tvOfferStatsWeekday"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/stat_card"
+            android:padding="10dp"
+            android:text="—"
+            android:textColor="@color/text_primary"
+            android:textSize="10sp"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="10dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/offer_stats_rate_header"
+            android:textColor="@color/accent_teal"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tvOfferStatsRates"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/stat_card"

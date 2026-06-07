@@ -39,6 +39,15 @@ object OfferStatsAnalyzer {
         val maxRate: Double,
     )
 
+    data class RateBucket(
+        val roundedRate: Int,
+        val count: Int,
+        val avgRate: Double,
+        val maxRate: Double,
+    ) {
+        val label: String get() = HourlyRateRound.label(roundedRate.toDouble())
+    }
+
     data class Report(
         val totalRaw: Int,
         val countedOffers: Int,
@@ -53,6 +62,7 @@ object OfferStatsAnalyzer {
         val hourly: List<HourBucket>,
         val weekdays: List<WeekdayBucket>,
         val topStations: List<StationBucket>,
+        val rateBuckets: List<RateBucket>,
     )
 
     data class DateFilter(
@@ -83,6 +93,7 @@ object OfferStatsAnalyzer {
                 hourly = emptyList(),
                 weekdays = emptyList(),
                 topStations = emptyList(),
+                rateBuckets = emptyList(),
             )
         }
 
@@ -131,6 +142,18 @@ object OfferStatsAnalyzer {
             .sortedWith(compareByDescending<StationBucket> { it.count }.thenByDescending { it.avgRate })
             .take(12)
 
+        val rateMap = linkedMapOf<Int, MutableList<OfferLogEntry>>()
+        relevant.forEach { entry ->
+            val key = HourlyRateRound.rounded(entry.hourlyRate)
+            if (key <= 0) return@forEach
+            rateMap.getOrPut(key) { mutableListOf() }.add(entry)
+        }
+        val rateBuckets = rateMap.entries
+            .map { (rate, list) ->
+                RateBucket(rate, list.size, avgRate(list), maxRate(list))
+            }
+            .sortedByDescending { it.roundedRate }
+
         val dates = daily.map { it.date }
         return Report(
             totalRaw = entries.size,
@@ -146,6 +169,7 @@ object OfferStatsAnalyzer {
             hourly = hourly,
             weekdays = weekdays.filter { it.count > 0 },
             topStations = topStations,
+            rateBuckets = rateBuckets,
         )
     }
 

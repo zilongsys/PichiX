@@ -234,4 +234,26 @@
     <string name="offer_stats_hourly_header">Mejores franjas horarias</string>
     <string name="offer_stats_weekday_header">Por día de la semana</string>
     <string name="offer_stats_stations_header">Estaciones con más ofertas</string>
+    <string name="offer_stats_rate_header">Ofertas por $/h (redondeado)</string>
+    <string name="offer_stats_export_all">Exportar</string>
+    <string name="offer_stats_clear_today">Hoy</string>
+    <string name="offer_stats_clear_all">Todo</string>
+    <string name="offer_stats_clear_today_title">Borrar historial de hoy</string>
+    <string name="offer_stats_clear_today_message">Se eliminarán todas las ofertas registradas hoy. Los días anteriores se conservan.\n\n¿Continuar?</string>
+    <string name="offer_stats_clear_all_title">Borrar todo el historial</string>
+    <string name="offer_stats_clear_all_message">¿Seguro? Se eliminarán todos los registros de ofertas.</string>
+    <string name="offer_stats_cleared_today">✓ Datos de hoy eliminados</string>
+    <string name="offer_stats_cleared_all">Historial borrado</string>
+    <string name="offer_stats_no_csv">Sin registros CSV aún</string>
+    <string name="bot_log_filter_all">Todos</string>
+    <string name="bot_log_filter_bot">Bot</string>
+    <string name="bot_log_filter_burst">Ráfaga</string>
+    <string name="bot_log_filter_click">Clic</string>
+    <string name="bot_log_filter_scroll">Scroll</string>
+    <string name="bot_log_filter_offer">Oferta</string>
+    <string name="bot_log_filter_screen">Pantalla</string>
+    <string name="bot_log_filter_return">Return</string>
+    <string name="bot_log_filter_pause">Pausa</string>
+    <string name="bot_log_load_more">Cargar más antiguos</string>
+    <string name="bot_log_page_info">Mostrando %1$d de %2$d eventos</string>
 </resources>

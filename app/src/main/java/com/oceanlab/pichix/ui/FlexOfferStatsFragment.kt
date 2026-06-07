@@ -1,10 +1,21 @@
 package com.oceanlab.pichix.ui
 
+import android.content.Intent
+import android.content.res.ColorStateList
+import android.net.Uri
 import android.os.Bundle
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+import android.text.style.StyleSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.google.android.material.button.MaterialButton
@@ -12,8 +23,11 @@ import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.datepicker.CalendarConstraints
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.oceanlab.pichix.R
+import com.oceanlab.pichix.data.HourlyRateRound
 import com.oceanlab.pichix.data.OfferLogCsvStore
+import com.oceanlab.pichix.data.OfferLogger
 import com.oceanlab.pichix.data.OfferStatsAnalyzer
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -31,9 +45,11 @@ class FlexOfferStatsFragment : Fragment() {
     private lateinit var tvHourly: TextView
     private lateinit var tvWeekdayHeader: TextView
     private lateinit var tvWeekday: TextView
+    private lateinit var tvRates: TextView
     private lateinit var tvStations: TextView
     private lateinit var btnPickDate: MaterialButton
     private lateinit var toggleRange: MaterialButtonToggleGroup
+    private lateinit var logger: OfferLogger
 
     private var rangeMode = RangeMode.ALL
     private var filterFrom: String? = null
@@ -49,6 +65,7 @@ class FlexOfferStatsFragment : Fragment() {
     ): View = inflater.inflate(R.layout.fragment_offer_stats, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        logger = OfferLogger(requireContext())
         tvSummary = view.findViewById(R.id.tvOfferStatsSummary)
         tvRangeLabel = view.findViewById(R.id.tvOfferStatsRangeLabel)
         tvDailyHeader = view.findViewById(R.id.tvOfferStatsDailyHeader)
@@ -56,6 +73,7 @@ class FlexOfferStatsFragment : Fragment() {
         tvHourly = view.findViewById(R.id.tvOfferStatsHourly)
         tvWeekdayHeader = view.findViewById(R.id.tvOfferStatsWeekdayHeader)
         tvWeekday = view.findViewById(R.id.tvOfferStatsWeekday)
+        tvRates = view.findViewById(R.id.tvOfferStatsRates)
         tvStations = view.findViewById(R.id.tvOfferStatsStations)
         btnPickDate = view.findViewById(R.id.btnPickOfferStatsDate)
         toggleRange = view.findViewById(R.id.toggleOfferStatsRange)
@@ -75,8 +93,11 @@ class FlexOfferStatsFragment : Fragment() {
                 filterFrom = today
                 filterTo = today
             }
+            styleRangeToggle(checkedId)
             updateRangeUi()
         }
+
+        styleRangeToggle(R.id.btnStatsRangeAll)
 
         btnPickDate.setOnClickListener {
             when (rangeMode) {
@@ -89,8 +110,56 @@ class FlexOfferStatsFragment : Fragment() {
         view.findViewById<MaterialButton>(R.id.btnRefreshOfferStats).setOnClickListener {
             refreshStats()
         }
+        view.findViewById<MaterialButton>(R.id.btnStatsExportAll).setOnClickListener {
+            shareCsvFile(logger.getLogFilePath())
+        }
+        view.findViewById<MaterialButton>(R.id.btnStatsClearToday).setOnClickListener {
+            AlertDialog.Builder(requireContext(), R.style.SparkAlertDialogTheme)
+                .setTitle(R.string.offer_stats_clear_today_title)
+                .setMessage(R.string.offer_stats_clear_today_message)
+                .setPositiveButton(R.string.offer_stats_clear_today) { _, _ ->
+                    logger.resetToday()
+                    refreshStats()
+                    Toast.makeText(requireContext(), R.string.offer_stats_cleared_today, Toast.LENGTH_SHORT).show()
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        }
+        view.findViewById<MaterialButton>(R.id.btnStatsClearAll).setOnClickListener {
+            AlertDialog.Builder(requireContext(), R.style.SparkAlertDialogTheme)
+                .setTitle(R.string.offer_stats_clear_all_title)
+                .setMessage(R.string.offer_stats_clear_all_message)
+                .setPositiveButton(R.string.offer_stats_clear_all) { _, _ ->
+                    logger.clearHistory()
+                    refreshStats()
+                    Toast.makeText(requireContext(), R.string.offer_stats_cleared_all, Toast.LENGTH_SHORT).show()
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        }
 
         updateRangeUi()
+    }
+
+    private fun styleRangeToggle(checkedId: Int) {
+        val ctx = requireContext()
+        val activeBg = ContextCompat.getColor(ctx, R.color.tab_active_bg)
+        val activeText = ContextCompat.getColor(ctx, R.color.white)
+        val inactiveBg = ContextCompat.getColor(ctx, R.color.white)
+        val inactiveText = ContextCompat.getColor(ctx, R.color.text_primary)
+        val activeStroke = ContextCompat.getColor(ctx, R.color.accent_teal_dark)
+        val inactiveStroke = ContextCompat.getColor(ctx, R.color.border_subtle)
+        listOf(
+            R.id.btnStatsRangeAll,
+            R.id.btnStatsRangeDay,
+            R.id.btnStatsRangePeriod,
+        ).forEach { id ->
+            val btn = view?.findViewById<MaterialButton>(id) ?: return@forEach
+            val selected = id == checkedId
+            btn.backgroundTintList = ColorStateList.valueOf(if (selected) activeBg else inactiveBg)
+            btn.setTextColor(if (selected) activeText else inactiveText)
+            btn.strokeColor = ColorStateList.valueOf(if (selected) activeStroke else inactiveStroke)
+        }
     }
 
     private fun updateRangeUi() {
@@ -228,30 +297,91 @@ class FlexOfferStatsFragment : Fragment() {
             )
         }
 
+        val globalMax = listOf(
+            report.daily.maxOfOrNull { it.maxRate } ?: 0.0,
+            report.hourly.maxOfOrNull { it.maxRate } ?: 0.0,
+            report.weekdays.maxOfOrNull { it.maxRate } ?: 0.0,
+            report.topStations.maxOfOrNull { it.maxRate } ?: 0.0,
+            report.rateBuckets.maxOfOrNull { it.maxRate } ?: 0.0,
+        ).maxOrNull() ?: 0.0
+
         if (rangeMode == RangeMode.SINGLE_DAY && bestDay != null) {
-            tvDaily.text =
-                "${bestDay.count} ofertas  ✓${bestDay.accepted}  " +
-                    "avg ${fmtRate(bestDay.avgRate)}  max ${fmtRate(bestDay.maxRate)}"
+            tvDaily.text = formatBucketLine(
+                label = bestDay.date,
+                count = bestDay.count,
+                avg = bestDay.avgRate,
+                max = bestDay.maxRate,
+                globalMaxMax = globalMax,
+            )
         } else {
             tvDaily.text = report.daily.joinToString("\n") { day ->
-                "${day.date}  ${day.count} ofertas  ✓${day.accepted}  " +
-                    "avg ${fmtRate(day.avgRate)}  max ${fmtRate(day.maxRate)}"
+                formatBucketLine(day.date, day.count, day.avgRate, day.maxRate, globalMax)
             }.ifBlank { "—" }
         }
 
         tvHourly.text = report.hourly
             .filter { it.count > 0 }
             .joinToString("\n") { hour ->
-                "${hour.label}  ${hour.count} ofertas  avg ${fmtRate(hour.avgRate)}  max ${fmtRate(hour.maxRate)}"
+                formatBucketLine(hour.label, hour.count, hour.avgRate, hour.maxRate, globalMax)
             }.ifBlank { "—" }
 
         tvWeekday.text = report.weekdays.joinToString("\n") { wd ->
-            "${wd.weekdayName}  ${wd.count} ofertas  avg ${fmtRate(wd.avgRate)}  max ${fmtRate(wd.maxRate)}"
+            formatBucketLine(wd.weekdayName, wd.count, wd.avgRate, wd.maxRate, globalMax)
+        }.ifBlank { "—" }
+
+        tvRates.text = report.rateBuckets.joinToString("\n") { bucket ->
+            formatBucketLine(
+                label = HourlyRateRound.label(bucket.roundedRate.toDouble()),
+                count = bucket.count,
+                avg = bucket.avgRate,
+                max = bucket.maxRate,
+                globalMaxMax = globalMax,
+            )
         }.ifBlank { "—" }
 
         tvStations.text = report.topStations.joinToString("\n") { st ->
-            "${st.station.take(28)}  ${st.count}×  avg ${fmtRate(st.avgRate)}  max ${fmtRate(st.maxRate)}"
+            formatBucketLine(
+                label = st.station.take(28),
+                count = st.count,
+                avg = st.avgRate,
+                max = st.maxRate,
+                globalMaxMax = globalMax,
+                countSuffix = "×",
+            )
         }.ifBlank { "—" }
+    }
+
+    private fun formatBucketLine(
+        label: String,
+        count: Int,
+        avg: Double,
+        max: Double,
+        globalMaxMax: Double,
+        countSuffix: String = "ofertas",
+    ): CharSequence {
+        val ss = SpannableStringBuilder()
+        val labelEnd = label.length
+        ss.append(label)
+        ss.setSpan(StyleSpan(android.graphics.Typeface.BOLD), 0, labelEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        ss.append("  $count $countSuffix  avg ${fmtRate(avg)}  max ")
+        val maxStart = ss.length
+        val maxText = fmtRate(max)
+        ss.append(maxText)
+        ss.setSpan(
+            StyleSpan(android.graphics.Typeface.BOLD),
+            maxStart,
+            ss.length,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+        )
+        if (max > 0.0 && max >= globalMaxMax) {
+            ss.setSpan(
+                ForegroundColorSpan(ContextCompat.getColor(requireContext(), R.color.green_400)),
+                maxStart,
+                ss.length,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+            )
+        }
+        return ss
     }
 
     private fun filterSummaryLine(report: OfferStatsAnalyzer.Report): String =
@@ -274,7 +404,35 @@ class FlexOfferStatsFragment : Fragment() {
         tvDaily.text = "—"
         tvHourly.text = "—"
         tvWeekday.text = "—"
+        tvRates.text = "—"
         tvStations.text = "—"
+    }
+
+    private fun shareCsvFile(path: String) {
+        try {
+            val file = File(path)
+            if (!file.exists()) {
+                Toast.makeText(requireContext(), R.string.offer_stats_no_csv, Toast.LENGTH_SHORT).show()
+                return
+            }
+            val uri = FileProvider.getUriForFile(
+                requireContext(),
+                "${requireContext().packageName}.fileprovider",
+                file,
+            )
+            startActivity(
+                Intent.createChooser(
+                    Intent(Intent.ACTION_SEND).apply {
+                        type = "text/csv"
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    },
+                    getString(R.string.offer_stats_export_all),
+                ),
+            )
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), e.message ?: "Error", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun dayStringToUtcMillis(day: String): Long {

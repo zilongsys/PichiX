@@ -11,6 +11,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.oceanlab.pichix.R
+import com.oceanlab.pichix.data.HourlyRateRound
 import com.oceanlab.pichix.data.OfferLogCsvStore
 import com.oceanlab.pichix.data.OfferLogEntry
 import com.oceanlab.pichix.data.OfferLogger
@@ -35,9 +36,11 @@ class DayLogActivity : AppCompatActivity() {
     private lateinit var filterBar: GridLayout
     private lateinit var allFilterCard: FilterCard
     private lateinit var stationFilterCard: FilterCard
+    private lateinit var rateFilterCard: FilterCard
     private val filterCards = mutableMapOf<OfferStatus, FilterCard>()
     private val activeStatusFilters = OfferStatus.values().toMutableSet()
     private val activeStationFilters = mutableSetOf<String>()
+    private val activeRateFilters = mutableSetOf<Int>()
     private var manualStationFilter: String = ""
     private var allEntries: List<OfferLogEntry> = emptyList()
 
@@ -153,7 +156,7 @@ class DayLogActivity : AppCompatActivity() {
 
         filterBar = GridLayout(this).apply {
             columnCount = 4
-            rowCount = 2
+            rowCount = 3
             alignmentMode = GridLayout.ALIGN_BOUNDS
             setColumnOrderPreserved(false)
             useDefaultMargins = false
@@ -165,6 +168,7 @@ class DayLogActivity : AppCompatActivity() {
             activeStatusFilters.addAll(OfferStatus.values())
             activeStationFilters.clear()
             manualStationFilter = ""
+            activeRateFilters.clear()
             updateFilterButtons()
             updateList()
         }
@@ -180,10 +184,18 @@ class DayLogActivity : AppCompatActivity() {
             filterCards[filter.status] = card
             filterBar.addView(card.container)
         }
-        stationFilterCard = createFilterCard("📍", "Filtrar por estación", R.color.accent_teal) {
+        stationFilterCard = createFilterCard("📍", "Estación", R.color.accent_teal) {
             showStationFilterDialog()
         }
         filterBar.addView(stationFilterCard.container)
+        rateFilterCard = createFilterCard("💲", "$/h", R.color.accent_teal) {
+            showRateFilterDialog()
+        }
+        rateFilterCard.container.layoutParams = (rateFilterCard.container.layoutParams as GridLayout.LayoutParams).apply {
+            rowSpec = GridLayout.spec(2, 1f)
+            columnSpec = GridLayout.spec(0, 4, 1f)
+        }
+        filterBar.addView(rateFilterCard.container)
         root.addView(filterBar)
 
         rv = RecyclerView(this).apply {
@@ -269,7 +281,7 @@ class DayLogActivity : AppCompatActivity() {
         }
 
         allFilterCard.count.text = allEntries.size.toString()
-        style(allFilterCard, allActive && !isStationFilterActive())
+        style(allFilterCard, allActive && !isStationFilterActive() && !isRateFilterActive())
         statusFilters.forEach { filter ->
             filterCards[filter.status]?.let { card ->
                 card.count.text = (counts[filter.status] ?: 0).toString()
@@ -283,9 +295,13 @@ class DayLogActivity : AppCompatActivity() {
         }
         stationFilterCard.count.text = stationCount.toString()
         style(stationFilterCard, isStationFilterActive())
+        val rateCount = if (isRateFilterActive()) activeRateFilters.size else availableRates().size
+        rateFilterCard.count.text = rateCount.toString()
+        style(rateFilterCard, isRateFilterActive())
     }
 
     private fun loadDay(date: String) {
+        currentDate = date
         allEntries = parseEntriesForDate(date)
         val accepted = allEntries.filter { it.status == OfferStatus.ACCEPTED }
         val totalEarned = accepted.sumOf { it.price }
@@ -298,7 +314,11 @@ class DayLogActivity : AppCompatActivity() {
     }
 
     private fun updateList() {
-        val displayed = allEntries.filter { it.status in activeStatusFilters && matchesStationFilter(it) }
+        val displayed = allEntries.filter {
+            it.status in activeStatusFilters &&
+                matchesStationFilter(it) &&
+                matchesRateFilter(it)
+        }
         rv.adapter = DayLogAdapter(displayed) { entry -> confirmStatusChange(entry) }
     }
 
@@ -318,6 +338,75 @@ class DayLogActivity : AppCompatActivity() {
         val manual = manualStationFilter.trim()
         val manualMatch = manual.isNotBlank() && station.contains(manual, ignoreCase = true)
         return selectedMatch || manualMatch
+    }
+
+    private fun availableRates(): List<Int> =
+        allEntries.map { HourlyRateRound.rounded(it.hourlyRate) }
+            .filter { it > 0 }
+            .distinct()
+            .sortedDescending()
+
+    private fun isRateFilterActive(): Boolean = activeRateFilters.isNotEmpty()
+
+    private fun matchesRateFilter(entry: OfferLogEntry): Boolean {
+        if (!isRateFilterActive()) return true
+        val rate = HourlyRateRound.rounded(entry.hourlyRate)
+        return rate in activeRateFilters
+    }
+
+    private fun showRateFilterDialog() {
+        val rates = availableRates()
+        val checks = mutableListOf<Pair<Int, CheckBox>>()
+        val listContainer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        rates.forEach { rate ->
+            val check = CheckBox(this).apply {
+                text = HourlyRateRound.label(rate.toDouble())
+                isChecked = rate in activeRateFilters
+            }
+            checks += rate to check
+            listContainer.addView(check)
+        }
+        val dialogView = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(8), dp(20), dp(4))
+            addView(TextView(this@DayLogActivity).apply {
+                text = "Precio por hora redondeado (20.50 → $20/h). Selecciona uno o más."
+                textSize = 13f
+                setTextColor(ContextCompat.getColor(this@DayLogActivity, R.color.text_secondary))
+            })
+            addView(
+                if (rates.isEmpty()) {
+                    TextView(this@DayLogActivity).apply {
+                        text = "Sin tarifas en este día."
+                        textSize = 13f
+                    }
+                } else {
+                    ScrollView(this@DayLogActivity).apply {
+                        addView(listContainer)
+                        layoutParams = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            dp(260),
+                        )
+                    }
+                },
+            )
+        }
+        AlertDialog.Builder(this, R.style.SparkAlertDialogTheme)
+            .setTitle("Filtrar por $/h")
+            .setView(dialogView)
+            .setNeutralButton("Limpiar") { _, _ ->
+                activeRateFilters.clear()
+                updateFilterButtons()
+                updateList()
+            }
+            .setPositiveButton("Aplicar") { _, _ ->
+                activeRateFilters.clear()
+                activeRateFilters.addAll(checks.filter { it.second.isChecked }.map { it.first })
+                updateFilterButtons()
+                updateList()
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
     }
 
     private fun showStationFilterDialog() {

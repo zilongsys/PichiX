@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -15,12 +16,15 @@ import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.core.view.GestureDetectorCompat
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.button.MaterialButtonToggleGroup
 import com.oceanlab.pichix.R
 import com.oceanlab.pichix.data.BotEventBurstCodec
 import com.oceanlab.pichix.data.BotEventEntry
@@ -28,13 +32,35 @@ import com.oceanlab.pichix.data.BotEventLog
 
 class FlexBotLogFragment : Fragment() {
 
+    private companion object {
+        const val PAGE_SIZE = 200
+        const val FILTER_ALL = "__ALL__"
+    }
+
     private var adapter: BotLogAdapter? = null
     private var loading = false
     private var followTail = true
+    private var visibleLimit = PAGE_SIZE
+    private var activeCategory: String = FILTER_ALL
     private val mainHandler = Handler(Looper.getMainLooper())
     private val reloadRunnable = Runnable { reloadLogInternal() }
     private val expandedBurstIds = mutableSetOf<Long>()
     private var latestEntries = emptyList<BotEventEntry>()
+    private lateinit var toggleCategory: MaterialButtonToggleGroup
+    private lateinit var tvPageInfo: TextView
+    private lateinit var btnLoadMore: MaterialButton
+
+    private val categoryFilters = listOf(
+        FILTER_ALL to R.string.bot_log_filter_all,
+        BotEventLog.CAT_BOT to R.string.bot_log_filter_bot,
+        BotEventLog.CAT_BURST to R.string.bot_log_filter_burst,
+        BotEventLog.CAT_CLICK to R.string.bot_log_filter_click,
+        BotEventLog.CAT_SCROLL to R.string.bot_log_filter_scroll,
+        BotEventLog.CAT_OFFER to R.string.bot_log_filter_offer,
+        BotEventLog.CAT_SCREEN to R.string.bot_log_filter_screen,
+        BotEventLog.CAT_RETURN to R.string.bot_log_filter_return,
+        BotEventLog.CAT_PAUSE to R.string.bot_log_filter_pause,
+    )
 
     private val eventReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -49,6 +75,11 @@ class FlexBotLogFragment : Fragment() {
     ): View = inflater.inflate(R.layout.fragment_bot_log, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        toggleCategory = view.findViewById(R.id.toggleBotLogCategory)
+        tvPageInfo = view.findViewById(R.id.tvBotLogPageInfo)
+        btnLoadMore = view.findViewById(R.id.btnBotLogLoadMore)
+        setupCategoryFilters()
+
         val rv = view.findViewById<RecyclerView>(R.id.rvBotLog)
         rv.layoutManager = LinearLayoutManager(requireContext()).apply { stackFromEnd = true }
         rv.isVerticalScrollBarEnabled = true
@@ -63,11 +94,11 @@ class FlexBotLogFragment : Fragment() {
             isBurstExpanded = { id -> id in expandedBurstIds },
             onExpandBurst = { id ->
                 expandedBurstIds.add(id)
-                adapter?.submit(latestEntries, expandedBurstIds)
+                refreshAdapter()
             },
             onCollapseBurst = { id ->
                 expandedBurstIds.remove(id)
-                adapter?.submit(latestEntries, expandedBurstIds)
+                refreshAdapter()
             },
         )
         rv.adapter = adapter
@@ -80,6 +111,10 @@ class FlexBotLogFragment : Fragment() {
             followTail = true
             scrollLogToBottom()
         }
+        btnLoadMore.setOnClickListener {
+            visibleLimit += PAGE_SIZE
+            refreshAdapter()
+        }
 
         view.findViewById<MaterialButton>(R.id.btnBotLogClearToday).setOnClickListener {
             AlertDialog.Builder(requireContext(), R.style.SparkAlertDialogTheme)
@@ -88,6 +123,7 @@ class FlexBotLogFragment : Fragment() {
                 .setPositiveButton(R.string.bot_log_clear_today) { _, _ ->
                     BotEventLog.clearToday()
                     expandedBurstIds.clear()
+                    visibleLimit = PAGE_SIZE
                     followTail = true
                     scheduleReload()
                     Toast.makeText(requireContext(), R.string.bot_log_cleared_today, Toast.LENGTH_SHORT).show()
@@ -102,6 +138,7 @@ class FlexBotLogFragment : Fragment() {
                 .setPositiveButton(R.string.bot_log_clear_all) { _, _ ->
                     BotEventLog.clear()
                     expandedBurstIds.clear()
+                    visibleLimit = PAGE_SIZE
                     followTail = true
                     scheduleReload()
                     Toast.makeText(requireContext(), R.string.bot_log_cleared_all, Toast.LENGTH_SHORT).show()
@@ -111,6 +148,51 @@ class FlexBotLogFragment : Fragment() {
         }
 
         scheduleReload()
+    }
+
+    private fun setupCategoryFilters() {
+        val ctx = requireContext()
+        categoryFilters.forEachIndexed { index, (category, labelRes) ->
+            val btn = MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                id = View.generateViewId()
+                text = getString(labelRes)
+                textSize = 10f
+                minHeight = 0
+                minimumHeight = 0
+                insetTop = 0
+                insetBottom = 0
+                tag = category
+                isChecked = index == 0
+            }
+            toggleCategory.addView(btn)
+        }
+        toggleCategory.addOnButtonCheckedListener { group, checkedId, isChecked ->
+            if (!isChecked) return@addOnButtonCheckedListener
+            val btn = group.findViewById<MaterialButton>(checkedId)
+            activeCategory = btn?.tag as? String ?: FILTER_ALL
+            visibleLimit = PAGE_SIZE
+            styleCategoryToggle(checkedId)
+            refreshAdapter()
+        }
+        toggleCategory.check(toggleCategory.getChildAt(0).id)
+        styleCategoryToggle(toggleCategory.getChildAt(0).id)
+    }
+
+    private fun styleCategoryToggle(checkedId: Int) {
+        val ctx = requireContext()
+        val activeBg = ContextCompat.getColor(ctx, R.color.tab_active_bg)
+        val activeText = ContextCompat.getColor(ctx, R.color.white)
+        val inactiveBg = ContextCompat.getColor(ctx, R.color.white)
+        val inactiveText = ContextCompat.getColor(ctx, R.color.text_primary)
+        val activeStroke = ContextCompat.getColor(ctx, R.color.accent_teal_dark)
+        val inactiveStroke = ContextCompat.getColor(ctx, R.color.border_subtle)
+        for (i in 0 until toggleCategory.childCount) {
+            val btn = toggleCategory.getChildAt(i) as MaterialButton
+            val selected = btn.id == checkedId
+            btn.backgroundTintList = ColorStateList.valueOf(if (selected) activeBg else inactiveBg)
+            btn.setTextColor(if (selected) activeText else inactiveText)
+            btn.strokeColor = ColorStateList.valueOf(if (selected) activeStroke else inactiveStroke)
+        }
     }
 
     override fun onStart() {
@@ -141,11 +223,44 @@ class FlexBotLogFragment : Fragment() {
             expandedBurstIds.retainAll(items.filter { BotEventBurstCodec.isBurstBundle(it) }
                 .map { BotEventBurstCodec.burstId(it) }
                 .toSet())
-            adapter?.submit(items, expandedBurstIds)
+            refreshAdapter()
             val rv = view?.findViewById<RecyclerView>(R.id.rvBotLog) ?: return@loadForUi
             if (followTail) {
                 rv.post { scrollLogToBottom() }
             }
+        }
+    }
+
+    private fun filteredEntries(): List<BotEventEntry> {
+        val filtered = if (activeCategory == FILTER_ALL) {
+            latestEntries
+        } else {
+            latestEntries.filter { entry ->
+                entry.category == activeCategory ||
+                    (activeCategory == BotEventLog.CAT_BURST && BotEventBurstCodec.isBurstBundle(entry))
+            }
+        }
+        return filtered.take(visibleLimit)
+    }
+
+    private fun totalFilteredCount(): Int =
+        if (activeCategory == FILTER_ALL) {
+            latestEntries.size
+        } else {
+            latestEntries.count { entry ->
+                entry.category == activeCategory ||
+                    (activeCategory == BotEventLog.CAT_BURST && BotEventBurstCodec.isBurstBundle(entry))
+            }
+        }
+
+    private fun refreshAdapter() {
+        val shown = filteredEntries()
+        val total = totalFilteredCount()
+        adapter?.submit(shown, expandedBurstIds)
+        tvPageInfo.text = getString(R.string.bot_log_page_info, shown.size, total)
+        btnLoadMore.isVisible = total > visibleLimit
+        if (followTail) {
+            view?.findViewById<RecyclerView>(R.id.rvBotLog)?.post { scrollLogToBottom() }
         }
     }
 

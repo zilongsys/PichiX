@@ -20,13 +20,17 @@ object BotEventBurstCodec {
 
     fun detailLines(entry: BotEventEntry): List<BotEventEntry> {
         val body = entry.message.removePrefix(GROUP_PREFIX).removePrefix(LIVE_PREFIX)
-        return body.lineSequence().drop(1).mapNotNull { line ->
-            val sep = line.indexOf('|')
-            if (sep <= 0) return@mapNotNull null
-            val ts = line.substring(0, sep).trim().toLongOrNull() ?: return@mapNotNull null
-            val msg = line.substring(sep + 1).trim()
-            BotEventEntry(ts, BotEventLog.CAT_BURST, msg)
-        }.toList()
+        return body.lineSequence().drop(1).mapNotNull { line -> parseDetailLine(line) }.toList()
+    }
+
+    private fun parseDetailLine(line: String): BotEventEntry? {
+        val parts = line.split('|', limit = 3)
+        val ts = parts.firstOrNull()?.trim()?.toLongOrNull() ?: return null
+        return when (parts.size) {
+            3 -> BotEventEntry(ts, parts[1].trim(), parts[2].trim())
+            2 -> BotEventEntry(ts, BotEventLog.CAT_BURST, parts[1].trim())
+            else -> null
+        }
     }
 
     fun encodeGroup(startedMs: Long, summary: String, lines: List<BotEventEntry>, live: Boolean): BotEventEntry {
@@ -37,7 +41,9 @@ object BotEventBurstCodec {
                 append('\n')
                 append(line.timestampMs)
                 append('|')
-                append(line.message.replace('\n', ' '))
+                append(line.category.replace('|', '/'))
+                append('|')
+                append(line.message.replace('\n', ' ').replace('|', '/'))
             }
         }
         return BotEventEntry(startedMs, BotEventLog.CAT_BURST, prefix + body)

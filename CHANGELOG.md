@@ -8,6 +8,18 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.76 (Mayo 2026)
+
+### Añadido
+- **Log del día**: filtro por $/h con precios redondeados (20.50 → $20/h).
+- **Estadísticas**: botones Exportar / Hoy / Todo con confirmación; filtro de periodo resaltado; leyendas en negrita, máximos en negrita y mayor máximo en verde; bloque «Ofertas por $/h (redondeado)».
+- **Log del bot**: filtro por tipo de evento; paginación «Cargar más»; corrección de agrupación de ráfagas.
+
+### Corregido
+- **Log del bot — ráfagas**: ya no mezcla eventos ajenos ni deja la sesión abierta tras «Ráfaga finalizada».
+
+---
+
 ## v0.1.75 (Mayo 2026)
 
 ### Añadido
