@@ -220,9 +220,15 @@ class FlexBotLogFragment : Fragment() {
             loading = false
             if (!isAdded) return@loadForUi
             latestEntries = items
-            expandedBurstIds.retainAll(items.filter { BotEventBurstCodec.isBurstBundle(it) }
-                .map { BotEventBurstCodec.burstId(it) }
-                .toSet())
+            expandedBurstIds.retainAll(
+                items.flatMap { entry ->
+                    when {
+                        BotEventBurstCodec.isBurstBundle(entry) -> listOf(BotEventBurstCodec.burstId(entry))
+                        entry.burstGroupId > 0L -> listOf(entry.burstGroupId)
+                        else -> emptyList()
+                    }
+                }.toSet(),
+            )
             refreshAdapter()
             val rv = view?.findViewById<RecyclerView>(R.id.rvBotLog) ?: return@loadForUi
             if (followTail) {
@@ -232,24 +238,34 @@ class FlexBotLogFragment : Fragment() {
     }
 
     private fun filteredEntries(): List<BotEventEntry> {
-        val filtered = if (activeCategory == FILTER_ALL) {
-            latestEntries
-        } else {
-            latestEntries.filter { entry ->
-                entry.category == activeCategory ||
-                    (activeCategory == BotEventLog.CAT_BURST && BotEventBurstCodec.isBurstBundle(entry))
+        val filtered = when (activeCategory) {
+            FILTER_ALL -> latestEntries
+            BotEventLog.CAT_BURST -> latestEntries.filter {
+                it.burstGroupId > 0L ||
+                    BotEventBurstCodec.isBurstBundle(it) ||
+                    (it.category == BotEventLog.CAT_BURST && it.burstGroupId == 0L)
+            }
+            else -> latestEntries.filter {
+                it.burstGroupId == 0L &&
+                    !BotEventBurstCodec.isBurstBundle(it) &&
+                    it.category == activeCategory
             }
         }
         return filtered.take(visibleLimit)
     }
 
     private fun totalFilteredCount(): Int =
-        if (activeCategory == FILTER_ALL) {
-            latestEntries.size
-        } else {
-            latestEntries.count { entry ->
-                entry.category == activeCategory ||
-                    (activeCategory == BotEventLog.CAT_BURST && BotEventBurstCodec.isBurstBundle(entry))
+        when (activeCategory) {
+            FILTER_ALL -> latestEntries.size
+            BotEventLog.CAT_BURST -> latestEntries.count {
+                it.burstGroupId > 0L ||
+                    BotEventBurstCodec.isBurstBundle(it) ||
+                    (it.category == BotEventLog.CAT_BURST && it.burstGroupId == 0L)
+            }
+            else -> latestEntries.count {
+                it.burstGroupId == 0L &&
+                    !BotEventBurstCodec.isBurstBundle(it) &&
+                    it.category == activeCategory
             }
         }
 
@@ -299,7 +315,9 @@ class FlexBotLogFragment : Fragment() {
 
         private fun buildRows(entriesOldestFirst: List<BotEventEntry>, expandedIds: Set<Long>): List<BotLogRow> {
             val out = ArrayList<BotLogRow>(entriesOldestFirst.size)
-            for (entry in entriesOldestFirst) {
+            var i = 0
+            while (i < entriesOldestFirst.size) {
+                val entry = entriesOldestFirst[i]
                 if (BotEventBurstCodec.isBurstBundle(entry)) {
                     val burstId = BotEventBurstCodec.burstId(entry)
                     val expanded = burstId in expandedIds
@@ -309,9 +327,34 @@ class FlexBotLogFragment : Fragment() {
                             out.add(BotLogRow(RowKind.BURST_DETAIL, detail, burstId))
                         }
                     }
-                } else {
-                    out.add(BotLogRow(RowKind.NORMAL, entry))
+                    i++
+                    continue
                 }
+                if (entry.burstGroupId > 0L) {
+                    val groupId = entry.burstGroupId
+                    val groupEntries = ArrayList<BotEventEntry>()
+                    while (i < entriesOldestFirst.size) {
+                        val current = entriesOldestFirst[i]
+                        if (current.burstGroupId != groupId || BotEventBurstCodec.isBurstBundle(current)) break
+                        groupEntries.add(current)
+                        i++
+                    }
+                    val expanded = groupId in expandedIds
+                    val summary = BotEventEntry(
+                        groupId,
+                        BotEventLog.CAT_BURST,
+                        BotEventLog.buildBurstSummary(groupEntries, groupId),
+                    )
+                    out.add(BotLogRow(RowKind.BURST_HEADER, summary, groupId))
+                    if (expanded) {
+                        groupEntries.forEach { detail ->
+                            out.add(BotLogRow(RowKind.BURST_DETAIL, detail, groupId))
+                        }
+                    }
+                    continue
+                }
+                out.add(BotLogRow(RowKind.NORMAL, entry))
+                i++
             }
             return out
         }

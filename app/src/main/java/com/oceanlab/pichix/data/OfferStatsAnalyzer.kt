@@ -33,6 +33,7 @@ object OfferStatsAnalyzer {
     )
 
     data class StationBucket(
+        val stationCode: String,
         val station: String,
         val count: Int,
         val avgRate: Double,
@@ -132,12 +133,18 @@ object OfferStatsAnalyzer {
 
         val stationMap = linkedMapOf<String, MutableList<OfferLogEntry>>()
         relevant.forEach { entry ->
-            val key = entry.station.trim().ifBlank { "?" }
+            val key = StationCode.compact(entry.station)
             stationMap.getOrPut(key) { mutableListOf() }.add(entry)
         }
         val topStations = stationMap.entries
-            .map { (station, list) ->
-                StationBucket(station, list.size, avgRate(list), maxRate(list))
+            .map { (code, list) ->
+                StationBucket(
+                    stationCode = code,
+                    station = list.firstOrNull()?.station?.trim().orEmpty().ifBlank { code },
+                    list.size,
+                    avgRate(list),
+                    maxRate(list),
+                )
             }
             .sortedWith(compareByDescending<StationBucket> { it.count }.thenByDescending { it.avgRate })
             .take(12)

@@ -20,15 +20,24 @@ data class BotEventEntry(
     val timestampMs: Long,
     val category: String,
     val message: String,
+    val burstGroupId: Long = 0L,
 ) {
-    fun toLine(): String = "$timestampMs|$category|${message.replace('\n', ' ').replace('|', '/')}"
+    fun toLine(): String {
+        val msg = message.replace('\n', ' ').replace('|', '/')
+        return if (burstGroupId > 0L) {
+            "$timestampMs|$category|$msg|$burstGroupId"
+        } else {
+            "$timestampMs|$category|$msg"
+        }
+    }
 
     companion object {
         fun fromLine(raw: String): BotEventEntry? {
-            val p = raw.split('|', limit = 3)
+            val p = raw.split('|', limit = 4)
             if (p.size < 3) return null
             val ts = p[0].trim().toLongOrNull() ?: return null
-            return BotEventEntry(ts, p[1].trim(), p[2].trim())
+            val burstId = if (p.size >= 4) p[3].trim().toLongOrNull() ?: 0L else 0L
+            return BotEventEntry(ts, p[1].trim(), p[2].trim(), burstId)
         }
     }
 }
@@ -74,7 +83,6 @@ object BotEventLog {
     private const val CAT_BURST_CANCEL = "__BURST_CANCEL__"
 
     private var burstSessionOpen = false
-    private val burstPendingLines = mutableListOf<Pending>()
     private var burstStartedMs = 0L
     private var uiBroadcastScheduled = false
 
@@ -151,7 +159,6 @@ object BotEventLog {
 
     private fun resetBurstSessionLocked() {
         burstSessionOpen = false
-        burstPendingLines.clear()
         burstStartedMs = 0L
     }
 
@@ -192,6 +199,20 @@ object BotEventLog {
         startWorkerIfNeeded()
     }
 
+    fun buildBurstSummary(entries: List<BotEventEntry>, groupId: Long): String {
+        if (entries.isEmpty()) return "Ráfaga"
+        val start = formatTime(groupId)
+        val end = formatTime(entries.maxOf { it.timestampMs })
+        val live = entries.none { it.message.contains("finalizada", ignoreCase = true) } &&
+            entries.any { it.message.contains("iniciada", ignoreCase = true) }
+        val suffix = when {
+            live -> " · en curso"
+            entries.any { it.message.contains("finalizada", ignoreCase = true) } -> ""
+            else -> " · interrumpida"
+        }
+        return "Ráfaga $start–$end · ${entries.size} eventos$suffix"
+    }
+
     fun formatTime(ms: Long): String = timeFmt.format(Date(ms))
 
     private fun startWorkerIfNeeded() {
@@ -223,11 +244,10 @@ object BotEventLog {
         when (pending.category) {
             CAT_BURST_START -> openBurstSession(pending)
             CAT_BURST_END -> closeBurstSession(pending)
-            CAT_BURST_CANCEL -> finalizeBurstSession(live = false, endMessage = null)
+            CAT_BURST_CANCEL -> closeBurstSession(Pending(pending.ts, CAT_BURST_END, ""))
             else -> {
                 if (burstSessionOpen && isBurstEndMessage(pending)) {
-                    burstPendingLines.add(pending)
-                    finalizeBurstSession(live = false, endMessage = pending.message)
+                    closeBurstSession(pending)
                     return
                 }
                 if (isBurstStartMessage(pending)) {
@@ -235,13 +255,12 @@ object BotEventLog {
                     return
                 }
                 if (burstSessionOpen && shouldIncludeInBurst(pending)) {
-                    burstPendingLines.add(pending)
-                    upsertLiveBurstEntry()
+                    addBurstEntry(pending)
                     scheduleUiBroadcast()
                     return
                 }
                 if (burstSessionOpen) {
-                    finalizeBurstSession(live = false, endMessage = null)
+                    closeBurstSession(Pending(pending.ts, CAT_BURST_END, ""))
                 }
                 addNormalEntry(BotEventEntry(pending.ts, pending.category, pending.message))
             }
@@ -265,16 +284,14 @@ object BotEventLog {
             pending.message.contains("finalizada", ignoreCase = true)
 
     private fun openBurstSession(pending: Pending) {
-        finalizeBurstSession(live = false, endMessage = null)
+        if (burstSessionOpen) {
+            closeBurstSession(Pending(pending.ts, CAT_BURST_END, ""))
+        }
         burstSessionOpen = true
         burstStartedMs = pending.ts
-        burstPendingLines.clear()
         if (pending.message.isNotBlank()) {
-            burstPendingLines.add(
-                Pending(pending.ts, CAT_BURST, pending.message),
-            )
+            addBurstEntry(Pending(pending.ts, CAT_BURST, pending.message))
         }
-        upsertLiveBurstEntry()
         scheduleUiBroadcast()
     }
 
@@ -286,61 +303,23 @@ object BotEventLog {
             return
         }
         if (pending.message.isNotBlank()) {
-            burstPendingLines.add(Pending(pending.ts, CAT_BURST, pending.message))
+            addBurstEntry(Pending(pending.ts, CAT_BURST, pending.message))
         }
-        finalizeBurstSession(live = false, endMessage = pending.message.ifBlank { null })
-    }
-
-    private fun finalizeBurstSession(live: Boolean, endMessage: String?) {
-        if (!burstSessionOpen && burstPendingLines.isEmpty()) return
-        removeLiveBurstEntry()
-        if (burstPendingLines.isEmpty()) {
-            burstSessionOpen = false
-            return
-        }
-        val lines = burstPendingLines.map { BotEventEntry(it.ts, it.category, it.message) }
-        val summary = buildBurstSummary(lines, endMessage, live)
-        val group = BotEventBurstCodec.encodeGroup(burstStartedMs, summary, lines, live = live)
-        addNormalEntry(group)
         burstSessionOpen = false
-        burstPendingLines.clear()
         burstStartedMs = 0L
         scheduleUiBroadcast()
     }
 
-    private fun buildBurstSummary(
-        lines: List<BotEventEntry>,
-        endMessage: String?,
-        live: Boolean,
-    ): String {
-        val start = formatTime(burstStartedMs)
-        val end = formatTime(lines.last().timestampMs)
-        val suffix = when {
-            live -> " · en curso"
-            endMessage != null -> ""
-            else -> " · interrumpida"
-        }
-        return "Ráfaga $start–$end · ${lines.size} eventos$suffix"
-    }
-
-    private fun upsertLiveBurstEntry() {
-        val lines = burstPendingLines.map { BotEventEntry(it.ts, it.category, it.message) }
-        val summary = buildBurstSummary(lines, endMessage = null, live = true)
-        val liveEntry = BotEventBurstCodec.encodeGroup(burstStartedMs, summary, lines, live = true)
-        synchronized(storeLock) {
-            removeLiveBurstEntryLocked()
-            hotEvents.addFirst(liveEntry)
-            hotBytes += liveEntry.message.length + liveEntry.category.length + 24
-        }
-    }
-
-    private fun removeLiveBurstEntry() = synchronized(storeLock) { removeLiveBurstEntryLocked() }
-
-    private fun removeLiveBurstEntryLocked() {
-        val first = hotEvents.firstOrNull() ?: return
-        if (!BotEventBurstCodec.isLive(first)) return
-        hotEvents.removeFirst()
-        hotBytes = max(0, hotBytes - (first.message.length + first.category.length + 24))
+    private fun addBurstEntry(pending: Pending) {
+        if (burstStartedMs <= 0L) return
+        addNormalEntry(
+            BotEventEntry(
+                pending.ts,
+                pending.category,
+                pending.message,
+                burstGroupId = burstStartedMs,
+            ),
+        )
     }
 
     private fun addNormalEntry(entry: BotEventEntry) {
@@ -378,7 +357,8 @@ object BotEventLog {
         return out
     }
 
-    private fun eventKey(e: BotEventEntry): String = "${e.timestampMs}|${e.category}|${e.message}"
+    private fun eventKey(e: BotEventEntry): String =
+        "${e.timestampMs}|${e.category}|${e.message}|${e.burstGroupId}"
 
     private fun sessionFile(context: Context): File {
         val dir = context.getExternalFilesDir(null) ?: context.filesDir

@@ -192,16 +192,10 @@
             android:fontFamily="monospace"
             android:layout_marginBottom="4dp" />
 
-        <TextView
-            android:id="@+id/tvOfferStatsDaily"
+        <FrameLayout
+            android:id="@+id/statsDailyTableHost"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/stat_card"
-            android:padding="10dp"
-            android:text="—"
-            android:textColor="@color/text_primary"
-            android:textSize="10sp"
-            android:fontFamily="monospace"
             android:layout_marginBottom="10dp" />
 
         <TextView
@@ -214,16 +208,10 @@
             android:fontFamily="monospace"
             android:layout_marginBottom="4dp" />
 
-        <TextView
-            android:id="@+id/tvOfferStatsHourly"
+        <FrameLayout
+            android:id="@+id/statsHourlyTableHost"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/stat_card"
-            android:padding="10dp"
-            android:text="—"
-            android:textColor="@color/text_primary"
-            android:textSize="10sp"
-            android:fontFamily="monospace"
             android:layout_marginBottom="10dp" />
 
         <TextView
@@ -237,16 +225,10 @@
             android:fontFamily="monospace"
             android:layout_marginBottom="4dp" />
 
-        <TextView
-            android:id="@+id/tvOfferStatsWeekday"
+        <FrameLayout
+            android:id="@+id/statsWeekdayTableHost"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/stat_card"
-            android:padding="10dp"
-            android:text="—"
-            android:textColor="@color/text_primary"
-            android:textSize="10sp"
-            android:fontFamily="monospace"
             android:layout_marginBottom="10dp" />
 
         <TextView
@@ -259,16 +241,10 @@
             android:fontFamily="monospace"
             android:layout_marginBottom="4dp" />
 
-        <TextView
-            android:id="@+id/tvOfferStatsRates"
+        <FrameLayout
+            android:id="@+id/statsRatesTableHost"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/stat_card"
-            android:padding="10dp"
-            android:text="—"
-            android:textColor="@color/text_primary"
-            android:textSize="10sp"
-            android:fontFamily="monospace"
             android:layout_marginBottom="10dp" />
 
         <TextView
@@ -281,16 +257,10 @@
             android:fontFamily="monospace"
             android:layout_marginBottom="4dp" />
 
-        <TextView
-            android:id="@+id/tvOfferStatsStations"
+        <FrameLayout
+            android:id="@+id/statsStationsTableHost"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/stat_card"
-            android:padding="10dp"
-            android:text="—"
-            android:textColor="@color/text_primary"
-            android:textSize="10sp"
-            android:fontFamily="monospace" />
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
 </ScrollView>

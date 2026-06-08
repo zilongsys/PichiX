@@ -8,6 +8,16 @@ La versión se actualiza automáticamente en `app/version.properties` al ejecuta
 
 ---
 
+## v0.1.77 (Mayo 2026)
+
+### Corregido
+- **Log del bot — ráfaga**: cada evento se guarda por separado (como el resto); la UI solo agrupa visualmente bajo una línea contenedora expandible/contraíble.
+
+### Actualizado
+- **Estadísticas**: estaciones por código corto; tablas ordenables por columna (toque en cabecera) en lugar de listado de texto.
+
+---
+
 ## v0.1.76 (Mayo 2026)
 
 ### Añadido

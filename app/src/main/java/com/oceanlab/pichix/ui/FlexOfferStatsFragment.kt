@@ -2,15 +2,11 @@ package com.oceanlab.pichix.ui
 
 import android.content.Intent
 import android.content.res.ColorStateList
-import android.net.Uri
 import android.os.Bundle
-import android.text.SpannableStringBuilder
-import android.text.Spanned
-import android.text.style.ForegroundColorSpan
-import android.text.style.StyleSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -41,15 +37,21 @@ class FlexOfferStatsFragment : Fragment() {
     private lateinit var tvSummary: TextView
     private lateinit var tvRangeLabel: TextView
     private lateinit var tvDailyHeader: TextView
-    private lateinit var tvDaily: TextView
-    private lateinit var tvHourly: TextView
     private lateinit var tvWeekdayHeader: TextView
-    private lateinit var tvWeekday: TextView
-    private lateinit var tvRates: TextView
-    private lateinit var tvStations: TextView
+    private lateinit var hostDaily: FrameLayout
+    private lateinit var hostHourly: FrameLayout
+    private lateinit var hostWeekday: FrameLayout
+    private lateinit var hostRates: FrameLayout
+    private lateinit var hostStations: FrameLayout
     private lateinit var btnPickDate: MaterialButton
     private lateinit var toggleRange: MaterialButtonToggleGroup
     private lateinit var logger: OfferLogger
+
+    private var dailyTable: SortableStatsTableView? = null
+    private var hourlyTable: SortableStatsTableView? = null
+    private var weekdayTable: SortableStatsTableView? = null
+    private var ratesTable: SortableStatsTableView? = null
+    private var stationsTable: SortableStatsTableView? = null
 
     private var rangeMode = RangeMode.ALL
     private var filterFrom: String? = null
@@ -57,6 +59,28 @@ class FlexOfferStatsFragment : Fragment() {
 
     private val dayFmt = SimpleDateFormat("yyyy-MM-dd", Locale.US)
     private val displayFmt = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+
+    private val countCols = listOf(
+        SortableStatsTableView.Column("label", "—", 72) { row -> row.cells["label"].orEmpty() },
+        SortableStatsTableView.Column("count", "#", 40) { row -> row.cells["count"]?.toIntOrNull() ?: 0 },
+        SortableStatsTableView.Column("ok", "✓", 32) { row -> row.cells["ok"]?.toIntOrNull() ?: 0 },
+        SortableStatsTableView.Column("avg", "avg", 48) { row -> rateSort(row.cells["avg"]) },
+        SortableStatsTableView.Column("max", "max", 48) { row -> rateSort(row.cells["max"]) },
+    )
+
+    private val simpleCols = listOf(
+        SortableStatsTableView.Column("label", "—", 72) { row -> row.cells["label"].orEmpty() },
+        SortableStatsTableView.Column("count", "#", 40) { row -> row.cells["count"]?.toIntOrNull() ?: 0 },
+        SortableStatsTableView.Column("avg", "avg", 48) { row -> rateSort(row.cells["avg"]) },
+        SortableStatsTableView.Column("max", "max", 48) { row -> rateSort(row.cells["max"]) },
+    )
+
+    private val stationCols = listOf(
+        SortableStatsTableView.Column("label", "Est", 44) { row -> row.cells["label"].orEmpty() },
+        SortableStatsTableView.Column("count", "#", 36) { row -> row.cells["count"]?.toIntOrNull() ?: 0 },
+        SortableStatsTableView.Column("avg", "avg", 44) { row -> rateSort(row.cells["avg"]) },
+        SortableStatsTableView.Column("max", "max", 44) { row -> rateSort(row.cells["max"]) },
+    )
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -69,14 +93,20 @@ class FlexOfferStatsFragment : Fragment() {
         tvSummary = view.findViewById(R.id.tvOfferStatsSummary)
         tvRangeLabel = view.findViewById(R.id.tvOfferStatsRangeLabel)
         tvDailyHeader = view.findViewById(R.id.tvOfferStatsDailyHeader)
-        tvDaily = view.findViewById(R.id.tvOfferStatsDaily)
-        tvHourly = view.findViewById(R.id.tvOfferStatsHourly)
         tvWeekdayHeader = view.findViewById(R.id.tvOfferStatsWeekdayHeader)
-        tvWeekday = view.findViewById(R.id.tvOfferStatsWeekday)
-        tvRates = view.findViewById(R.id.tvOfferStatsRates)
-        tvStations = view.findViewById(R.id.tvOfferStatsStations)
+        hostDaily = view.findViewById(R.id.statsDailyTableHost)
+        hostHourly = view.findViewById(R.id.statsHourlyTableHost)
+        hostWeekday = view.findViewById(R.id.statsWeekdayTableHost)
+        hostRates = view.findViewById(R.id.statsRatesTableHost)
+        hostStations = view.findViewById(R.id.statsStationsTableHost)
         btnPickDate = view.findViewById(R.id.btnPickOfferStatsDate)
         toggleRange = view.findViewById(R.id.toggleOfferStatsRange)
+
+        dailyTable = ensureTable(hostDaily)
+        hourlyTable = ensureTable(hostHourly)
+        weekdayTable = ensureTable(hostWeekday)
+        ratesTable = ensureTable(hostRates)
+        stationsTable = ensureTable(hostStations)
 
         toggleRange.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (!isChecked) return@addOnButtonCheckedListener
@@ -141,6 +171,14 @@ class FlexOfferStatsFragment : Fragment() {
         updateRangeUi()
     }
 
+    private fun ensureTable(host: FrameLayout): SortableStatsTableView {
+        host.removeAllViews()
+        return SortableStatsTableView(requireContext()).also { host.addView(it) }
+    }
+
+    private fun rateSort(raw: String?): Double =
+        if (raw.isNullOrBlank() || raw == "—") 0.0 else raw.removePrefix("$").toDoubleOrNull() ?: 0.0
+
     private fun styleRangeToggle(checkedId: Int) {
         val ctx = requireContext()
         val activeBg = ContextCompat.getColor(ctx, R.color.tab_active_bg)
@@ -176,7 +214,7 @@ class FlexOfferStatsFragment : Fragment() {
             RangeMode.RANGE -> formatRangeLabel(filterFrom, filterTo)
         }
         tvWeekdayHeader.isVisible = rangeMode != RangeMode.SINGLE_DAY
-        tvWeekday.isVisible = rangeMode != RangeMode.SINGLE_DAY
+        hostWeekday.isVisible = rangeMode != RangeMode.SINGLE_DAY
         tvDailyHeader.text = when (rangeMode) {
             RangeMode.SINGLE_DAY -> getString(R.string.offer_stats_day_summary_header)
             else -> getString(R.string.offer_stats_daily_header)
@@ -201,18 +239,19 @@ class FlexOfferStatsFragment : Fragment() {
 
     private fun showSingleDayPicker() {
         val initial = dayStringToUtcMillis(filterFrom ?: dayFmt.format(Date()))
-        val picker = MaterialDatePicker.Builder.datePicker()
+        MaterialDatePicker.Builder.datePicker()
             .setTitleText(getString(R.string.offer_stats_pick_day))
             .setSelection(initial)
             .setCalendarConstraints(buildPastConstraints())
             .build()
-        picker.addOnPositiveButtonClickListener { selection ->
-            val day = utcMillisToDayString(selection)
-            filterFrom = day
-            filterTo = day
-            updateRangeUi()
-        }
-        picker.show(parentFragmentManager, "offer_stats_day")
+            .apply {
+                addOnPositiveButtonClickListener { selection ->
+                    filterFrom = utcMillisToDayString(selection)
+                    filterTo = filterFrom
+                    updateRangeUi()
+                }
+                show(parentFragmentManager, "offer_stats_day")
+            }
     }
 
     private fun showRangePicker() {
@@ -227,21 +266,20 @@ class FlexOfferStatsFragment : Fragment() {
                 ),
             )
         }
-        val picker = builder.build()
-        picker.addOnPositiveButtonClickListener { selection ->
-            filterFrom = utcMillisToDayString(selection.first)
-            filterTo = utcMillisToDayString(selection.second)
-            updateRangeUi()
+        builder.build().apply {
+            addOnPositiveButtonClickListener { selection ->
+                filterFrom = utcMillisToDayString(selection.first)
+                filterTo = utcMillisToDayString(selection.second)
+                updateRangeUi()
+            }
+            show(parentFragmentManager, "offer_stats_range")
         }
-        picker.show(parentFragmentManager, "offer_stats_range")
     }
 
-    private fun buildPastConstraints(): CalendarConstraints {
-        val end = MaterialDatePicker.todayInUtcMilliseconds()
-        return CalendarConstraints.Builder()
-            .setEnd(end)
+    private fun buildPastConstraints(): CalendarConstraints =
+        CalendarConstraints.Builder()
+            .setEnd(MaterialDatePicker.todayInUtcMilliseconds())
             .build()
-    }
 
     private fun refreshStats() {
         if (rangeMode == RangeMode.SINGLE_DAY && filterFrom.isNullOrBlank()) {
@@ -257,20 +295,24 @@ class FlexOfferStatsFragment : Fragment() {
 
         val filter = when (rangeMode) {
             RangeMode.ALL -> OfferStatsAnalyzer.DateFilter()
-            RangeMode.SINGLE_DAY -> OfferStatsAnalyzer.DateFilter(
-                from = filterFrom,
-                to = filterTo ?: filterFrom,
-            )
+            RangeMode.SINGLE_DAY -> OfferStatsAnalyzer.DateFilter(from = filterFrom, to = filterTo ?: filterFrom)
             RangeMode.RANGE -> OfferStatsAnalyzer.DateFilter(from = filterFrom, to = filterTo)
         }
 
-        val entries = OfferLogCsvStore(requireContext()).readAllEntries()
-        val report = OfferStatsAnalyzer.analyze(entries, filter)
+        val report = OfferStatsAnalyzer.analyze(OfferLogCsvStore(requireContext()).readAllEntries(), filter)
         if (report.countedOffers == 0) {
             tvSummary.text = getString(R.string.offer_stats_no_data_for_filter)
             clearResults()
             return
         }
+
+        val globalMax = listOf(
+            report.daily.maxOfOrNull { it.maxRate } ?: 0.0,
+            report.hourly.maxOfOrNull { it.maxRate } ?: 0.0,
+            report.weekdays.maxOfOrNull { it.maxRate } ?: 0.0,
+            report.topStations.maxOfOrNull { it.maxRate } ?: 0.0,
+            report.rateBuckets.maxOfOrNull { it.maxRate } ?: 0.0,
+        ).maxOrNull() ?: 0.0
 
         val bestDay = report.bestDay
         val bestHour = report.bestHour
@@ -290,98 +332,80 @@ class FlexOfferStatsFragment : Fragment() {
                 )
             }
             append("Top horas: ")
-            append(
-                report.topHours.take(5).joinToString(" · ") { h ->
-                    "${h.label}(${h.count})"
-                }.ifBlank { "—" },
-            )
+            append(report.topHours.take(5).joinToString(" · ") { "${it.label}(${it.count})" }.ifBlank { "—" })
         }
 
-        val globalMax = listOf(
-            report.daily.maxOfOrNull { it.maxRate } ?: 0.0,
-            report.hourly.maxOfOrNull { it.maxRate } ?: 0.0,
-            report.weekdays.maxOfOrNull { it.maxRate } ?: 0.0,
-            report.topStations.maxOfOrNull { it.maxRate } ?: 0.0,
-            report.rateBuckets.maxOfOrNull { it.maxRate } ?: 0.0,
-        ).maxOrNull() ?: 0.0
-
-        if (rangeMode == RangeMode.SINGLE_DAY && bestDay != null) {
-            tvDaily.text = formatBucketLine(
-                label = bestDay.date,
-                count = bestDay.count,
-                avg = bestDay.avgRate,
-                max = bestDay.maxRate,
-                globalMaxMax = globalMax,
-            )
+        val dailyRows = if (rangeMode == RangeMode.SINGLE_DAY && bestDay != null) {
+            listOf(bestDay)
         } else {
-            tvDaily.text = report.daily.joinToString("\n") { day ->
-                formatBucketLine(day.date, day.count, day.avgRate, day.maxRate, globalMax)
-            }.ifBlank { "—" }
+            report.daily
+        }.map { day ->
+            SortableStatsTableView.Row(
+                mapOf(
+                    "label" to day.date,
+                    "count" to day.count.toString(),
+                    "ok" to day.accepted.toString(),
+                    "avg" to fmtRate(day.avgRate),
+                    "max" to fmtRate(day.maxRate),
+                ),
+                maxRate = day.maxRate,
+            )
         }
+        dailyTable?.bind(countCols, dailyRows, globalMax)
 
-        tvHourly.text = report.hourly
+        val hourlyRows = report.hourly
             .filter { it.count > 0 }
-            .joinToString("\n") { hour ->
-                formatBucketLine(hour.label, hour.count, hour.avgRate, hour.maxRate, globalMax)
-            }.ifBlank { "—" }
+            .map { hour ->
+                SortableStatsTableView.Row(
+                    mapOf(
+                        "label" to hour.label,
+                        "count" to hour.count.toString(),
+                        "avg" to fmtRate(hour.avgRate),
+                        "max" to fmtRate(hour.maxRate),
+                    ),
+                    maxRate = hour.maxRate,
+                )
+            }
+        hourlyTable?.bind(simpleCols, hourlyRows, globalMax)
 
-        tvWeekday.text = report.weekdays.joinToString("\n") { wd ->
-            formatBucketLine(wd.weekdayName, wd.count, wd.avgRate, wd.maxRate, globalMax)
-        }.ifBlank { "—" }
-
-        tvRates.text = report.rateBuckets.joinToString("\n") { bucket ->
-            formatBucketLine(
-                label = HourlyRateRound.label(bucket.roundedRate.toDouble()),
-                count = bucket.count,
-                avg = bucket.avgRate,
-                max = bucket.maxRate,
-                globalMaxMax = globalMax,
-            )
-        }.ifBlank { "—" }
-
-        tvStations.text = report.topStations.joinToString("\n") { st ->
-            formatBucketLine(
-                label = st.station.take(28),
-                count = st.count,
-                avg = st.avgRate,
-                max = st.maxRate,
-                globalMaxMax = globalMax,
-                countSuffix = "×",
-            )
-        }.ifBlank { "—" }
-    }
-
-    private fun formatBucketLine(
-        label: String,
-        count: Int,
-        avg: Double,
-        max: Double,
-        globalMaxMax: Double,
-        countSuffix: String = "ofertas",
-    ): CharSequence {
-        val ss = SpannableStringBuilder()
-        val labelEnd = label.length
-        ss.append(label)
-        ss.setSpan(StyleSpan(android.graphics.Typeface.BOLD), 0, labelEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        ss.append("  $count $countSuffix  avg ${fmtRate(avg)}  max ")
-        val maxStart = ss.length
-        val maxText = fmtRate(max)
-        ss.append(maxText)
-        ss.setSpan(
-            StyleSpan(android.graphics.Typeface.BOLD),
-            maxStart,
-            ss.length,
-            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
-        )
-        if (max > 0.0 && max >= globalMaxMax) {
-            ss.setSpan(
-                ForegroundColorSpan(ContextCompat.getColor(requireContext(), R.color.green_400)),
-                maxStart,
-                ss.length,
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+        val weekdayRows = report.weekdays.map { wd ->
+            SortableStatsTableView.Row(
+                mapOf(
+                    "label" to wd.weekdayName,
+                    "count" to wd.count.toString(),
+                    "avg" to fmtRate(wd.avgRate),
+                    "max" to fmtRate(wd.maxRate),
+                ),
+                maxRate = wd.maxRate,
             )
         }
-        return ss
+        weekdayTable?.bind(simpleCols, weekdayRows, globalMax)
+
+        val rateRows = report.rateBuckets.map { bucket ->
+            SortableStatsTableView.Row(
+                mapOf(
+                    "label" to HourlyRateRound.label(bucket.roundedRate.toDouble()),
+                    "count" to bucket.count.toString(),
+                    "avg" to fmtRate(bucket.avgRate),
+                    "max" to fmtRate(bucket.maxRate),
+                ),
+                maxRate = bucket.maxRate,
+            )
+        }
+        ratesTable?.bind(simpleCols, rateRows, globalMax)
+
+        val stationRows = report.topStations.map { st ->
+            SortableStatsTableView.Row(
+                mapOf(
+                    "label" to st.stationCode,
+                    "count" to st.count.toString(),
+                    "avg" to fmtRate(st.avgRate),
+                    "max" to fmtRate(st.maxRate),
+                ),
+                maxRate = st.maxRate,
+            )
+        }
+        stationsTable?.bind(stationCols, stationRows, globalMax)
     }
 
     private fun filterSummaryLine(report: OfferStatsAnalyzer.Report): String =
@@ -401,11 +425,11 @@ class FlexOfferStatsFragment : Fragment() {
         }
 
     private fun clearResults() {
-        tvDaily.text = "—"
-        tvHourly.text = "—"
-        tvWeekday.text = "—"
-        tvRates.text = "—"
-        tvStations.text = "—"
+        dailyTable?.bind(countCols, emptyList(), 0.0)
+        hourlyTable?.bind(simpleCols, emptyList(), 0.0)
+        weekdayTable?.bind(simpleCols, emptyList(), 0.0)
+        ratesTable?.bind(simpleCols, emptyList(), 0.0)
+        stationsTable?.bind(stationCols, emptyList(), 0.0)
     }
 
     private fun shareCsvFile(path: String) {
@@ -441,11 +465,7 @@ class FlexOfferStatsFragment : Fragment() {
         local.time = parsed
         val utc = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
         utc.clear()
-        utc.set(
-            local.get(Calendar.YEAR),
-            local.get(Calendar.MONTH),
-            local.get(Calendar.DAY_OF_MONTH),
-        )
+        utc.set(local.get(Calendar.YEAR), local.get(Calendar.MONTH), local.get(Calendar.DAY_OF_MONTH))
         return utc.timeInMillis
     }
 

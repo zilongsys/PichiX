@@ -233,7 +233,8 @@
     <string name="offer_stats_daily_header">Ofertas por día</string>
     <string name="offer_stats_hourly_header">Mejores franjas horarias</string>
     <string name="offer_stats_weekday_header">Por día de la semana</string>
-    <string name="offer_stats_stations_header">Estaciones con más ofertas</string>
+    <string name="offer_stats_stations_header">Estaciones (código)</string>
+    <string name="offer_stats_table_sort_hint">Toca una columna para ordenar</string>
     <string name="offer_stats_rate_header">Ofertas por $/h (redondeado)</string>
     <string name="offer_stats_export_all">Exportar</string>
     <string name="offer_stats_clear_today">Hoy</string>
