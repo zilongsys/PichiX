@@ -307,13 +307,24 @@ data class FlexTariffRule(
 }
 
 object FlexTariffRulesStore {
+    @Volatile private var cachedRaw: String? = null
+    @Volatile private var cachedRules: List<FlexTariffRule> = emptyList()
+
     fun load(settings: AppSettings): List<FlexTariffRule> {
         val raw = settings.flexTariffRulesJson
-        if (raw.isBlank()) return emptyList()
+        if (raw.isBlank()) {
+            cachedRaw = ""
+            cachedRules = emptyList()
+            return emptyList()
+        }
+        if (raw == cachedRaw) return cachedRules
         return try {
             val arr = JSONArray(raw)
-            (0 until arr.length()).map { FlexTariffRule.fromJson(arr.getJSONObject(it)) }
+            val rules = (0 until arr.length()).map { FlexTariffRule.fromJson(arr.getJSONObject(it)) }
                 .sortedBy { it.sortOrder }
+            cachedRaw = raw
+            cachedRules = rules
+            rules
         } catch (_: Exception) {
             emptyList()
         }
@@ -323,6 +334,9 @@ object FlexTariffRulesStore {
         val normalized = rules.mapIndexed { index, r -> r.copy(sortOrder = index) }
         val arr = JSONArray()
         normalized.forEach { arr.put(it.toJson()) }
-        settings.flexTariffRulesJson = arr.toString()
+        val json = arr.toString()
+        settings.flexTariffRulesJson = json
+        cachedRaw = json
+        cachedRules = normalized
     }
 }

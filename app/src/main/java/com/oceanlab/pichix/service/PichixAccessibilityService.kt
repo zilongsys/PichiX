@@ -246,11 +246,12 @@ class PichixAccessibilityService : AccessibilityService() {
         text: String,
         scrollIfEmpty: Boolean,
         burstMode: Boolean,
+        preloadedOffers: List<FlexBlockOffer>? = null,
     ): Boolean {
         val flags = reader.detectScreenFlags(text, settings)
         if (flags.captcha) return false
 
-        val offers = reader.readOffersFromList()
+        val offers = preloadedOffers ?: reader.readOffersFromList()
         if (settings.debugLogEnabled && offers.isNotEmpty()) {
             offers.forEachIndexed { i, o ->
                 Log.i(
@@ -360,29 +361,45 @@ class PichixAccessibilityService : AccessibilityService() {
     private fun beginPostRefreshOfferAnalysis(listSignatureBeforeRefresh: String) {
         cancelPostRefreshAnalysis()
         var attempt = 0
+        val burstMode = burstActive && settings.flexBurstClickEnabled
         val runnable = object : Runnable {
             override fun run() {
                 if (postRefreshRunnable !== this) return
+                if (isTakeFlowActive()) {
+                    cancelPostRefreshAnalysis()
+                    return
+                }
                 if (!isMotorForegroundAllowed()) {
                     cancelPostRefreshAnalysis()
                     return
                 }
                 attempt++
-                val freshText = reader.readFullScreenText()
-                val sigNow = reader.offerListSignature()
-                val ready = when {
-                    attempt >= POST_REFRESH_MAX_ATTEMPTS -> true
-                    attempt < 2 -> false
-                    sigNow != listSignatureBeforeRefresh -> true
-                    attempt >= 6 -> true
-                    else -> false
+                reader.beginTickCache()
+                try {
+                    val freshText = reader.readFullScreenText()
+                    val offersNow = reader.readOffersFromList()
+                    val sigNow = offerListSignatureOf(offersNow)
+                    val ready = when {
+                        attempt >= POST_REFRESH_MAX_ATTEMPTS -> true
+                        attempt < 2 -> false
+                        sigNow != listSignatureBeforeRefresh -> true
+                        attempt >= 6 -> true
+                        else -> false
+                    }
+                    if (!ready && attempt < POST_REFRESH_MAX_ATTEMPTS) {
+                        handler.post(this)
+                        return
+                    }
+                    cancelPostRefreshAnalysis()
+                    processVisibleOffers(
+                        freshText,
+                        scrollIfEmpty = !burstMode,
+                        burstMode = burstMode,
+                        preloadedOffers = offersNow,
+                    )
+                } finally {
+                    reader.endTickCache()
                 }
-                if (!ready && attempt < POST_REFRESH_MAX_ATTEMPTS) {
-                    handler.post(this)
-                    return
-                }
-                cancelPostRefreshAnalysis()
-                processVisibleOffers(freshText, scrollIfEmpty = true, burstMode = false)
             }
         }
         postRefreshRunnable = runnable
@@ -541,45 +558,85 @@ class PichixAccessibilityService : AccessibilityService() {
             scheduleWork()
             return
         }
+        // No Refresh/scroll mientras hay toma en curso (detalle o confirmación Schedule).
+        if (isTakeFlowActive()) {
+            scheduleWork()
+            return
+        }
         updateBurstState()
         if (!isMotorForegroundAllowed()) {
             scheduleWork()
             return
         }
         scheduleWork()
-        val overlayText = reader.readFlexOverlayText()
-        maybeStopBurstForFlexBanner(overlayText)
-        if (PauseByOverClicksController.onScreenText(this, overlayText)) {
-            return
-        }
-        val text = reader.readFullScreenText()
-        trackScreenChange(text, reader.detectScreenFlags(text, settings))
-        maybeAutoReturnToOffers(text)
-        if (returnInFlight) return
-        grabInFlight = true
+        reader.beginTickCache()
         try {
-            if (burstActive && settings.flexBurstClickEnabled) {
-                tryRefreshClick(text, burstMode = true)
-                processVisibleOffers(text, scrollIfEmpty = false, burstMode = true)
+            val text = reader.readFullScreenText()
+            val overlayText = reader.readFlexOverlayText(activeWindowText = text)
+            maybeStopBurstForFlexBanner(overlayText)
+            if (PauseByOverClicksController.onScreenText(this, overlayText)) {
                 return
             }
-            val sigBeforeRefresh = reader.offerListSignature()
-            val refreshed = if (settings.flexClickRefreshEnabled) {
-                tryRefreshClick(text, burstMode = false)
-            } else {
-                false
-            }
+            trackScreenChange(text, reader.detectScreenFlags(text, settings))
+            maybeAutoReturnToOffers(text)
+            if (returnInFlight) return
+            grabInFlight = true
+            try {
+                if (burstActive && settings.flexBurstClickEnabled) {
+                    val offersBefore = reader.readOffersFromList()
+                    val sigBefore = offerListSignatureOf(offersBefore)
+                    val refreshed = tryRefreshClick(text, burstMode = true)
+                    if (refreshed) {
+                        // Esperar lista nueva (como reanálisis normal); no evaluar texto pre-Refresh.
+                        beginPostRefreshOfferAnalysis(sigBefore)
+                    } else {
+                        processVisibleOffers(
+                            text,
+                            scrollIfEmpty = false,
+                            burstMode = true,
+                            preloadedOffers = offersBefore,
+                        )
+                    }
+                    return
+                }
+                val offersBefore = if (settings.flexClickRefreshEnabled) {
+                    reader.readOffersFromList()
+                } else {
+                    null
+                }
+                val sigBeforeRefresh = offersBefore?.let { offerListSignatureOf(it) }.orEmpty()
+                val refreshed = if (settings.flexClickRefreshEnabled) {
+                    tryRefreshClick(text, burstMode = false)
+                } else {
+                    false
+                }
 
-            warnIfTariffRulesMisconfigured()
-            if (refreshed && settings.flexReanalyzeAfterRefreshEnabled) {
-                beginPostRefreshOfferAnalysis(sigBeforeRefresh)
-            } else {
-                processVisibleOffers(text, scrollIfEmpty = true, burstMode = false)
+                warnIfTariffRulesMisconfigured()
+                if (refreshed && settings.flexReanalyzeAfterRefreshEnabled) {
+                    beginPostRefreshOfferAnalysis(sigBeforeRefresh)
+                } else {
+                    processVisibleOffers(
+                        text,
+                        scrollIfEmpty = true,
+                        burstMode = false,
+                        preloadedOffers = offersBefore,
+                    )
+                }
+            } finally {
+                grabInFlight = false
             }
         } finally {
-            grabInFlight = false
+            reader.endTickCache()
         }
     }
+
+    private fun isTakeFlowActive(): Boolean =
+        detailAcceptRunnable != null || scheduleOutcomeRunnable != null
+
+    private fun offerListSignatureOf(offers: List<FlexBlockOffer>): String =
+        offers.joinToString("|") { o ->
+            "${o.payText}:${o.timeText}:${o.stationText}"
+        }
 
     private fun handleAccept(offer: FlexBlockOffer, listReason: String) {
         val simulation = settings.dryRunMode
@@ -591,6 +648,9 @@ class PichixAccessibilityService : AccessibilityService() {
             "Intento: ${offer.stationText} ${offer.payText} " +
                 "(${offer.hourlyRate?.let { "%.1f".format(it) } ?: "?"} \$/h) — $listReason",
         )
+
+        // Evita que el grabber pulse Refresh mientras abrimos detalle / Schedule.
+        cancelPostRefreshAnalysis()
 
         if (!reader.clickOfferCardAtIndex(offer.index)) {
             postObserver("No se pudo abrir la oferta en la lista")

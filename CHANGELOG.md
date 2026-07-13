@@ -8,6 +8,13 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.11 (Junio 2026)
+
+### Actualizado
+- **Captura más rápida**: ráfaga espera la lista tras Refresh (no evalúa la pantalla anterior); el grabber no interfiere durante toma (detalle/Schedule); cache de view-ids y una sola lectura de lista por ciclo (menos recorridos Accessibility).
+
+---
+
 ## v0.2.10 (Junio 2026)
 
 ### Añadido

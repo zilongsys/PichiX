@@ -39,15 +39,37 @@ class FlexScreenReader(private val service: AccessibilityService) {
         get() = com.oceanlab.pichix.data.MonitorPackages.primaryTarget(service)
             ?: AppSettings.DEFAULT_FLEX_PACKAGE.split(',', ';').first().trim()
 
+    /** Cache de view-ids resueltos durante un tick del grabber (evita N× root walks). */
+    private val resolvedIdCache = HashMap<String, String?>()
+    private var tickCacheActive = false
+
     private fun activeRoot(): AccessibilityNodeInfo? = service.rootInActiveWindow
 
+    /** Inicia cache de ids para un ciclo de lectura (grabber / post-refresh). */
+    fun beginTickCache() {
+        tickCacheActive = true
+        resolvedIdCache.clear()
+    }
+
+    fun endTickCache() {
+        tickCacheActive = false
+        resolvedIdCache.clear()
+    }
+
     fun resolveId(suffix: String): String? {
+        if (tickCacheActive && resolvedIdCache.containsKey(suffix)) {
+            return resolvedIdCache[suffix]
+        }
         val candidates = FlexIds.viewIdCandidates(suffix, appPackage)
         val root = activeRoot()
+        var resolved: String? = null
         if (root != null) {
             try {
                 for (cand in candidates) {
-                    if (root.hasViewId(cand)) return cand
+                    if (root.hasViewId(cand)) {
+                        resolved = cand
+                        break
+                    }
                 }
             } finally {
                 try {
@@ -56,7 +78,9 @@ class FlexScreenReader(private val service: AccessibilityService) {
                 }
             }
         }
-        return candidates.firstOrNull()
+        if (resolved == null) resolved = candidates.firstOrNull()
+        if (tickCacheActive) resolvedIdCache[suffix] = resolved
+        return resolved
     }
 
     /**
@@ -76,16 +100,21 @@ class FlexScreenReader(private val service: AccessibilityService) {
 
     /**
      * Texto de todas las ventanas Flex (solo pausa por banner flotante / demasiados clics).
-     * No usar en el bucle de clics Refresh — alteraba la detección de «Offers».
+     * [activeWindowText] evita releer el árbol de la ventana activa si ya se leyó en este tick.
      */
-    fun readFlexOverlayText(): String {
+    fun readFlexOverlayText(activeWindowText: String? = null): String {
         return try {
             val target = appPackage
             val chunks = linkedSetOf<String>()
+            if (!activeWindowText.isNullOrBlank()) {
+                chunks.add(activeWindowText)
+            }
             val root = activeRoot()
             if (root != null) {
                 try {
-                    root.getAllVisibleText().takeIf { it.isNotBlank() }?.let { chunks.add(it) }
+                    if (activeWindowText.isNullOrBlank()) {
+                        root.getAllVisibleText().takeIf { it.isNotBlank() }?.let { chunks.add(it) }
+                    }
                     readTopBannerZoneText(root).takeIf { it.isNotBlank() }?.let { chunks.add(it) }
                 } finally {
                     try {
@@ -284,13 +313,16 @@ class FlexScreenReader(private val service: AccessibilityService) {
 
         val root = activeRoot() ?: return emptyList()
         return try {
+            val timeTexts = timeId?.let { root.allTextsByViewId(it) }.orEmpty()
+            val stationTexts = stationId?.let { root.allTextsByViewId(it) }.orEmpty()
+            val durationTexts = durationId?.let { root.allTextsByViewId(it) }.orEmpty()
             root.useViewIdNodes(payId) { payNodes ->
                 payNodes.mapIndexed { index, payNode ->
                     val payText = payNode.text?.toString()?.trim().orEmpty()
                     val pay = FlexGrabberEvaluator.parsePay(payText)
-                    val timeText = findSiblingText(payNode, timeId, index)
-                    val stationText = findSiblingText(payNode, stationId, index)
-                    val durationText = findSiblingText(payNode, durationId, index)
+                    val timeText = timeTexts.getOrElse(index) { timeTexts.firstOrNull().orEmpty() }
+                    val stationText = stationTexts.getOrElse(index) { stationTexts.firstOrNull().orEmpty() }
+                    val durationText = durationTexts.getOrElse(index) { durationTexts.firstOrNull().orEmpty() }
                     val durationHours = FlexGrabberEvaluator.resolveDurationHours(timeText, durationText)
                     val hourly = pay?.let { p ->
                         durationHours?.takeIf { it > 0 }?.let { p / it }
@@ -312,17 +344,6 @@ class FlexScreenReader(private val service: AccessibilityService) {
                     }
                 }
             }
-        } finally {
-            try { root.recycle() } catch (_: Exception) {}
-        }
-    }
-
-    private fun findSiblingText(anchor: AccessibilityNodeInfo, fullId: String?, index: Int): String {
-        if (fullId == null) return ""
-        val root = activeRoot() ?: return ""
-        return try {
-            val texts = root.allTextsByViewId(fullId)
-            texts.getOrElse(index) { texts.firstOrNull().orEmpty() }
         } finally {
             try { root.recycle() } catch (_: Exception) {}
         }
