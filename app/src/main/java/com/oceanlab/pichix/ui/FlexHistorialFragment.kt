@@ -54,6 +54,7 @@ class FlexHistorialFragment : Fragment() {
     private lateinit var tvHistSimulated: TextView
     private lateinit var tvHistSeen: TextView
     private lateinit var tvHistMiss: TextView
+    private var tvHistEmpty: TextView? = null
 
     private val folderPicker = registerForActivityResult(
         ActivityResultContracts.OpenDocumentTree(),
@@ -84,6 +85,7 @@ class FlexHistorialFragment : Fragment() {
         tvHistSimulated = view.findViewById(R.id.tvHistSimulated)
         tvHistSeen = view.findViewById(R.id.tvHistSeen)
         tvHistMiss = view.findViewById(R.id.tvHistMiss)
+        tvHistEmpty = view.findViewById(R.id.tvHistEmpty)
         tvSavePath = view.findViewById(R.id.tvTxtSavePath)
 
         fun hint(msg: String) = Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
@@ -261,6 +263,9 @@ class FlexHistorialFragment : Fragment() {
                 tvHistSeen.text = stats.seen.toString()
                 adapter = OfferLogAdapter(entries)
                 rv.adapter = adapter
+                val empty = entries.isEmpty()
+                tvHistEmpty?.visibility = if (empty) View.VISIBLE else View.GONE
+                rv.visibility = if (empty) View.GONE else View.VISIBLE
             }
         }.start()
     }
@@ -302,7 +307,7 @@ class OfferLogAdapter(private val items: List<OfferLogEntry>) :
         holder.tvDetail.text = e.station.ifBlank { "—" }
         holder.tvPrice.text = "$%.2f · %.1f h".format(e.price, e.durationHours)
         holder.tvStatus.text = OfferLogRowUi.statusIcon(e.status)
-        holder.tvType.text = OfferLogRowUi.timeWindowLabel(e.timeWindow)
+        holder.tvType.text = OfferLogRowUi.scheduleLabel(e)
         holder.tvMeta.text = OfferLogRowUi.metaRightLine(e, timeFmt)
         val reason = OfferLogRowUi.reasonLeft(e)
         holder.tvReason.text = reason

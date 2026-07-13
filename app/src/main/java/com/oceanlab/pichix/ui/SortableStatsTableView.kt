@@ -3,17 +3,18 @@ package com.oceanlab.pichix.ui
 import android.content.Context
 import android.graphics.Typeface
 import android.util.AttributeSet
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.oceanlab.pichix.R
 
 /**
- * Tabla compacta con cabeceras clicables para ordenar filas.
+ * Tabla a ancho completo con bordes, filas alternas y cabeceras ordenables.
+ * Usa LinearLayout (no RecyclerView) para no provocar saltos de scroll en ScrollView padre.
  */
 class SortableStatsTableView @JvmOverloads constructor(
     context: Context,
@@ -23,7 +24,7 @@ class SortableStatsTableView @JvmOverloads constructor(
     data class Column(
         val id: String,
         val title: String,
-        val widthDp: Int = 56,
+        val weight: Float = 1f,
         val sortKey: (Row) -> Comparable<*> = { row -> row.cells[id].orEmpty() },
     )
 
@@ -33,64 +34,74 @@ class SortableStatsTableView @JvmOverloads constructor(
     )
 
     private val headerRow: LinearLayout
-    private val rvRows: RecyclerView
+    private val rowsContainer: LinearLayout
     private var columns: List<Column> = emptyList()
     private var rows: List<Row> = emptyList()
     private var sortColumnId: String? = null
     private var sortAscending = true
     private var globalMaxMax = 0.0
+    private val cellPadH = (6 * resources.displayMetrics.density).toInt()
+    private val cellPadV = (5 * resources.displayMetrics.density).toInt()
 
     init {
         orientation = VERTICAL
         LayoutInflater.from(context).inflate(R.layout.widget_sortable_stats_table, this, true)
         headerRow = findViewById(R.id.statsTableHeaderRow)
-        rvRows = findViewById(R.id.rvStatsTableRows)
-        rvRows.layoutManager = LinearLayoutManager(context)
-        rvRows.adapter = TableAdapter()
+        rowsContainer = findViewById(R.id.statsTableRowsContainer)
+        isFocusable = false
+        isFocusableInTouchMode = false
     }
 
     fun bind(cols: List<Column>, data: List<Row>, highlightMaxRate: Double) {
-        columns = cols
-        rows = data
-        globalMaxMax = highlightMaxRate
-        if (sortColumnId == null && cols.isNotEmpty()) {
-            sortColumnId = cols.first().id
+        runRetainingHostScroll(this) {
+            columns = cols
+            rows = data
+            globalMaxMax = highlightMaxRate
+            if (sortColumnId == null && cols.isNotEmpty()) {
+                sortColumnId = cols.first().id
+            }
+            renderHeader()
+            renderRows()
         }
-        renderHeader()
-        renderRows()
     }
 
     private fun renderHeader() {
         headerRow.removeAllViews()
-        val density = resources.displayMetrics.density
         columns.forEach { col ->
-            val tv = LayoutInflater.from(context)
-                .inflate(R.layout.item_stats_table_cell, headerRow, false) as TextView
-            tv.layoutParams = LinearLayout.LayoutParams(
-                (col.widthDp * density).toInt(),
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            )
+            val tv = TextView(context).apply {
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, col.weight)
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(cellPadH, cellPadV + 2, cellPadH, cellPadV + 2)
+                setBackgroundResource(R.drawable.stats_table_header_cell)
+                setTextColor(ContextCompat.getColor(context, R.color.text_primary))
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 10f)
+                typeface = Typeface.MONOSPACE
+                setTypeface(typeface, Typeface.BOLD)
+                isSingleLine = true
+                ellipsize = android.text.TextUtils.TruncateAt.END
+                isFocusable = false
+                isFocusableInTouchMode = false
+            }
             val active = col.id == sortColumnId
             tv.text = if (active) {
                 "${col.title}${if (sortAscending) " ▲" else " ▼"}"
             } else {
                 col.title
             }
-            tv.setTextColor(
-                ContextCompat.getColor(
-                    context,
-                    if (active) R.color.tab_active_bg else R.color.accent_teal,
-                ),
-            )
+            if (active) {
+                tv.setTextColor(ContextCompat.getColor(context, R.color.tab_active_bg))
+            }
             tv.setOnClickListener {
-                if (sortColumnId == col.id) {
-                    sortAscending = !sortAscending
-                } else {
-                    sortColumnId = col.id
-                    sortAscending = true
+                runRetainingHostScroll(this@SortableStatsTableView) {
+                    if (sortColumnId == col.id) {
+                        sortAscending = !sortAscending
+                    } else {
+                        sortColumnId = col.id
+                        sortAscending = true
+                    }
+                    renderHeader()
+                    renderRows()
                 }
-                renderHeader()
-                renderRows()
             }
             headerRow.addView(tv)
         }
@@ -102,67 +113,51 @@ class SortableStatsTableView @JvmOverloads constructor(
             rows
         } else {
             val col = columns.first { it.id == colId }
-            val list = rows.sortedWith { a, b ->
-                val va = col.sortKey(a)
-                val vb = col.sortKey(b)
-                val cmp = compareValues(va, vb)
+            rows.sortedWith { a, b ->
+                val cmp = compareValues(col.sortKey(a), col.sortKey(b))
                 if (sortAscending) cmp else -cmp
             }
-            list
         }
-        (rvRows.adapter as TableAdapter).submit(sorted)
+        rowsContainer.removeAllViews()
+        sorted.forEachIndexed { position, row ->
+            rowsContainer.addView(buildRowView(row, position))
+        }
     }
 
-    private inner class TableAdapter : RecyclerView.Adapter<TableAdapter.VH>() {
-        private val items = mutableListOf<Row>()
-
-        fun submit(list: List<Row>) {
-            items.clear()
-            items.addAll(list)
-            notifyDataSetChanged()
+    private fun buildRowView(row: Row, position: Int): LinearLayout {
+        val rowLayout = LinearLayout(context).apply {
+            orientation = HORIZONTAL
+            layoutParams = LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            )
         }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-            val row = LinearLayout(context).apply {
-                orientation = HORIZONTAL
-                layoutParams = RecyclerView.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                )
+        val cellBg = if (position % 2 == 0) {
+            R.drawable.stats_table_row_even
+        } else {
+            R.drawable.stats_table_row_odd
+        }
+        columns.forEach { col ->
+            val tv = TextView(context).apply {
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, col.weight)
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(cellPadH, cellPadV, cellPadH, cellPadV)
+                setBackgroundResource(cellBg)
+                text = row.cells[col.id].orEmpty()
+                setTextColor(ContextCompat.getColor(context, R.color.text_primary))
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 9f)
+                typeface = Typeface.MONOSPACE
+                isSingleLine = true
+                ellipsize = android.text.TextUtils.TruncateAt.END
             }
-            return VH(row)
-        }
-
-        override fun onBindViewHolder(holder: VH, position: Int) {
-            holder.bind(items[position])
-        }
-
-        override fun getItemCount(): Int = items.size
-
-        inner class VH(private val rowLayout: LinearLayout) : RecyclerView.ViewHolder(rowLayout) {
-            fun bind(row: Row) {
-                rowLayout.removeAllViews()
-                val density = resources.displayMetrics.density
-                columns.forEach { col ->
-                    val tv = LayoutInflater.from(context)
-                        .inflate(R.layout.item_stats_table_cell, rowLayout, false) as TextView
-                    tv.layoutParams = LinearLayout.LayoutParams(
-                        (col.widthDp * density).toInt(),
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                    )
-                    tv.text = row.cells[col.id].orEmpty()
-                    tv.setTextColor(ContextCompat.getColor(context, R.color.text_primary))
-                    tv.textSize = 9f
-                    tv.setTypeface(Typeface.MONOSPACE, Typeface.NORMAL)
-                    if (col.id == "max" && row.maxRate > 0.0 && row.maxRate >= globalMaxMax) {
-                        tv.setTextColor(ContextCompat.getColor(context, R.color.green_400))
-                        tv.setTypeface(Typeface.MONOSPACE, Typeface.BOLD)
-                    } else if (col.id == "max") {
-                        tv.setTypeface(Typeface.MONOSPACE, Typeface.BOLD)
-                    }
-                    rowLayout.addView(tv)
+            if (col.id == "max") {
+                tv.setTypeface(Typeface.MONOSPACE, Typeface.BOLD)
+                if (row.maxRate > 0.0 && row.maxRate >= globalMaxMax) {
+                    tv.setTextColor(ContextCompat.getColor(context, R.color.green_400))
                 }
             }
+            rowLayout.addView(tv)
         }
+        return rowLayout
     }
 }

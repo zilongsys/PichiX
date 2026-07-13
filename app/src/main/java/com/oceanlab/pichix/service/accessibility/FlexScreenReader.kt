@@ -7,12 +7,15 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
 import com.oceanlab.pichix.analyzer.FlexBlockOffer
 import com.oceanlab.pichix.analyzer.FlexGrabberEvaluator
+import com.oceanlab.pichix.analyzer.FlexTakeOutcomeReader
+import com.oceanlab.pichix.analyzer.OfferListDetailMatcher
 import com.oceanlab.pichix.data.AppSettings
 import com.oceanlab.pichix.data.FlexReturnTriggersEvaluator
 import com.oceanlab.pichix.data.FlexReturnTriggersStore
 import com.oceanlab.pichix.data.FlexReturnScreenTrigger
 import com.oceanlab.pichix.data.FlexState
 import com.oceanlab.pichix.flex.FlexIds
+import com.oceanlab.pichix.service.FlexBlockingPhrases
 import com.oceanlab.pichix.util.ScreenTextMatcher
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.allTextsByViewId
 import com.oceanlab.pichix.service.accessibility.AccessibilityNodeUtils.performClickOnClickableSelfOrAncestor
@@ -34,7 +37,7 @@ class FlexScreenReader(private val service: AccessibilityService) {
 
     private val appPackage: String
         get() = com.oceanlab.pichix.data.MonitorPackages.primaryTarget(service)
-            ?: "com.amazon.rabbit"
+            ?: AppSettings.DEFAULT_FLEX_PACKAGE.split(',', ';').first().trim()
 
     private fun activeRoot(): AccessibilityNodeInfo? = service.rootInActiveWindow
 
@@ -76,23 +79,64 @@ class FlexScreenReader(private val service: AccessibilityService) {
      * No usar en el bucle de clics Refresh — alteraba la detección de «Offers».
      */
     fun readFlexOverlayText(): String {
-        val target = appPackage
-        val chunks = linkedSetOf<String>()
-        readFullScreenText().takeIf { it.isNotBlank() }?.let { chunks.add(it) }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            collectDrawnTextFromFlexWindows(chunks, target)
+        return try {
+            val target = appPackage
+            val chunks = linkedSetOf<String>()
+            val root = activeRoot()
+            if (root != null) {
+                try {
+                    root.getAllVisibleText().takeIf { it.isNotBlank() }?.let { chunks.add(it) }
+                    readTopBannerZoneText(root).takeIf { it.isNotBlank() }?.let { chunks.add(it) }
+                } finally {
+                    try {
+                        root.recycle()
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                collectDrawnTextFromFlexWindows(chunks, target)
+            }
+            chunks.joinToString(" ")
+        } catch (e: Exception) {
+            ""
         }
-        return chunks.joinToString(" ")
+    }
+
+    /** Texto del banner superior (demasiados clics, avisos Flex). */
+    private fun readTopBannerZoneText(root: AccessibilityNodeInfo): String {
+        val maxY = service.resources.displayMetrics.heightPixels * 0.38f
+        val sb = StringBuilder()
+        val seen = linkedSetOf<String>()
+        root.withAllObtainedNodes { nodes ->
+            for (n in nodes) {
+                val rect = Rect()
+                n.getBoundsInScreen(rect)
+                if (rect.top > maxY || rect.height() <= 0) continue
+                for (raw in listOf(n.text?.toString(), n.contentDescription?.toString())) {
+                    val part = raw?.trim()?.takeIf { it.isNotEmpty() } ?: continue
+                    if (!seen.add(part)) continue
+                    if (sb.isNotEmpty()) sb.append(' ')
+                    sb.append(part)
+                }
+            }
+        }
+        return sb.toString()
     }
 
     private fun collectDrawnTextFromFlexWindows(out: MutableSet<String>, target: String) {
-        val windows = service.windows ?: return
+        val windows = try {
+            service.windows
+        } catch (_: Exception) {
+            null
+        } ?: return
         for (window in windows) {
             val root = window.root ?: continue
             try {
                 if (root.packageName?.toString() != target) continue
                 val drawn = root.getAllVisibleText()
                 if (drawn.isNotBlank()) out.add(drawn)
+            } catch (_: Exception) {
             } finally {
                 try {
                     root.recycle()
@@ -118,12 +162,11 @@ class FlexScreenReader(private val service: AccessibilityService) {
         val lower = screenText.lowercase()
         val triggers = settings?.let { FlexReturnTriggersStore.load(it) }.orEmpty()
         return ScreenFlags(
-            blockUnavailable = lower.contains("no longer available") ||
-                lower.contains("not available") ||
-                lower.contains("unavailable"),
+            blockUnavailable = OfferListDetailMatcher.isBlockUnavailable(screenText),
             captcha = lower.contains("captcha") || lower.contains("robot") ||
                 lower.contains("puzzle") || lower.contains("verify"),
-            offerScheduled = lower.contains("scheduled") && lower.contains("offer"),
+            offerScheduled = FlexTakeOutcomeReader.read(screenText).result ==
+                FlexTakeOutcomeReader.Result.SCHEDULED,
             onOffersList = isOnOffersListScreen(lower),
             onFlexHomeTabs = lower.contains("updates") && lower.contains("schedule") && !isOnOffersListScreen(lower),
             shouldReturnToOffers = shouldReturnToOffersScreen(screenText, triggers),
@@ -141,6 +184,47 @@ class FlexScreenReader(private val service: AccessibilityService) {
 
     /** Offer Details (Schedule / tomar bloque): ids de detalle en pantalla. */
     fun isOnOfferDetailScreen(): Boolean = hasOfferDetailMarkers()
+
+    /** Detalle listo para validar / Schedule (sin espera fija). */
+    fun isDetailReadyForAccept(needsSchedule: Boolean): Boolean {
+        if (!isOnOfferDetailScreen()) return false
+        if (needsSchedule && !hasScheduleButtonOnDetail()) return false
+        return true
+    }
+
+    fun hasScheduleButtonOnDetail(): Boolean {
+        val root = activeRoot() ?: return false
+        return try {
+            val bySchedule = root.findClickableByText("Schedule", ignoreCase = true)
+            if (bySchedule != null) {
+                try {
+                    return true
+                } finally {
+                    try { bySchedule.recycle() } catch (_: Exception) {}
+                }
+            }
+            val byScheduled = root.findClickableByText("Scheduled", ignoreCase = true)
+            if (byScheduled != null) {
+                try {
+                    return true
+                } finally {
+                    try { byScheduled.recycle() } catch (_: Exception) {}
+                }
+            }
+            hasScheduleButtonByViewId(root)
+        } finally {
+            try { root.recycle() } catch (_: Exception) {}
+        }
+    }
+
+    private fun hasScheduleButtonByViewId(root: AccessibilityNodeInfo): Boolean {
+        val id = resolveId(FlexIds.MERIDIAN_BUTTON_TEXT) ?: return false
+        return root.useViewIdNodes(id) { nodes ->
+            nodes.any { n ->
+                n.text?.toString().orEmpty().contains("Schedule", ignoreCase = true)
+            }
+        }
+    }
 
     /**
      * Lista de ofertas u Offer Details — aquí NO debe ejecutarse Return 2 automático.
@@ -351,6 +435,50 @@ class FlexScreenReader(private val service: AccessibilityService) {
             }
         } finally {
             try { root.recycle() } catch (_: Exception) {}
+        }
+    }
+
+    /** Botón Cancel / Cancelar en Offer Details (antes de Schedule). */
+    fun clickCancelOnDetail(): Boolean = clickLabeledDetailButton(
+        listOf("Cancel", "Cancelar", "Decline", "Reject"),
+    )
+
+    /** Diálogo de confirmación tras Cancel en Flex. */
+    fun confirmOfferCancelDialog(): Boolean = clickLabeledDetailButton(
+        listOf(
+            "Yes, cancel",
+            "Yes, decline",
+            "Yes",
+            "Confirm",
+            "Confirmar",
+            "Decline block",
+            "Cancel block",
+            "OK",
+            "Sí",
+            "Si",
+        ),
+    )
+
+    private fun clickLabeledDetailButton(labels: List<String>): Boolean {
+        val root = activeRoot() ?: return false
+        return try {
+            for (label in labels) {
+                val node = root.findClickableByText(label, ignoreCase = true) ?: continue
+                try {
+                    if (node.performAction(AccessibilityNodeInfo.ACTION_CLICK)) return true
+                } finally {
+                    try {
+                        node.recycle()
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+            false
+        } finally {
+            try {
+                root.recycle()
+            } catch (_: Exception) {
+            }
         }
     }
 
@@ -648,25 +776,9 @@ class FlexScreenReader(private val service: AccessibilityService) {
         return dispatched
     }
 
-    /** Banner flotante (demasiados clics, captcha…). Solo para pausa, no para flags del grabber. */
-    fun isBlockingOverlayText(lowerScreenText: String): Boolean {
-        if (lowerScreenText.isBlank()) return false
-        return lowerScreenText.contains("captcha") ||
-            lowerScreenText.contains("robot") ||
-            lowerScreenText.contains("puzzle") ||
-            lowerScreenText.contains("verify") ||
-            lowerScreenText.contains("too many click") ||
-            lowerScreenText.contains("too many tap") ||
-            lowerScreenText.contains("clicked too quickly") ||
-            lowerScreenText.contains("click too fast") ||
-            lowerScreenText.contains("tap too fast") ||
-            lowerScreenText.contains("slow down") ||
-            lowerScreenText.contains("try again later") ||
-            lowerScreenText.contains("demasiados clic") ||
-            lowerScreenText.contains("demasiados toque") ||
-            lowerScreenText.contains("has hecho demasiados") ||
-            lowerScreenText.contains("verification required")
-    }
+    /** Banner flotante in-app (demasiados clics, captcha…). Solo para pausa, no para flags del grabber. */
+    fun isBlockingOverlayText(screenText: String): Boolean =
+        FlexBlockingPhrases.isAnyBlockingOverlay(screenText)
 
     data class ScreenFlags(
         val blockUnavailable: Boolean = false,

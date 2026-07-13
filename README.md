@@ -9,7 +9,7 @@ Asistente Android para **Amazon Flex** (diseño y flujo inspirados en [MakiX](ht
 
 ## Versión
 
-Formato `x.y.z` (como MakiX): el segmento **z** sube en cada compilación (`compile*Kotlin` / `assemble*`). Al llegar a **100**, sube **y** y **z** vuelve a **0**.
+Formato `x.y.z` (como MakiX): el segmento **z** sube **solo al entregar cambios**, no en cada compilación. Usar `./gradlew :app:bumpVersion` o editar `app/version.properties`. Al llegar a **100**, sube **y** y **z** vuelve a **0**.
 
 Valores en `app/version.properties`; no editar `versionName` en `build.gradle`.
 

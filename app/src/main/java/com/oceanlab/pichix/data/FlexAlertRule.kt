@@ -1,6 +1,7 @@
 package com.oceanlab.pichix.data
 
 import com.oceanlab.pichix.util.MatchTextParser
+import com.oceanlab.pichix.data.FlexMessageHub
 import com.oceanlab.pichix.util.TextMatcher
 import org.json.JSONArray
 import org.json.JSONObject
@@ -17,6 +18,10 @@ data class FlexAlertRule(
     val ignoreCase: Boolean = true,
     val soundUri: String = "",
     val repeatCount: Int = 2,
+    /** Si true y la llamada global está activa en Config, marca al coincidir esta notificación. */
+    val callOnMatch: Boolean = false,
+    /** Origen: [SOURCE_NOTIFICATION], [SOURCE_IN_APP] o [SOURCE_BOTH]. */
+    val sourceType: String = SOURCE_BOTH,
 ) {
     fun displayName(): String {
         val first = effectiveMatchTexts().firstOrNull().orEmpty()
@@ -40,6 +45,19 @@ data class FlexAlertRule(
         }
     }
 
+    fun matchesSource(source: FlexMessageHub.Source): Boolean =
+        when (sourceType) {
+            SOURCE_NOTIFICATION -> source == FlexMessageHub.Source.NOTIFICATION
+            SOURCE_IN_APP -> source == FlexMessageHub.Source.IN_APP
+            else -> true
+        }
+
+    fun sourceTypeLabel(): String = when (sourceType) {
+        SOURCE_NOTIFICATION -> "Notificación de la app"
+        SOURCE_IN_APP -> "Mensaje flotante (Flex)"
+        else -> "Notificación y mensaje Flex"
+    }
+
     fun matchSummary(): String {
         val texts = effectiveMatchTexts()
         if (texts.isEmpty()) return "(sin textos)"
@@ -61,12 +79,17 @@ data class FlexAlertRule(
         put("matchTexts", arr)
         put("soundUri", soundUri)
         put("repeatCount", repeatCount.coerceIn(1, 20))
+        put("callOnMatch", callOnMatch)
+        put("sourceType", sourceType)
     }
 
     companion object {
         const val DEFAULT_REPEAT_COUNT = 2
         const val MATCH_ANY = "any"
         const val MATCH_ALL = "all"
+        const val SOURCE_NOTIFICATION = "notification"
+        const val SOURCE_IN_APP = "in_app"
+        const val SOURCE_BOTH = "both"
 
         fun fromJson(o: JSONObject): FlexAlertRule {
             val texts = when {
@@ -90,6 +113,8 @@ data class FlexAlertRule(
                 ignoreCase = o.optBoolean("ignoreCase", true),
                 soundUri = o.optString("soundUri", ""),
                 repeatCount = o.optInt("repeatCount", DEFAULT_REPEAT_COUNT).coerceIn(1, 20),
+                callOnMatch = o.optBoolean("callOnMatch", false),
+                sourceType = o.optString("sourceType", SOURCE_BOTH).ifBlank { SOURCE_BOTH },
             )
         }
 

@@ -21,6 +21,17 @@ object OfferLogRowUi {
         return if (t.isBlank()) "—" else t
     }
 
+    fun scheduleLabel(entry: OfferLogEntry): String {
+        val date = entry.blockDate.trim()
+        val time = entry.timeWindow.trim()
+        return when {
+            date.isNotBlank() && time.isNotBlank() -> "$date · $time"
+            date.isNotBlank() -> date
+            time.isNotBlank() -> time
+            else -> "—"
+        }
+    }
+
     fun metaRightLine(entry: OfferLogEntry, timeFmt: SimpleDateFormat): String {
         val hourly = if (entry.hourlyRate > 0.01) "${"%.2f".format(entry.hourlyRate)} \$/h" else "—"
         val timeStr = timeFmt.format(Date(entry.timestamp))

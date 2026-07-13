@@ -133,7 +133,7 @@ object OfferStatsAnalyzer {
 
         val stationMap = linkedMapOf<String, MutableList<OfferLogEntry>>()
         relevant.forEach { entry ->
-            val key = StationCode.compact(entry.station)
+            val key = StationCode.code(entry.station)
             stationMap.getOrPut(key) { mutableListOf() }.add(entry)
         }
         val topStations = stationMap.entries
@@ -184,6 +184,7 @@ object OfferStatsAnalyzer {
         status == OfferStatus.SEEN ||
             status == OfferStatus.ACCEPTED ||
             status == OfferStatus.REJECTED ||
+            status == OfferStatus.MISS ||
             status == OfferStatus.SIMULATED
 
     private fun entryInFilter(entry: OfferLogEntry, filter: DateFilter): Boolean {

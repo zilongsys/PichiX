@@ -363,7 +363,8 @@ class MainActivity : AppCompatActivity() {
         val stats = OfferLogger(this).getTodayStats()
         tvCountToday.text = stats.accepted.toString()
         tvAvgRate.text = "\$%.2f".format(stats.totalEarned)
-        tvTotalMiles.text = kotlin.math.ceil(stats.totalHours).toInt().toString()
+        tvTotalMiles.text =
+            if (stats.totalHours > 0.01) "%.1f h".format(stats.totalHours) else "0 h"
     }
 
     fun markDirty(tabIndex: Int) {
@@ -375,6 +376,51 @@ class MainActivity : AppCompatActivity() {
     fun clearDirty(tabIndex: Int) {
         dirtyTabs.remove(tabIndex)
         refreshDirtyIndicators()
+    }
+
+    fun reloadSettingsFromDisk() {
+        settings = AppSettings(this)
+    }
+
+    /** Tras importar config: recarga ajustes en memoria y refresca pestañas visibles. */
+    fun notifyConfigImported() {
+        reloadSettingsFromDisk()
+        applyCategoryUi()
+        updateHeader()
+        clearDirty(1)
+        walkFragments { fragment ->
+            if (fragment is FlexConfigFragment && fragment.isAdded) {
+                try {
+                    fragment.reloadConfigFieldsFromSettings()
+                } catch (_: Exception) {
+                }
+            }
+        }
+        AppSettings.clearPendingConfigUiReload()
+        LocalBroadcastManager.getInstance(this).apply {
+            sendBroadcast(Intent(CONFIG_IMPORTED))
+            sendBroadcast(Intent(BOT_STATE_CHANGED))
+            sendBroadcast(Intent(CategoryUiHelper.ACTION_CATEGORY_UI_CHANGED))
+        }
+    }
+
+    /** Guarda el formulario Config en disco antes de exportar (si la pestaña ya existe). */
+    fun flushConfigFormBeforeExport() {
+        walkFragments { fragment ->
+            if (fragment is FlexConfigFragment) {
+                fragment.saveAllFieldsToSettings()
+            }
+        }
+    }
+
+    private fun walkFragments(action: (Fragment) -> Unit) {
+        val pending = ArrayDeque<Fragment>()
+        pending.addAll(supportFragmentManager.fragments)
+        while (pending.isNotEmpty()) {
+            val fragment = pending.removeFirst()
+            action(fragment)
+            pending.addAll(fragment.childFragmentManager.fragments)
+        }
     }
 
     fun isTabDirty(tabIndex: Int): Boolean = dirtyTabs.contains(tabIndex)
@@ -434,10 +480,19 @@ class MainActivity : AppCompatActivity() {
         const val BOT_PAUSED = "com.oceanlab.pichix.BOT_PAUSED"
         const val RETURN2_SETTING_CHANGED = "com.oceanlab.pichix.RETURN2_SETTING_CHANGED"
         const val EXTRA_RETURN2_ENABLED = "return2_enabled"
+        const val AUTO_ACCEPT_SETTING_CHANGED = "com.oceanlab.pichix.AUTO_ACCEPT_SETTING_CHANGED"
+        const val EXTRA_AUTO_ACCEPT_ENABLED = "auto_accept_enabled"
+        const val CONFIG_IMPORTED = "com.oceanlab.pichix.CONFIG_IMPORTED"
 
         fun notifyReturn2SettingChanged(context: Context, enabled: Boolean) {
             LocalBroadcastManager.getInstance(context).sendBroadcast(
                 Intent(RETURN2_SETTING_CHANGED).putExtra(EXTRA_RETURN2_ENABLED, enabled),
+            )
+        }
+
+        fun notifyAutoAcceptSettingChanged(context: Context, enabled: Boolean) {
+            LocalBroadcastManager.getInstance(context).sendBroadcast(
+                Intent(AUTO_ACCEPT_SETTING_CHANGED).putExtra(EXTRA_AUTO_ACCEPT_ENABLED, enabled),
             )
         }
     }

@@ -625,7 +625,7 @@ class DayLogAdapter(
         h.tvDetail.text = e.station.ifBlank { "—" }
         h.tvPrice.text = "$%.2f · %.1f h".format(e.price, e.durationHours)
         h.tvStatus.text = OfferLogRowUi.statusIcon(e.status)
-        h.tvType.text = OfferLogRowUi.timeWindowLabel(e.timeWindow)
+        h.tvType.text = OfferLogRowUi.scheduleLabel(e)
         h.tvMeta.text = OfferLogRowUi.metaRightLine(e, timeFmt)
         val reason = listOf(OfferLogRowUi.reasonLeft(e), timingLine(e))
             .filter { it.isNotBlank() }

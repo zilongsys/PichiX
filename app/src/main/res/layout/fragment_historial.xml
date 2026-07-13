@@ -7,18 +7,33 @@
     android:background="@color/bg_page"
     android:padding="10dp">
 
-    <!-- ── STAT CARDS ROW ── -->
-    <LinearLayout
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/historial_section_summary"
+        android:textColor="@color/text_hint"
+        android:textSize="10sp"
+        android:textAllCaps="true"
+        android:letterSpacing="0.10"
+        android:fontFamily="monospace"
+        android:layout_marginBottom="6dp"/>
+
+    <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:scrollbars="none"
         android:layout_marginBottom="8dp">
 
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
         <LinearLayout android:id="@+id/cardAccepted"
-            android:layout_width="0dp" android:layout_height="wrap_content"
-            android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+            android:layout_width="72dp" android:layout_height="wrap_content"
+            android:orientation="vertical" android:gravity="center"
             android:background="@drawable/stat_card" android:padding="6dp"
-            android:layout_marginEnd="2dp" android:clickable="true" android:focusable="true">
+            android:layout_marginEnd="4dp" android:clickable="true" android:focusable="true">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="✅" android:textSize="14sp" android:gravity="center"/>
             <TextView android:id="@+id/tvHistAccepted"
@@ -29,10 +44,10 @@
         </LinearLayout>
 
         <LinearLayout android:id="@+id/cardRejected"
-            android:layout_width="0dp" android:layout_height="wrap_content"
-            android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+            android:layout_width="72dp" android:layout_height="wrap_content"
+            android:orientation="vertical" android:gravity="center"
             android:background="@drawable/stat_card" android:padding="6dp"
-            android:layout_marginEnd="2dp" android:layout_marginStart="2dp"
+            android:layout_marginEnd="4dp"
             android:clickable="true" android:focusable="true">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="❌" android:textSize="14sp" android:gravity="center"/>
@@ -44,10 +59,10 @@
         </LinearLayout>
 
         <LinearLayout android:id="@+id/cardCancelled"
-            android:layout_width="0dp" android:layout_height="wrap_content"
-            android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+            android:layout_width="72dp" android:layout_height="wrap_content"
+            android:orientation="vertical" android:gravity="center"
             android:background="@drawable/stat_card" android:padding="6dp"
-            android:layout_marginEnd="2dp" android:layout_marginStart="2dp"
+            android:layout_marginEnd="4dp"
             android:clickable="true" android:focusable="true">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="🚫" android:textSize="14sp" android:gravity="center"/>
@@ -59,10 +74,10 @@
         </LinearLayout>
 
         <LinearLayout android:id="@+id/cardSimulated"
-            android:layout_width="0dp" android:layout_height="wrap_content"
-            android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+            android:layout_width="72dp" android:layout_height="wrap_content"
+            android:orientation="vertical" android:gravity="center"
             android:background="@drawable/stat_card" android:padding="6dp"
-            android:layout_marginEnd="2dp" android:layout_marginStart="2dp"
+            android:layout_marginEnd="4dp"
             android:clickable="true" android:focusable="true">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="🧪" android:textSize="14sp" android:gravity="center"/>
@@ -74,10 +89,10 @@
         </LinearLayout>
 
         <LinearLayout android:id="@+id/cardMiss"
-            android:layout_width="0dp" android:layout_height="wrap_content"
-            android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+            android:layout_width="72dp" android:layout_height="wrap_content"
+            android:orientation="vertical" android:gravity="center"
             android:background="@drawable/stat_card" android:padding="6dp"
-            android:layout_marginEnd="2dp" android:layout_marginStart="2dp"
+            android:layout_marginEnd="4dp"
             android:clickable="true" android:focusable="true">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="💨" android:textSize="14sp" android:gravity="center"/>
@@ -89,10 +104,9 @@
         </LinearLayout>
 
         <LinearLayout android:id="@+id/cardSeen"
-            android:layout_width="0dp" android:layout_height="wrap_content"
-            android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+            android:layout_width="72dp" android:layout_height="wrap_content"
+            android:orientation="vertical" android:gravity="center"
             android:background="@drawable/stat_card" android:padding="6dp"
-            android:layout_marginStart="2dp"
             android:clickable="true" android:focusable="true">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="👁" android:textSize="14sp" android:gravity="center"/>
@@ -105,15 +119,33 @@
 
     </LinearLayout>
 
-    <!-- ── PANEL: OFERTAS ── -->
+    </HorizontalScrollView>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/historial_section_offers"
+        android:textColor="@color/text_hint"
+        android:textSize="10sp"
+        android:textAllCaps="true"
+        android:letterSpacing="0.10"
+        android:fontFamily="monospace"
+        android:layout_marginBottom="6dp"/>
+
+    <!-- Panel ofertas -->
     <LinearLayout android:layout_width="match_parent" android:layout_height="0dp"
         android:layout_weight="1" android:orientation="vertical">
 
-        <LinearLayout style="@style/Card"
+        <LinearLayout
+            style="@style/Card"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:layout_marginBottom="6dp">
+            android:layout_marginBottom="6dp"
+            android:orientation="vertical">
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvOffers"
                 android:layout_width="match_parent"
@@ -121,6 +153,17 @@
                 android:clipToPadding="false"
                 android:scrollbars="vertical"
                 android:fadeScrollbars="true"/>
+            <TextView
+                android:id="@+id/tvHistEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:padding="20dp"
+                android:text="@string/historial_empty"
+                android:textColor="@color/text_hint"
+                android:textSize="12sp"
+                android:visibility="gone"/>
+            </FrameLayout>
         </LinearLayout>
 
         <!-- Ruta TXT -->

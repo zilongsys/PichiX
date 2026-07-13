@@ -10,6 +10,8 @@ import android.view.accessibility.AccessibilityEvent
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.oceanlab.pichix.analyzer.FlexOfferSelector
 import com.oceanlab.pichix.analyzer.FlexGrabResult
+import com.oceanlab.pichix.analyzer.FlexTakeOutcomeReader
+import com.oceanlab.pichix.analyzer.OfferListDetailMatcher
 import com.oceanlab.pichix.analyzer.FlexBlockOffer
 import com.oceanlab.pichix.analyzer.FlexGrabberEvaluator
 import com.oceanlab.pichix.data.AppSettings
@@ -25,6 +27,11 @@ import com.oceanlab.pichix.data.OfferLogger
 import com.oceanlab.pichix.data.OfferStatus
 import com.oceanlab.pichix.service.accessibility.FlexForegroundGate
 import com.oceanlab.pichix.service.accessibility.FlexListScroller
+import com.oceanlab.pichix.data.FlexMessageHub
+import com.oceanlab.pichix.util.FlexAlertDispatcher
+import com.oceanlab.pichix.util.AlertManager
+import com.oceanlab.pichix.util.BlockDateFormatter
+import com.oceanlab.pichix.util.CallOnBlockHelper
 import com.oceanlab.pichix.service.accessibility.FlexScreenReader
 import com.oceanlab.pichix.service.accessibility.FlexUiDumper
 import com.oceanlab.pichix.ui.MainActivity
@@ -38,6 +45,12 @@ class PichixAccessibilityService : AccessibilityService() {
 
     companion object {
         private const val TAG = "PichixFlex"
+        /** Reintentos inmediatos (sin espera fija) hasta que Offer Details esté listo. */
+        private const val DETAIL_ACCEPT_MAX_ATTEMPTS = 50
+        /** Reintentos tras Refresh hasta releer lista actualizada. */
+        private const val POST_REFRESH_MAX_ATTEMPTS = 40
+        /** Reintentos tras Schedule hasta leer mensaje de Flex (scheduled / unavailable). */
+        private const val SCHEDULE_OUTCOME_MAX_ATTEMPTS = 50
         const val BOT_STATE_CHANGED = MainActivity.BOT_STATE_CHANGED
         const val BOT_PAUSED = MainActivity.BOT_PAUSED
         const val BOT_RESUMED = "com.oceanlab.pichix.BOT_RESUMED"
@@ -112,6 +125,9 @@ class PichixAccessibilityService : AccessibilityService() {
     private val timerRunnable = Runnable { runFlexTimerTick() }
     private var pendingScrollWasDown = true
     private val scrollSettleRunnable = Runnable { finishScrollSettle() }
+    private var detailAcceptRunnable: Runnable? = null
+    private var postRefreshRunnable: Runnable? = null
+    private var scheduleOutcomeRunnable: Runnable? = null
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -251,41 +267,41 @@ class PichixAccessibilityService : AccessibilityService() {
             return false
         }
 
-        logger.logVisibleOffers(offers)
-
         val evaluated = offers.map { offer ->
-            FlexOfferSelector.EvaluatedOffer(
-                offer,
-                FlexGrabberEvaluator.evaluateListRow(offer, settings, text),
-            )
+            val eval = FlexGrabberEvaluator.evaluateListRowDetailed(offer, settings, text)
+            FlexOfferSelector.EvaluatedOffer(offer, eval.result, eval.reason)
         }
         val winner = FlexOfferSelector.pickAcceptable(evaluated, settings)
         if (winner != null) {
             val prefix = if (burstMode) "Ráfaga → " else ""
             postObserver(prefix + FlexOfferSelector.selectionSummary(winner, evaluated, settings))
-            handleAccept(winner)
+            val listReason = evaluated.firstOrNull {
+                it.offer.index == winner.index &&
+                    (it.result == FlexGrabResult.ACCEPT || it.result == FlexGrabResult.SIMULATED_ACCEPT)
+            }?.reason?.ifBlank { null } ?: "Cumple criterios en lista"
+            handleAccept(winner, listReason)
             return true
         }
 
-        for ((offer, result) in evaluated) {
-            when (result) {
+        for (item in evaluated) {
+            when (item.result) {
                 FlexGrabResult.REJECT -> {
+                    val detail = item.reason.ifBlank { "No cumple criterios" }
                     logGrabEvalThrottled(
                         (if (burstMode) "Ráfaga: " else "") +
-                            "No cumple regla: ${offer.stationText} ${offer.payText} " +
-                            "(${offer.hourlyRate?.let { "%.1f".format(it) } ?: "?"} \$/h)",
+                            "No toma: ${item.offer.stationText} ${item.offer.payText} — $detail",
                     )
-                    if (settings.flexCancelBadBlocks) {
-                        logger.log(offer.toLogEntry(OfferStatus.REJECTED, "Criterio grabber"))
-                    }
+                    logger.log(item.offer.toLogEntry(OfferStatus.SEEN, detail))
                 }
                 FlexGrabResult.SKIP -> {
+                    val detail = item.reason.ifBlank { "Datos incompletos" }
                     logGrabEvalThrottled(
                         (if (burstMode) "Ráfaga: " else "") +
-                            "Datos incompletos: ${offer.stationText} ${offer.payText}",
+                            "Omitida: ${item.offer.stationText} ${item.offer.payText} — $detail",
                     )
+                    logger.logSeenIfNew(item.offer)
                 }
-                else -> Unit
+                else -> logger.logSeenIfNew(item.offer)
             }
         }
 
@@ -293,8 +309,8 @@ class PichixAccessibilityService : AccessibilityService() {
         return false
     }
 
-    private fun tryRefreshClick(screenText: String, burstMode: Boolean) {
-        if (!settings.flexClickRefreshEnabled) return
+    private fun tryRefreshClick(screenText: String, burstMode: Boolean): Boolean {
+        if (!burstMode && !settings.flexClickRefreshEnabled) return false
         val screenOk = reader.screenMatchesForClick(
             settings.flexClickScreenText,
             screenText,
@@ -308,9 +324,9 @@ class PichixAccessibilityService : AccessibilityService() {
                         "(lista=${reader.isOnOffersListScreen(screenText)})",
                 )
             }
-            return
+            return false
         }
-        if (!screenOk && settings.flexClickScreenText.isBlank()) return
+        if (!screenOk && settings.flexClickScreenText.isBlank()) return false
         val target = MonitorPackages.primaryTarget(this)
         val logUi = settings.debugLogEnabled || settings.fileLogEnabled
         if (logUi) {
@@ -337,6 +353,45 @@ class PichixAccessibilityService : AccessibilityService() {
                 }
             }, 450)
         }
+        return clicked
+    }
+
+    /** Tras Refresh: relee pantalla y evalúa sin esperar al siguiente ciclo del grabber. */
+    private fun beginPostRefreshOfferAnalysis(listSignatureBeforeRefresh: String) {
+        cancelPostRefreshAnalysis()
+        var attempt = 0
+        val runnable = object : Runnable {
+            override fun run() {
+                if (postRefreshRunnable !== this) return
+                if (!isMotorForegroundAllowed()) {
+                    cancelPostRefreshAnalysis()
+                    return
+                }
+                attempt++
+                val freshText = reader.readFullScreenText()
+                val sigNow = reader.offerListSignature()
+                val ready = when {
+                    attempt >= POST_REFRESH_MAX_ATTEMPTS -> true
+                    attempt < 2 -> false
+                    sigNow != listSignatureBeforeRefresh -> true
+                    attempt >= 6 -> true
+                    else -> false
+                }
+                if (!ready && attempt < POST_REFRESH_MAX_ATTEMPTS) {
+                    handler.post(this)
+                    return
+                }
+                cancelPostRefreshAnalysis()
+                processVisibleOffers(freshText, scrollIfEmpty = true, burstMode = false)
+            }
+        }
+        postRefreshRunnable = runnable
+        handler.post(runnable)
+    }
+
+    private fun cancelPostRefreshAnalysis() {
+        postRefreshRunnable?.let { handler.removeCallbacks(it) }
+        postRefreshRunnable = null
     }
 
     private fun scheduleWork() {
@@ -392,6 +447,7 @@ class PichixAccessibilityService : AccessibilityService() {
     }
 
     private fun runObservers() {
+        if (!::reader.isInitialized) return
         settings = AppSettings(this)
         if (motorPausedForNavigation) return
         if (!isMotorForegroundAllowed()) return
@@ -410,9 +466,30 @@ class PichixAccessibilityService : AccessibilityService() {
             postBotPaused()
         }
 
-        PauseByOverClicksController.onScreenText(this, reader.readFlexOverlayText())
+        val overlayText = reader.readFlexOverlayText()
+        maybeStopBurstForFlexBanner(overlayText)
+        PauseByOverClicksController.onScreenText(this, overlayText)
+        if (overlayText.isNotBlank()) {
+            FlexAlertDispatcher.onFlexText(
+                context = this,
+                settings = settings,
+                text = overlayText,
+                source = FlexMessageHub.Source.IN_APP,
+            )
+        }
 
         maybeAutoReturnToOffers(text, flags)
+    }
+
+    /** Detiene la ráfaga si Flex muestra el banner in-app de demasiados toques. */
+    private fun maybeStopBurstForFlexBanner(overlayText: String) {
+        if (!burstActive) return
+        if (!FlexBlockingPhrases.isFlexThrottleBanner(overlayText)) return
+        burstActive = false
+        nextBurstAtMs = System.currentTimeMillis() + settings.nextBurstIntervalMs()
+        val msg = "Ráfaga detenida — banner Flex (demasiados clics)"
+        BotEventLog.onBurstEnd(this, msg)
+        postObserver(msg)
     }
 
     private var lastReturnProbeLogMs = 0L
@@ -455,6 +532,10 @@ class PichixAccessibilityService : AccessibilityService() {
     }
 
     private fun runGrabberTick() {
+        if (!::reader.isInitialized) {
+            scheduleWork()
+            return
+        }
         settings = AppSettings(this)
         if (!settings.isBotEnabled || pausedAfterAccept || motorPausedForNavigation || returnInFlight) {
             scheduleWork()
@@ -466,6 +547,11 @@ class PichixAccessibilityService : AccessibilityService() {
             return
         }
         scheduleWork()
+        val overlayText = reader.readFlexOverlayText()
+        maybeStopBurstForFlexBanner(overlayText)
+        if (PauseByOverClicksController.onScreenText(this, overlayText)) {
+            return
+        }
         val text = reader.readFullScreenText()
         trackScreenChange(text, reader.detectScreenFlags(text, settings))
         maybeAutoReturnToOffers(text)
@@ -477,91 +563,497 @@ class PichixAccessibilityService : AccessibilityService() {
                 processVisibleOffers(text, scrollIfEmpty = false, burstMode = true)
                 return
             }
-            if (settings.flexClickRefreshEnabled) {
+            val sigBeforeRefresh = reader.offerListSignature()
+            val refreshed = if (settings.flexClickRefreshEnabled) {
                 tryRefreshClick(text, burstMode = false)
+            } else {
+                false
             }
 
             warnIfTariffRulesMisconfigured()
-            processVisibleOffers(text, scrollIfEmpty = true, burstMode = false)
+            if (refreshed && settings.flexReanalyzeAfterRefreshEnabled) {
+                beginPostRefreshOfferAnalysis(sigBeforeRefresh)
+            } else {
+                processVisibleOffers(text, scrollIfEmpty = true, burstMode = false)
+            }
         } finally {
             grabInFlight = false
         }
     }
 
-    private fun handleAccept(offer: FlexBlockOffer) {
+    private fun handleAccept(offer: FlexBlockOffer, listReason: String) {
         val simulation = settings.dryRunMode
         val shouldSchedule = settings.flexAutoAccept && !simulation
+        val actionStartedAt = System.currentTimeMillis()
         BotEventLog.log(
             this,
             BotEventLog.CAT_OFFER,
             "Intento: ${offer.stationText} ${offer.payText} " +
-                "(${offer.hourlyRate?.let { "%.1f".format(it) } ?: "?"} \$/h)",
+                "(${offer.hourlyRate?.let { "%.1f".format(it) } ?: "?"} \$/h) — $listReason",
         )
 
         if (!reader.clickOfferCardAtIndex(offer.index)) {
             postObserver("No se pudo abrir la oferta en la lista")
+            logger.log(
+                offer.toLogEntry(
+                    OfferStatus.MISS,
+                    "No se pudo abrir tarjeta en lista (índice ${offer.index})",
+                    actionStartedAt = actionStartedAt,
+                ),
+            )
+            finishBlockTakeFlow(pauseBot = shouldPauseAfterMiss())
             return
         }
 
-        handler.postDelayed({
-            if (!isMotorForegroundAllowed()) {
-                finishBlockTakeFlow()
-                return@postDelayed
-            }
-            val details = reader.readBlockDetails()
-            val station = offer.stationText.ifBlank { details["station"].orEmpty() }
-            val screenText = reader.readFullScreenText()
-
-            if (!shouldSchedule) {
-                val note = if (simulation) "Simulación — detalle sin Schedule" else "Detalle abierto — sin aceptar automático"
-                logger.log(
-                    offer.toLogEntry(
-                        if (simulation) OfferStatus.SIMULATED else OfferStatus.SIMULATED,
-                        note,
-                    ),
-                )
-                postObserver(
-                    if (simulation) {
-                        "SIMULACIÓN: ${offer.stationText} ${offer.payText} (Offer Details, sin Schedule)"
-                    } else {
-                        "Detalle: ${offer.stationText} — revisa y pulsa Schedule manualmente"
-                    },
-                )
-                finishBlockTakeFlow()
-                return@postDelayed
-            }
-
-            val detailResult = FlexGrabberEvaluator.evaluateDetailScreen(
-                payRangeText = details["pay_range"].orEmpty(),
-                timeWindowText = details["time_window"].orEmpty(),
-                settings = settings,
-                station = station,
-                screenText = screenText,
+        if (settings.offerClickSoundEnabled) {
+            AlertManager(this).playFlexNotificationAlert(
+                settings.offerClickSoundUri,
+                settings.offerClickSoundRepeatCount,
             )
-            if (detailResult != FlexGrabResult.ACCEPT) {
-                logger.log(offer.toLogEntry(OfferStatus.REJECTED, "Detalle no cumple criterios", station))
-                postObserver("Rechazada en detalle: $station")
-                finishBlockTakeFlow()
-                return@postDelayed
-            }
+        }
 
-            val scheduled = reader.clickScheduleOnDetail()
+        beginDetailAcceptFlow(offer, listReason, shouldSchedule, simulation, actionStartedAt)
+    }
+
+    /**
+     * Tras abrir la tarjeta: valida y Schedule sin espera artificial.
+     * Si el detalle aún no cargó, reintenta al instante (siguiente ciclo del handler).
+     */
+    private fun beginDetailAcceptFlow(
+        offer: FlexBlockOffer,
+        listReason: String,
+        shouldSchedule: Boolean,
+        simulation: Boolean,
+        actionStartedAt: Long,
+    ) {
+        cancelDetailAcceptRetries()
+        var attempt = 0
+        val runnable = object : Runnable {
+            override fun run() {
+                if (detailAcceptRunnable !== this) return
+                if (!isMotorForegroundAllowed()) {
+                    logger.log(
+                        offer.toLogEntry(
+                            OfferStatus.MISS,
+                            "Flex salió de primer plano tras abrir detalle",
+                            actionStartedAt = actionStartedAt,
+                        ),
+                    )
+                    finishBlockTakeFlow(pauseBot = shouldPauseAfterMiss())
+                    return
+                }
+                attempt++
+                if (!reader.isDetailReadyForAccept(needsSchedule = shouldSchedule)) {
+                    val screenText = reader.readFullScreenText()
+                    if (reader.isOnOfferDetailScreen() &&
+                        OfferListDetailMatcher.isBlockUnavailable(screenText)
+                    ) {
+                        cancelDetailAcceptRetries()
+                        val details = reader.readBlockDetails()
+                        val station = offer.stationText.ifBlank { details["station"].orEmpty() }
+                        val blockDateShort = BlockDateFormatter.formatShort(details["date"].orEmpty())
+                        handleTakeMiss(
+                            offer,
+                            "Bloque ya no disponible (desapareció o cambió tras el clic)",
+                            station,
+                            blockDateShort,
+                            actionStartedAt,
+                        )
+                        return
+                    }
+                    if (attempt >= DETAIL_ACCEPT_MAX_ATTEMPTS) {
+                        cancelDetailAcceptRetries()
+                        logger.log(
+                            offer.toLogEntry(
+                                OfferStatus.MISS,
+                                "Offer Details no cargó ($attempt intentos)",
+                                actionStartedAt = actionStartedAt,
+                                actionCompletedAt = System.currentTimeMillis(),
+                            ),
+                        )
+                        postObserver("Detalle no cargó a tiempo — ${offer.stationText}")
+                        finishBlockTakeFlow(pauseBot = shouldPauseAfterMiss())
+                        return
+                    }
+                    handler.post(this)
+                    return
+                }
+                cancelDetailAcceptRetries()
+                processOfferDetailReady(
+                    offer, listReason, shouldSchedule, simulation, actionStartedAt,
+                )
+            }
+        }
+        detailAcceptRunnable = runnable
+        handler.post(runnable)
+    }
+
+    private fun processOfferDetailReady(
+        offer: FlexBlockOffer,
+        listReason: String,
+        shouldSchedule: Boolean,
+        simulation: Boolean,
+        actionStartedAt: Long,
+    ) {
+        val details = reader.readBlockDetails()
+        val station = offer.stationText.ifBlank { details["station"].orEmpty() }
+        val blockDateShort = BlockDateFormatter.formatShort(details["date"].orEmpty())
+        val screenText = reader.readFullScreenText()
+
+        if (OfferListDetailMatcher.isBlockUnavailable(screenText)) {
+            handleTakeMiss(
+                offer,
+                "Bloque ya no disponible (desapareció o cambió tras el clic)",
+                station,
+                blockDateShort,
+                actionStartedAt,
+            )
+            return
+        }
+
+        val allMismatches = OfferListDetailMatcher.verify(offer, details)
+        val softOnly = allMismatches.isNotEmpty() &&
+            !OfferListDetailMatcher.shouldTriggerMismatchAction(offer, details)
+        if (softOnly) {
+            val warn = OfferListDetailMatcher.formatReason(allMismatches) +
+                " · aviso menor, se continúa"
+            BotEventLog.log(this, BotEventLog.CAT_OFFER, warn)
+        }
+
+        if (OfferListDetailMatcher.shouldTriggerMismatchAction(offer, details)) {
+            val reason = OfferListDetailMatcher.formatReason(allMismatches)
+            handleDetailMismatch(
+                offer, reason, station, blockDateShort, listReason, actionStartedAt,
+            )
+            return
+        }
+
+        if (!shouldSchedule) {
+            val note = if (simulation) {
+                "Simulación · $listReason"
+            } else {
+                "Detalle abierto · $listReason · sin Schedule automático"
+            }
             logger.log(
                 offer.toLogEntry(
-                    if (scheduled) OfferStatus.ACCEPTED else OfferStatus.REJECTED,
-                    if (scheduled) "Schedule pulsado" else "No se encontró Schedule",
-                    station,
+                    if (simulation) OfferStatus.SIMULATED else OfferStatus.SIMULATED,
+                    note,
+                    stationOverride = station,
+                    blockDate = blockDateShort,
+                    actionStartedAt = actionStartedAt,
+                    actionCompletedAt = System.currentTimeMillis(),
                 ),
             )
             postObserver(
-                if (scheduled) {
-                    "ACEPTADA: $station ${offer.payText}"
+                if (simulation) {
+                    "SIMULACIÓN: ${offer.stationText} ${offer.payText} (Offer Details, sin Schedule)"
                 } else {
-                    "Offer Details: no se encontró botón Schedule"
+                    "Detalle: ${offer.stationText} — revisa y pulsa Schedule manualmente"
                 },
             )
-            finishBlockTakeFlow()
-        }, 650)
+            finishBlockTakeFlow(pauseBot = settings.autoPauseAfterAccept)
+            return
+        }
+
+        val detailEval = FlexGrabberEvaluator.evaluateDetailWithListFallback(
+            offer = offer,
+            details = details,
+            settings = settings,
+            station = station,
+            screenText = screenText,
+        )
+        if (!detailEval.accepted) {
+            val detailCtx = detailContextSummary(details)
+            val reason = buildString {
+                append(detailEval.reason.ifBlank { "Detalle no cumple criterios" })
+                if (detailCtx.isNotBlank()) append(" · Leído: ").append(detailCtx)
+                append(" · Lista: ").append(listReason)
+            }
+            logger.log(
+                offer.toLogEntry(
+                    OfferStatus.SEEN,
+                    reason,
+                    stationOverride = station,
+                    blockDate = blockDateShort,
+                    actionStartedAt = actionStartedAt,
+                    actionCompletedAt = System.currentTimeMillis(),
+                ),
+            )
+            postObserver("No toma en detalle: $station — $reason")
+            finishBlockTakeFlow(pauseBot = settings.autoPauseAfterAccept)
+            return
+        }
+
+        if (!reader.clickScheduleOnDetail()) {
+            handleTakeMiss(
+                offer,
+                "No se encontró botón Schedule",
+                station,
+                blockDateShort,
+                actionStartedAt,
+            )
+            return
+        }
+
+        BotEventLog.log(
+            this,
+            BotEventLog.CAT_OFFER,
+            "Schedule pulsado — esperando confirmación Flex: $station",
+        )
+        beginScheduleOutcomeFlow(
+            offer = offer,
+            station = station,
+            blockDateShort = blockDateShort,
+            listReason = listReason,
+            detailReason = detailEval.reason,
+            actionStartedAt = actionStartedAt,
+        )
+    }
+
+    /** Tras Schedule: Aceptada solo si Flex muestra scheduled; Miss si block unavailable. */
+    private fun beginScheduleOutcomeFlow(
+        offer: FlexBlockOffer,
+        station: String,
+        blockDateShort: String,
+        listReason: String,
+        detailReason: String,
+        actionStartedAt: Long,
+    ) {
+        cancelScheduleOutcomeFlow()
+        var attempt = 0
+        val runnable = object : Runnable {
+            override fun run() {
+                if (scheduleOutcomeRunnable !== this) return
+                if (!isMotorForegroundAllowed()) {
+                    handleTakeMiss(
+                        offer,
+                        "Flex salió de primer plano tras Schedule",
+                        station,
+                        blockDateShort,
+                        actionStartedAt,
+                    )
+                    return
+                }
+                attempt++
+                val screenText = reader.readFullScreenText()
+                val overlayText = reader.readFlexOverlayText()
+                val reading = FlexTakeOutcomeReader.readWithRecentNotification(
+                    screenText = screenText,
+                    overlayText = overlayText,
+                )
+                when (reading.result) {
+                    FlexTakeOutcomeReader.Result.SCHEDULED -> {
+                        cancelScheduleOutcomeFlow()
+                        logScheduleOutcome(
+                            offer,
+                            accepted = true,
+                            flexMessage = reading.flexMessage,
+                            station,
+                            blockDateShort,
+                            listReason,
+                            detailReason,
+                            actionStartedAt,
+                        )
+                        finishBlockTakeFlow(pauseBot = settings.autoPauseAfterAccept)
+                    }
+                    FlexTakeOutcomeReader.Result.BLOCK_UNAVAILABLE -> {
+                        cancelScheduleOutcomeFlow()
+                        handleTakeMiss(
+                            offer,
+                            reading.flexMessage.ifBlank { "Block unavailable" },
+                            station,
+                            blockDateShort,
+                            actionStartedAt,
+                        )
+                    }
+                    FlexTakeOutcomeReader.Result.PENDING -> {
+                        if (attempt >= SCHEDULE_OUTCOME_MAX_ATTEMPTS) {
+                            cancelScheduleOutcomeFlow()
+                            handleTakeMiss(
+                                offer,
+                                "Sin confirmación de Flex tras Schedule ($attempt intentos)",
+                                station,
+                                blockDateShort,
+                                actionStartedAt,
+                            )
+                        } else {
+                            handler.post(this)
+                        }
+                    }
+                }
+            }
+        }
+        scheduleOutcomeRunnable = runnable
+        handler.post(runnable)
+    }
+
+    private fun logScheduleOutcome(
+        offer: FlexBlockOffer,
+        accepted: Boolean,
+        flexMessage: String,
+        station: String,
+        blockDateShort: String,
+        listReason: String,
+        detailReason: String,
+        actionStartedAt: Long,
+    ) {
+        val completedAt = System.currentTimeMillis()
+        val reason = buildString {
+            append(flexMessage.ifBlank { if (accepted) "Offer scheduled" else "Block unavailable" })
+            append(" · Lista: ")
+            append(listReason)
+            if (detailReason.isNotBlank()) {
+                append(" · Detalle: ")
+                append(detailReason)
+            }
+        }
+        logger.log(
+            offer.toLogEntry(
+                if (accepted) OfferStatus.ACCEPTED else OfferStatus.MISS,
+                reason,
+                stationOverride = station,
+                blockDate = blockDateShort,
+                actionStartedAt = actionStartedAt,
+                actionCompletedAt = completedAt,
+            ),
+        )
+        postObserver(
+            if (accepted) {
+                "ACEPTADA: $station — ${flexMessage.ifBlank { "scheduled" }}" +
+                    if (blockDateShort.isNotBlank()) " ($blockDateShort)" else ""
+            } else {
+                "PERDIDA: $station — ${flexMessage.ifBlank { "block unavailable" }}"
+            },
+        )
+        if (accepted && settings.callOnBlockWhenAccepted) {
+            CallOnBlockHelper.maybeCall(
+                this,
+                settings,
+                "bloque aceptado: $station",
+            )
+        }
+    }
+
+    private fun cancelScheduleOutcomeFlow() {
+        scheduleOutcomeRunnable?.let { handler.removeCallbacks(it) }
+        scheduleOutcomeRunnable = null
+    }
+
+    private fun cancelDetailAcceptRetries() {
+        detailAcceptRunnable?.let { handler.removeCallbacks(it) }
+        detailAcceptRunnable = null
+    }
+
+    private fun handleTakeMiss(
+        offer: FlexBlockOffer,
+        reason: String,
+        station: String,
+        blockDateShort: String,
+        actionStartedAt: Long,
+    ) {
+        logger.log(
+            offer.toLogEntry(
+                OfferStatus.MISS,
+                reason,
+                stationOverride = station,
+                blockDate = blockDateShort,
+                actionStartedAt = actionStartedAt,
+                actionCompletedAt = System.currentTimeMillis(),
+            ),
+        )
+        postObserver("Perdida: $station — $reason")
+        finishBlockTakeFlow(pauseBot = shouldPauseAfterMiss())
+    }
+
+    /**
+     * Offer Details: lista ≠ detalle. Según Config:
+     * - Sonido + quedarse en pantalla (bot pausado, tú decides Schedule/Cancel).
+     * - Cancel automático + confirmar diálogo.
+     */
+    private fun handleDetailMismatch(
+        offer: FlexBlockOffer,
+        reason: String,
+        station: String,
+        blockDateShort: String,
+        listReason: String,
+        actionStartedAt: Long,
+    ) {
+        val completedAt = System.currentTimeMillis()
+        if (settings.usesDetailMismatchAutoCancel()) {
+            val cancelClicked = reader.clickCancelOnDetail()
+            if (!cancelClicked) {
+                logger.log(
+                    offer.toLogEntry(
+                        OfferStatus.MISS,
+                        "$reason · no se encontró botón Cancel",
+                        stationOverride = station,
+                        blockDate = blockDateShort,
+                        actionStartedAt = actionStartedAt,
+                        actionCompletedAt = completedAt,
+                    ),
+                )
+                postObserver("Detalle distinto — no se encontró Cancel")
+                finishBlockTakeFlow(pauseBot = shouldPauseAfterMiss())
+                return
+            }
+            handler.postDelayed({
+                val confirmed = reader.confirmOfferCancelDialog()
+                val logReason = when {
+                    confirmed -> "$reason · Cancel + confirmación"
+                    else -> "$reason · Cancel (sin confirmar diálogo)"
+                }
+                logger.log(
+                    offer.toLogEntry(
+                        if (confirmed) OfferStatus.CANCELLED else OfferStatus.MISS,
+                        logReason,
+                        stationOverride = station,
+                        blockDate = blockDateShort,
+                        actionStartedAt = actionStartedAt,
+                        actionCompletedAt = System.currentTimeMillis(),
+                    ),
+                )
+                postObserver(
+                    if (confirmed) {
+                        "Detalle distinto — oferta cancelada en Flex"
+                    } else {
+                        "Detalle distinto — Cancel pulsado, confirma manualmente"
+                    },
+                )
+                finishBlockTakeFlow(
+                    pauseBot = if (confirmed) settings.autoPauseAfterAccept else shouldPauseAfterMiss(),
+                )
+            }, 550)
+            return
+        }
+
+        AlertManager(this).playSoundOnce(settings.flexDetailMismatchSoundUri)
+        logger.log(
+            offer.toLogEntry(
+                OfferStatus.SEEN,
+                "Aviso sonoro · $reason · quedó en Offer Details (Schedule/Cancel manual) · Lista: $listReason",
+                stationOverride = station,
+                blockDate = blockDateShort,
+                actionStartedAt = actionStartedAt,
+                actionCompletedAt = completedAt,
+            ),
+        )
+        postObserver("Detalle distinto — aviso sonoro, revisa Offer Details (Schedule/Cancel)")
+        finishBlockTakeFlow(pauseBot = settings.autoPauseAfterAccept)
+    }
+
+    private fun detailContextSummary(details: Map<String, String>): String = buildString {
+        val pay = details["pay_range"]?.trim().orEmpty()
+        val time = details["time_window"]?.trim().orEmpty()
+        val st = details["station"]?.trim().orEmpty()
+        if (pay.isNotBlank()) append("pago=").append(pay.take(24))
+        if (time.isNotBlank()) {
+            if (isNotEmpty()) append(", ")
+            append("horario=").append(time.take(32))
+        }
+        if (st.isNotBlank()) {
+            if (isNotEmpty()) append(", ")
+            append("est=").append(st.take(20))
+        }
     }
 
     /** Pausa el bot una vez tras abrir/aceptar un bloque (lista → detalle → Schedule opcional). */
@@ -582,10 +1074,19 @@ class PichixAccessibilityService : AccessibilityService() {
         Log.d(TAG, message)
     }
 
-    private fun finishBlockTakeFlow() {
-        pausedAfterAccept = true
-        postBotPaused()
-        BotEventLog.log(this, BotEventLog.CAT_PAUSE, "Pausado tras flujo de oferta")
+    private fun shouldPauseAfterMiss(): Boolean = !settings.flexContinueOnTakeMiss
+
+    private fun finishBlockTakeFlow(pauseBot: Boolean) {
+        cancelDetailAcceptRetries()
+        cancelScheduleOutcomeFlow()
+        if (pauseBot) {
+            pausedAfterAccept = true
+            postBotPaused()
+            BotEventLog.log(this, BotEventLog.CAT_PAUSE, "Pausado tras flujo de oferta")
+        } else {
+            BotEventLog.log(this, BotEventLog.CAT_OFFER, "Flujo de oferta terminado — bot sigue activo")
+            scheduleWork()
+        }
         broadcastState()
     }
 
@@ -608,6 +1109,9 @@ class PichixAccessibilityService : AccessibilityService() {
 
     private fun cancelPendingMotorActions() {
         handler.removeCallbacks(scrollSettleRunnable)
+        cancelDetailAcceptRetries()
+        cancelPostRefreshAnalysis()
+        cancelScheduleOutcomeFlow()
         scrollInFlight = false
     }
 
@@ -785,6 +1289,9 @@ class PichixAccessibilityService : AccessibilityService() {
         status: OfferStatus,
         reason: String,
         stationOverride: String = stationText,
+        blockDate: String = "",
+        actionStartedAt: Long = 0L,
+        actionCompletedAt: Long = 0L,
     ): OfferLogEntry {
         val pay = payAmount ?: FlexGrabberEvaluator.parsePay(payText) ?: 0.0
         val hours = durationHours ?: 0.0
@@ -794,9 +1301,12 @@ class PichixAccessibilityService : AccessibilityService() {
             hourlyRate = hourly,
             durationHours = hours,
             timeWindow = timeText,
+            blockDate = blockDate,
             station = stationOverride.ifBlank { stationText },
             status = status,
             reason = reason,
+            actionStartedAt = actionStartedAt,
+            actionCompletedAt = actionCompletedAt,
         )
     }
 }

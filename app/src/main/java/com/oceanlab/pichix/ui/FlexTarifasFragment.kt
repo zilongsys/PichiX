@@ -33,6 +33,26 @@ class FlexTarifasFragment : Fragment() {
 
         showingDetailed = settings.usesFlexDetailedTariff()
         if (showingDetailed) toggle.check(R.id.btnTariffDetailed) else toggle.check(R.id.btnTariffClassic)
+        SegmentedToggleStyle.wireGroup(toggle, view) { checkedId ->
+            val detailed = checkedId == R.id.btnTariffDetailed
+            if (detailed == showingDetailed) return@wireGroup
+            if (!isAdded) return@wireGroup
+            settings.flexTariffMode = if (detailed) {
+                AppSettings.TARIFF_MODE_DETAILED
+            } else {
+                AppSettings.TARIFF_MODE_CLASSIC
+            }
+            showingDetailed = detailed
+            updateModeUi(view, detailed)
+            showChildFragment(detailed)
+            if (detailed) {
+                childFragmentManager.findFragmentByTag(TAG_RULES)
+                    ?.let { it as? FlexTarifasRulesFragment }
+                    ?.ensureStarterRulesIfEmpty()
+            }
+            PichixAccessibilityService.syncEngine(requireContext())
+            (activity as? MainActivity)?.markDirty(2)
+        }
         updateModeUi(view, showingDetailed)
         applyModeInfoVisibility(tvModeInfo, btnToggleModeInfo, settings.showFlexTariffModeInfo)
         showChildFragment(showingDetailed)
@@ -42,28 +62,6 @@ class FlexTarifasFragment : Fragment() {
             applyModeInfoVisibility(tvModeInfo, btnToggleModeInfo, settings.showFlexTariffModeInfo)
         }
 
-        toggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
-            if (!isChecked) return@addOnButtonCheckedListener
-            val detailed = checkedId == R.id.btnTariffDetailed
-            if (detailed == showingDetailed) return@addOnButtonCheckedListener
-            view.runRetainingFocus {
-                settings.flexTariffMode = if (detailed) {
-                    AppSettings.TARIFF_MODE_DETAILED
-                } else {
-                    AppSettings.TARIFF_MODE_CLASSIC
-                }
-                showingDetailed = detailed
-                updateModeUi(view, detailed)
-                showChildFragment(detailed)
-                if (detailed) {
-                    childFragmentManager.findFragmentByTag(TAG_RULES)
-                        ?.let { it as? FlexTarifasRulesFragment }
-                        ?.ensureStarterRulesIfEmpty()
-                }
-                PichixAccessibilityService.syncEngine(requireContext())
-                (activity as? MainActivity)?.markDirty(2)
-            }
-        }
     }
 
     private fun applyModeInfoVisibility(info: TextView, toggle: TextView, visible: Boolean) {

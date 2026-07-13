@@ -31,6 +31,7 @@ object ConfigSectionBinder {
         applyExpandedState(header, content, open)
 
         header.setOnClickListener {
+            val focused = header.rootView.findFocus()
             val toggle = {
                 open = !open
                 applyExpandedState(header, content, open)
@@ -41,6 +42,7 @@ object ConfigSectionBinder {
                 is NestedScrollView -> scrollHost.runRetainingScrollForSectionToggle(header, toggle)
                 else -> toggle()
             }
+            header.post { header.rootView.restoreFocus(focused) }
         }
     }
 

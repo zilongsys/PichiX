@@ -22,6 +22,15 @@ import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.textfield.TextInputEditText
 import com.oceanlab.pichix.R
 
+/** Conserva posición de scroll al relayout; [anchor] compensa cambios de altura del contenido. */
+fun View.runRetainingHostScroll(anchor: View = this, block: () -> Unit) {
+    when (val scrollHost = findHostScrollView()) {
+        is ScrollView -> scrollHost.runRetainingScrollForSectionToggle(anchor, block)
+        is NestedScrollView -> scrollHost.runRetainingScrollForSectionToggle(anchor, block)
+        else -> block()
+    }
+}
+
 /** ScrollView raíz + contenido interno: no robar foco al relayout. */
 fun View.setupFormFocus() {
     preventScrollFocusSteal()
@@ -47,6 +56,25 @@ fun View.findHostScrollView(): View? {
         current = current.parent as? View
     }
     return null
+}
+
+/** Mejor ancla para conservar scroll/foco: scroll del campo o [fallback]. */
+fun View.formFocusHost(fallback: View = this): View =
+    findHostScrollView() ?: fallback.findHostScrollView() ?: fallback.focusRoot()
+
+/** Marca un toggle sin disparar IllegalStateException si el grupo aún no está listo. */
+fun MaterialButtonToggleGroup.safeCheck(buttonId: Int) {
+    if (findViewById<View>(buttonId) == null) return
+    try {
+        check(buttonId)
+    } catch (_: IllegalStateException) {
+        post {
+            try {
+                check(buttonId)
+            } catch (_: IllegalStateException) {
+            }
+        }
+    }
 }
 
 /** Vista raíz del árbol (activity / fragment) para restaurar foco tras cambios de UI. */
@@ -81,15 +109,17 @@ fun View.restoreFocus(target: View?) {
 
 private fun restoreFocusNearby(from: View?) {
     var origin: View? = from
-    repeat(8) {
+    repeat(12) {
         val node = origin ?: return
-        val candidate = node.focusSearch(View.FOCUS_DOWN)
-        if (candidate != null && candidate !== node &&
-            candidate.isShown && candidate.isEnabled &&
-            (candidate.isFocusable || candidate.isFocusableInTouchMode) &&
-            candidate.requestFocus()
-        ) {
-            return
+        for (direction in intArrayOf(View.FOCUS_DOWN, View.FOCUS_UP, View.FOCUS_FORWARD)) {
+            val candidate = node.focusSearch(direction)
+            if (candidate != null && candidate !== node &&
+                candidate.isShown && candidate.isEnabled &&
+                (candidate.isFocusable || candidate.isFocusableInTouchMode) &&
+                candidate.requestFocus()
+            ) {
+                return
+            }
         }
         origin = node.parent as? View
     }
@@ -186,13 +216,13 @@ inline fun SwitchMaterial.setOnCheckedChangeRetainingFocus(
     focusRoot: View,
     crossinline listener: (Boolean) -> Unit,
 ) {
-    val scrollHost = focusRoot.findHostScrollView()
     setOnCheckedChangeListener { _, checked ->
+        val host = formFocusHost(focusRoot)
         val run: () -> Unit = { listener(checked) }
-        when (scrollHost) {
-            is ScrollView -> scrollHost.runRetainingScrollAndFocus(run)
-            is NestedScrollView -> scrollHost.runRetainingScrollAndFocus(run)
-            else -> focusRoot.runRetainingFocus(run)
+        when (host) {
+            is ScrollView -> host.runRetainingScrollAndFocus(run)
+            is NestedScrollView -> host.runRetainingScrollAndFocus(run)
+            else -> host.runRetainingFocus(run)
         }
     }
 }
@@ -202,14 +232,14 @@ inline fun MaterialButtonToggleGroup.addOnButtonCheckedRetainingFocus(
     focusRoot: View,
     crossinline listener: () -> Unit,
 ) {
-    val scrollHost = focusRoot.findHostScrollView()
     addOnButtonCheckedListener { _, _, isChecked ->
         if (!isChecked) return@addOnButtonCheckedListener
+        val host = formFocusHost(focusRoot)
         val run = { listener() }
-        when (scrollHost) {
-            is ScrollView -> scrollHost.runRetainingScrollAndFocus(run)
-            is NestedScrollView -> scrollHost.runRetainingScrollAndFocus(run)
-            else -> focusRoot.runRetainingFocus(run)
+        when (host) {
+            is ScrollView -> host.runRetainingScrollAndFocus(run)
+            is NestedScrollView -> host.runRetainingScrollAndFocus(run)
+            else -> host.runRetainingFocus(run)
         }
     }
 }
@@ -236,7 +266,7 @@ inline fun Spinner.setOnItemSelectedRetainingFocus(
 ) {
     onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
         override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
-            focusRoot.runRetainingFocus { listener(pos) }
+            formFocusHost(focusRoot).runRetainingFocus { listener(pos) }
         }
         override fun onNothingSelected(parent: AdapterView<*>?) = Unit
     }
@@ -282,18 +312,17 @@ fun TextInputEditText.onUserTextChanged(
     onDirty: () -> Unit,
     onChange: (() -> Unit)? = null
 ) {
-    val scrollHost = findHostScrollView()
-    val root = focusRoot()
     addTextChangedListener(object : TextWatcher {
         override fun afterTextChanged(s: Editable?) {
+            val host = formFocusHost()
             val action: () -> Unit = {
                 onDirty()
                 onChange?.invoke()
             }
-            when (scrollHost) {
-                is ScrollView -> scrollHost.runRetainingScrollAndFocus(action)
-                is NestedScrollView -> scrollHost.runRetainingScrollAndFocus(action)
-                else -> root.runRetainingFocus(action)
+            when (host) {
+                is ScrollView -> host.runRetainingScrollAndFocus(action)
+                is NestedScrollView -> host.runRetainingScrollAndFocus(action)
+                else -> host.runRetainingFocus(action)
             }
         }
         override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -326,12 +355,11 @@ fun TextView.setTarifaMaxHint(text: String) {
 }
 
 inline fun Spinner.setSelectionSilently(position: Int, crossinline onSelected: (Int) -> Unit) {
-    val focusRoot = focusRoot()
     onItemSelectedListener = null
     setSelection(position, false)
     onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
         override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
-            focusRoot.runRetainingFocus { onSelected(pos) }
+            formFocusHost().runRetainingFocus { onSelected(pos) }
         }
         override fun onNothingSelected(parent: AdapterView<*>?) {}
     }

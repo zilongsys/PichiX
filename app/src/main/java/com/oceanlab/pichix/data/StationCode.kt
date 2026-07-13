@@ -1,19 +1,16 @@
 package com.oceanlab.pichix.data
 
-/** Código corto de estación para tablas y filtros compactos. */
+/** Código de estación: texto entre paréntesis, sin los paréntesis. */
 object StationCode {
 
-    private val parenCode = Regex("\\(([A-Z0-9]{2,10})\\)")
-    private val leadingCode = Regex("^([A-Z0-9]{2,10})")
-    private val splitDelim = Regex("[\\s\\-–—|,]+")
-
-    fun compact(station: String): String {
+    fun code(station: String): String {
         val raw = station.trim()
-        if (raw.isBlank() || raw == "—" || raw == "?") return "?"
-        parenCode.find(raw)?.groupValues?.getOrNull(1)?.let { return it }
-        val first = splitDelim.split(raw).firstOrNull()?.trim().orEmpty()
-        if (first.matches(Regex("[A-Z0-9]{2,10}"))) return first
-        leadingCode.find(raw)?.groupValues?.getOrNull(1)?.let { return it }
-        return first.take(8).ifBlank { raw.take(8) }
+        if (raw.isBlank() || raw == "—") return "?"
+        val open = raw.indexOf('(')
+        val close = raw.lastIndexOf(')')
+        if (open >= 0 && close > open) {
+            return raw.substring(open + 1, close).trim().ifBlank { "?" }
+        }
+        return "?"
     }
 }

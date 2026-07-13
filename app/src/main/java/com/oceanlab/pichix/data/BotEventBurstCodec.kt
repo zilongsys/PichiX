@@ -33,19 +33,26 @@ object BotEventBurstCodec {
         }
     }
 
-    fun encodeGroup(startedMs: Long, summary: String, lines: List<BotEventEntry>, live: Boolean): BotEventEntry {
-        val prefix = if (live) LIVE_PREFIX else GROUP_PREFIX
-        val body = buildString {
-            append(summary)
-            lines.forEach { line ->
-                append('\n')
-                append(line.timestampMs)
-                append('|')
-                append(line.category.replace('|', '/'))
-                append('|')
-                append(line.message.replace('\n', ' ').replace('|', '/'))
+    fun expandToIndividualEntries(bundle: BotEventEntry): List<BotEventEntry> {
+        val groupId = burstId(bundle)
+        val details = detailLines(bundle)
+        if (details.isNotEmpty()) {
+            return details.map { line ->
+                BotEventEntry(
+                    line.timestampMs,
+                    line.category,
+                    line.message,
+                    burstGroupId = groupId,
+                )
             }
         }
-        return BotEventEntry(startedMs, BotEventLog.CAT_BURST, prefix + body)
+        return listOf(
+            BotEventEntry(
+                groupId,
+                BotEventLog.CAT_BURST,
+                summary(bundle),
+                burstGroupId = groupId,
+            ),
+        )
     }
 }

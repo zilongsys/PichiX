@@ -10,7 +10,7 @@
     android:paddingBottom="8dp"
     android:background="@drawable/row_divider">
 
-    <!-- Fila 1: # · icono estado · tipo orden | precio · millas -->
+    <!-- Fila 1: # · icono estado · horario bloque | precio · horas -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -74,7 +74,7 @@
         android:maxLines="1"
         android:ellipsize="end"/>
 
-    <!-- Fila 3: motivo (izq) | $/mi · hora (der) -->
+    <!-- Fila 3: motivo (izq) | $/h · hora registro (der) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

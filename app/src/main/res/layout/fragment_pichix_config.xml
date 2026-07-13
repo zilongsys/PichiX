@@ -191,7 +191,7 @@
                 android:layout_marginTop="4dp"
                 android:layout_marginRight="16dp"
                 android:layout_marginBottom="4dp"
-                android:hint="com.amazon.rabbit"
+                android:hint="com.amazon.flex.rabbit"
                 android:inputType="text" />
 
             <LinearLayout
@@ -613,6 +613,34 @@
                 android:layout_marginRight="16dp"
                 android:layout_marginBottom="6dp"
                 android:text="@string/config_click_refresh_hint"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/layoutReanalyzeAfterRefresh"
+                style="@style/Row"
+                android:visibility="gone">
+
+                <TextView
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_reanalyze_after_refresh_title" />
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchReanalyzeAfterRefresh"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvReanalyzeAfterRefreshHint"
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="6dp"
+                android:text="@string/config_reanalyze_after_refresh_hint"
                 android:visibility="gone" />
 
             <View style="@style/DividerFull" />
@@ -1227,6 +1255,351 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:text="@string/config_continue_on_take_miss_title" />
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchContinueOnTakeMiss"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="6dp"
+                android:text="@string/config_continue_on_take_miss_hint" />
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_pause_after_accept_title" />
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchPauseAfterAccept"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="6dp"
+                android:text="@string/config_pause_after_accept_hint" />
+
+            <View style="@style/DividerFull" />
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_offer_click_sound_title" />
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchOfferClickSound"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <LinearLayout style="@style/Row" android:layout_marginBottom="8dp">
+                <TextView
+                    android:id="@+id/tvOfferClickSoundLabel"
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_offer_click_sound_label" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPickOfferClickSound"
+                    style="@style/SparkIconButtonCompact"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:contentDescription="@string/config_btn_pick_offer_click_sound"
+                    app:icon="@drawable/ic_btn_music" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPickOfferClickAudioFile"
+                    style="@style/SparkIconButtonCompact"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:contentDescription="@string/config_btn_pick_audio_file"
+                    app:icon="@drawable/ic_hist_folder" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="6dp"
+                android:text="@string/config_offer_click_sound_hint" />
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_offer_click_sound_repeat_label" />
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etOfferClickSoundRepeat"
+                    style="@style/MediumInput"
+                    android:layout_width="56dp"
+                    android:layout_height="44dp"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:text="1" />
+            </LinearLayout>
+
+            <LinearLayout
+                style="@style/Row"
+                android:layout_marginBottom="4dp"
+                android:gravity="center_vertical">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnOfferClickSoundSystem"
+                    style="@style/SparkIconButtonCompact"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:contentDescription="@string/config_btn_sound_system_default"
+                    app:icon="@android:drawable/ic_menu_preferences" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnOfferClickSoundPlay"
+                    style="@style/SparkIconButtonCompact"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:contentDescription="@string/config_btn_test_sound"
+                    app:icon="@drawable/ic_btn_play"
+                    app:iconTint="@color/green_400" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnOfferClickSoundStop"
+                    style="@style/SparkIconButtonCompact"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:contentDescription="@string/config_btn_stop_sound"
+                    app:icon="@drawable/ic_btn_stop"
+                    app:iconTint="@color/coral_600" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/RowLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginRight="16dp"
+                android:text="@string/config_detail_mismatch_title" />
+
+            <TextView
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="6dp"
+                android:text="@string/config_detail_mismatch_hint" />
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/toggleDetailMismatchAction"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="8dp"
+                app:singleSelection="true"
+                app:selectionRequired="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMismatchSoundStay"
+                    style="@style/SparkThemeToggleButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_detail_mismatch_sound_stay" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMismatchAutoCancel"
+                    style="@style/SparkThemeToggleButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_detail_mismatch_auto_cancel" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <LinearLayout
+                android:id="@+id/layoutMismatchSound"
+                style="@style/Row"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:id="@+id/tvMismatchSoundLabel"
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_detail_mismatch_sound_label" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPickMismatchSound"
+                    style="@style/SparkIconButtonCompact"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:contentDescription="@string/config_btn_pick_mismatch_sound"
+                    app:icon="@drawable/ic_btn_music" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPickMismatchAudioFile"
+                    style="@style/SparkIconButtonCompact"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:contentDescription="@string/config_btn_pick_audio_file"
+                    app:icon="@drawable/ic_hist_folder" />
+            </LinearLayout>
+
+            <View style="@style/DividerFull" />
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_call_on_block_title" />
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchCallOnBlock"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/headerCallOnBlockHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="false"
+                android:gravity="end"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp">
+
+                <TextView
+                    android:id="@+id/tvCallOnBlockHintToggle"
+                    style="@style/ConfigHintToggle"
+                    android:text="@string/config_phase_note_show" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvCallOnBlockHint"
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="6dp"
+                android:text="@string/config_call_on_block_hint"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/layoutCallOnBlockOptions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:layout_marginBottom="8dp"
+                    android:hint="@string/config_call_on_block_phone_hint">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etCallOnBlockPhone"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="phone"
+                        android:maxLines="1" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <LinearLayout style="@style/Row">
+                    <TextView
+                        style="@style/RowLabel"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/config_call_on_block_when_accepted" />
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchCallOnBlockWhenAccepted"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+
+                <LinearLayout style="@style/Row">
+                    <TextView
+                        style="@style/RowLabel"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/config_call_on_block_on_scheduled" />
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchCallOnBlockOnScheduled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+
+                <LinearLayout style="@style/Row" android:layout_marginBottom="8dp">
+                    <TextView
+                        style="@style/RowLabel"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/config_call_on_block_delay_title" />
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etCallOnBlockDelayMs"
+                        style="@style/MediumInput"
+                        android:layout_width="72dp"
+                        android:layout_height="44dp"
+                        android:gravity="center"
+                        android:hint="0"
+                        android:inputType="number" />
+                </LinearLayout>
+
+                <TextView
+                    style="@style/RowHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:layout_marginBottom="6dp"
+                    android:text="@string/config_call_on_block_delay_hint" />
+            </LinearLayout>
+
+            <View style="@style/DividerFull" />
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:text="@string/config_flex_foreground_title" />
                 <com.google.android.material.switchmaterial.SwitchMaterial
                     android:id="@+id/switchFlexOnlyForeground"
@@ -1720,6 +2093,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
+
+        <TextView
+            style="@style/InfoBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/config_flex_banner_auto_note" />
 
         <LinearLayout style="@style/Card">
 

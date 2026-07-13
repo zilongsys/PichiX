@@ -13,8 +13,8 @@ class OfferLogCsvStore(context: Context) {
     companion object {
         const val HEADER =
             "timestamp,fecha,precio,dolares_hora,duracion_horas,horario,estacion,estado,razon," +
-                "first_seen_at,action_started_at,action_completed_at,reject_step1_at,reject_confirmed_at"
-        const val COLUMN_COUNT = 14
+                "first_seen_at,action_started_at,action_completed_at,reject_step1_at,reject_confirmed_at,fecha_bloque"
+        const val COLUMN_COUNT = 15
         const val FILE_NAME = "pichix_offers_log.csv"
     }
 
@@ -53,7 +53,8 @@ class OfferLogCsvStore(context: Context) {
             "${entry.actionStartedAt}," +
             "${entry.actionCompletedAt}," +
             "${entry.rejectStep1At}," +
-            "${entry.rejectConfirmedAt}\n"
+            "${entry.rejectConfirmedAt}," +
+            "${entry.blockDate.replace(",", ";")}\n"
         lock.withLock { logFile.appendText(line) }
     }
 
@@ -86,6 +87,7 @@ class OfferLogCsvStore(context: Context) {
                 actionCompletedAt = p.getOrNull(11).toLongOrZero(),
                 rejectStep1At = p.getOrNull(12).toLongOrZero(),
                 rejectConfirmedAt = p.getOrNull(13).toLongOrZero(),
+                blockDate = p.getOrNull(14)?.trim().orEmpty(),
             )
         } catch (_: Exception) {
             null

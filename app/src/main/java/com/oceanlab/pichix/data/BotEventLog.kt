@@ -115,6 +115,7 @@ object BotEventLog {
             return
         }
         thread(name = "BotEventLogRead") {
+            migrateLegacyBurstFileIfNeeded(ctx)
             val merged = buildMergedSnapshot(ctx)
             mainHandler.post { onReady(merged) }
         }
@@ -254,25 +255,13 @@ object BotEventLog {
                     openBurstSession(pending)
                     return
                 }
-                if (burstSessionOpen && shouldIncludeInBurst(pending)) {
-                    addBurstEntry(pending)
-                    scheduleUiBroadcast()
-                    return
-                }
                 if (burstSessionOpen) {
-                    closeBurstSession(Pending(pending.ts, CAT_BURST_END, ""))
+                    addBurstEntry(pending)
+                    return
                 }
                 addNormalEntry(BotEventEntry(pending.ts, pending.category, pending.message))
             }
         }
-    }
-
-    private fun shouldIncludeInBurst(pending: Pending): Boolean {
-        if (pending.category == CAT_BURST) return true
-        val message = pending.message
-        return message.startsWith("Ráfaga") ||
-            message.contains("Ráfaga →") ||
-            message.contains("Ráfaga:")
     }
 
     private fun isBurstStartMessage(pending: Pending): Boolean =
@@ -322,6 +311,28 @@ object BotEventLog {
         )
     }
 
+    /** Reescribe entradas @@BURST@@ antiguas como líneas individuales con burstGroupId. */
+    private fun migrateLegacyBurstFileIfNeeded(context: Context) {
+        val file = sessionFile(context)
+        if (!file.exists()) return
+        synchronized(storeLock) {
+            val lines = file.readLines()
+            if (lines.isEmpty()) return
+            val entries = lines.mapNotNull { BotEventEntry.fromLine(it) }
+            if (entries.none { BotEventBurstCodec.isBurstBundle(it) }) return
+            val expanded = ArrayList<BotEventEntry>(entries.size + 64)
+            for (entry in entries) {
+                if (BotEventBurstCodec.isBurstBundle(entry)) {
+                    expanded.addAll(BotEventBurstCodec.expandToIndividualEntries(entry))
+                } else {
+                    expanded.add(entry)
+                }
+            }
+            val body = expanded.joinToString("\n") { it.toLine() }
+            file.writeText(if (body.isEmpty()) "" else "$body\n")
+        }
+    }
+
     private fun addNormalEntry(entry: BotEventEntry) {
         val toFlush = mutableListOf<BotEventEntry>()
         synchronized(storeLock) {
@@ -354,7 +365,21 @@ object BotEventLog {
             if (seen.add(key)) out.add(e)
         }
         out.sortByDescending { it.timestampMs }
-        return out
+        return expandLegacyBurstBundles(out)
+    }
+
+    /** Convierte bloques @@BURST@@ antiguos en eventos individuales para la UI. */
+    private fun expandLegacyBurstBundles(entries: List<BotEventEntry>): List<BotEventEntry> {
+        if (entries.none { BotEventBurstCodec.isBurstBundle(it) }) return entries
+        val expanded = ArrayList<BotEventEntry>(entries.size + 32)
+        for (entry in entries) {
+            if (BotEventBurstCodec.isBurstBundle(entry)) {
+                expanded.addAll(BotEventBurstCodec.expandToIndividualEntries(entry))
+            } else {
+                expanded.add(entry)
+            }
+        }
+        return expanded.sortedByDescending { it.timestampMs }
     }
 
     private fun eventKey(e: BotEventEntry): String =

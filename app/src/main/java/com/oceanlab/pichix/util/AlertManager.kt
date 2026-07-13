@@ -1,6 +1,7 @@
 package com.oceanlab.pichix.util
 
 import android.content.Context
+import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.RingtoneManager
@@ -43,9 +44,9 @@ class AlertManager(private val context: Context) {
     fun playFlexNotificationAlert(soundUri: String, repeatCount: Int = 2) {
         try {
             stopGlobal()
-            setNotificationVolume()
+            prepareSystemVolumeForAlert()
             val uri = resolveUri(soundUri)
-            playSound(uri, settings.alertVolume / 100f, repeatCount.coerceIn(1, 20))
+            playSound(uri, volumeFraction(), repeatCount.coerceIn(1, 20))
             if (settings.vibrateOnAlert) vibrate()
         } catch (e: Exception) {
             Log.e(TAG, "playFlexNotificationAlert: ${e.message}")
@@ -55,10 +56,10 @@ class AlertManager(private val context: Context) {
     /** Un solo disparo (pausa / reanudación del bot); no interrumpe alertas en curso si ya suenan. */
     fun playSoundOnce(soundUri: String) {
         try {
-            setNotificationVolume()
+            prepareSystemVolumeForAlert()
             val uri = resolveUri(soundUri)
-            val player = MediaPlayer.create(context, uri) ?: return
-            val v = (settings.alertVolume / 100f).coerceIn(0f, 1f)
+            val player = buildPlayer(uri) ?: return
+            val v = volumeFraction()
             player.setVolume(v, v)
             player.setOnCompletionListener { mp ->
                 try {
@@ -72,10 +73,26 @@ class AlertManager(private val context: Context) {
         }
     }
 
-    private fun setNotificationVolume() {
-        val maxVol = audioMgr.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION)
-        val target = (settings.alertVolume / 100.0 * maxVol).toInt().coerceAtLeast(1)
-        audioMgr.setStreamVolume(AudioManager.STREAM_NOTIFICATION, target, 0)
+    private fun volumeFraction(): Float = (settings.alertVolume / 100f).coerceIn(0f, 1f)
+
+    private fun prepareSystemVolumeForAlert() {
+        if (!settings.alertForceVolumeEnabled) return
+        val fraction = volumeFraction()
+        if (fraction <= 0f) return
+        val streams = intArrayOf(
+            AudioManager.STREAM_NOTIFICATION,
+            AudioManager.STREAM_ALARM,
+        )
+        for (stream in streams) {
+            val maxVol = audioMgr.getStreamMaxVolume(stream)
+            if (maxVol <= 0) continue
+            val target = (fraction * maxVol).toInt().coerceIn(1, maxVol)
+            try {
+                audioMgr.setStreamVolume(stream, target, 0)
+            } catch (e: Exception) {
+                Log.w(TAG, "setStreamVolume stream=$stream: ${e.message}")
+            }
+        }
     }
 
     private fun resolveUri(uriStr: String): Uri =
@@ -89,8 +106,31 @@ class AlertManager(private val context: Context) {
             RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
         }
 
+    private fun buildPlayer(uri: Uri): MediaPlayer? {
+        val usage = if (settings.alertForceVolumeEnabled) {
+            AudioAttributes.USAGE_ALARM
+        } else {
+            AudioAttributes.USAGE_NOTIFICATION_EVENT
+        }
+        return try {
+            MediaPlayer().apply {
+                setDataSource(context, uri)
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(usage)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build(),
+                )
+                prepare()
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "buildPlayer fallback: ${e.message}")
+            MediaPlayer.create(context, uri)
+        }
+    }
+
     private fun playSound(uri: Uri, volume: Float, repeatCount: Int) {
-        val player = MediaPlayer.create(context, uri) ?: return
+        val player = buildPlayer(uri) ?: return
         val v = volume.coerceIn(0f, 1f)
         player.setVolume(v, v)
         player.isLooping = false

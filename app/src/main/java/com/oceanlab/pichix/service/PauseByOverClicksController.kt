@@ -21,33 +21,20 @@ object PauseByOverClicksController {
     private var resumeRunnable: Runnable? = null
 
     /** Frases por defecto si el campo de texto está vacío (cartel en pantalla / aviso Flex). */
-    private val DEFAULT_BLOCK_PHRASES = listOf(
-        "too many click",
-        "too many tap",
-        "too many taps",
-        "clicked too quickly",
-        "click too fast",
-        "tap too fast",
-        "slow down",
-        "try again later",
-        "demasiados clic",
-        "demasiados toque",
-        "demasiados toques",
-        "has hecho demasiados",
-        "verification required",
-        "verify you're",
-        "verify you are",
-        "captcha",
-        "robot check",
-        "not a robot",
-        "puzzle",
-    )
+    private val DEFAULT_BLOCK_PHRASES: List<String>
+        get() = FlexBlockingPhrases.FLEX_THROTTLE_PHRASES + FlexBlockingPhrases.OTHER_BLOCK_PHRASES
 
-    /** Evalúa texto dibujado en pantalla (banner flotante, no ventana modal). */
+    /** Evalúa texto dibujado en pantalla (banner flotante in-app, no notificación). */
     fun onScreenText(context: Context, screenText: String): Boolean {
         val settings = AppSettings(context)
         if (!settings.isBotEnabled) return false
         if (PichixAccessibilityService.pausedAfterAccept) return true
+
+        FlexBlockingPhrases.findFlexThrottleNeedle(screenText)?.let { needle ->
+            return triggerPause(context, settings, needle, "banner Flex")
+        }
+
+        if (!settings.pauseByOverClicksEnabled) return false
         val needle = findMatchingNeedle(screenText, settings) ?: return false
         return triggerPause(context, settings, needle, "pantalla")
     }
@@ -56,7 +43,9 @@ object PauseByOverClicksController {
     fun wouldBlockClicks(context: Context, screenText: String): Boolean {
         if (PichixAccessibilityService.pausedAfterAccept) return true
         val settings = AppSettings(context)
-        if (!settings.isBotEnabled || !settings.pauseByOverClicksEnabled) return false
+        if (!settings.isBotEnabled) return false
+        if (FlexBlockingPhrases.isFlexThrottleBanner(screenText)) return true
+        if (!settings.pauseByOverClicksEnabled) return false
         return findMatchingNeedle(screenText, settings) != null
     }
 

@@ -156,7 +156,7 @@
                 android:singleLine="true"/>
         </LinearLayout>
 
-        <!-- MILLAS: 0 por defecto, redondeado, hasta 999 -->
+        <!-- HORAS: suma de duración de bloques aceptados hoy -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -168,7 +168,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="MILLAS"
+                android:text="@string/header_total_hours_label"
                 android:textColor="@color/text_hint"
                 android:textSize="8sp"
                 android:textAllCaps="true"

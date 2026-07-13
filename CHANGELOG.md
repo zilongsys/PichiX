@@ -1,10 +1,257 @@
 # PichiX — Historial de cambios
 
-Formato de versión: `x.y.z` — `z` (PATCH) sube en cada compilación de **0 a 100**; al llegar a 100, `y` (+1) y `z` = 0 (igual si `y` llega a 100 con `x` +1).
+Formato de versión: `x.y.z` — `z` (PATCH) sube de **0 a 100** al entregar cambios; al llegar a 100, `y` (+1) y `z` = 0 (igual si `y` llega a 100 con `x` +1).
 
-La versión se actualiza automáticamente en `app/version.properties` al ejecutar `assemble*` o `compile*Kotlin`.
+La versión vive en `app/version.properties`. Compilar **no** la modifica; usar `./gradlew :app:bumpVersion` (o editar el archivo) solo cuando haya cambios reales.
 
 **Convención de entradas:** en cada versión se listan cambios como **Añadido**, **Actualizado**, **Corregido** o **Eliminado**.
+
+---
+
+## v0.2.10 (Junio 2026)
+
+### Añadido
+- **Config → Comportamiento Flex**: «Seguir tras oferta perdida» (activo por defecto) — si no pudo tomar el bloque, el bot sigue intentando. «Pausar al tomar bloque» controla la pausa tras aceptar con éxito.
+
+---
+
+## v0.2.9 (Junio 2026)
+
+### Añadido
+- **Alertas**: secciones colapsables (General, Nueva regla, Reglas). Cada regla también se expande/colapsa.
+- **Volumen de alerta**: slider 0–100 %, opción «Forzar volumen al alertar» (canal alarma + sube volumen del sistema) y vibración.
+
+### Actualizado
+- **Tema**: colores del SeekBar, toggles segmentados y botones alineados con tema claro/oscuro.
+
+---
+
+## v0.2.8 (Junio 2026)
+
+### Actualizado
+- **Alertas**: cada regla tiene su selector **Notificación / Mensaje Flex / Ambos** (nueva regla, edición y tarjeta de regla). Sección reorganizada: General, Nueva regla, Reglas configuradas. Estado de acceso a notificaciones y accesibilidad.
+
+---
+
+## v0.2.7 (Junio 2026)
+
+### Corregido
+- **Confirmación al tomar**: evalúa toast, banner y notificación por separado (evita falsos «unavailable»). Aceptada si Flex muestra scheduled en cualquiera de esas fuentes.
+- **Alertas «offer scheduled»**: también se evalúan en mensajes flotantes in-app (accesibilidad), no solo en notificaciones del sistema.
+
+### Añadido
+- **Alertas → Origen**: cada regla indica si vigila **Notificación**, **Mensaje Flex** (flotante/banner) o **Ambos**.
+
+---
+
+## v0.2.6 (Junio 2026)
+
+### Corregido
+- **Tomar oferta**: tras pulsar Schedule el bot espera el mensaje de Flex. **Aceptada** solo si aparece scheduled/programado; **Perdida** si block unavailable. El motivo en el log es el texto que muestra Flex.
+
+---
+
+## v0.2.5 (Junio 2026)
+
+### Corregido
+- **Historial**: intento de tomar sin éxito → **Perdida** (💨 MISS): no abre tarjeta, detalle no carga, Schedule no encontrado, bloque ya no disponible, etc. **Rechazada** queda solo para descarte explícito; cancelación en Flex → **Cancelada**.
+
+---
+
+## v0.2.4 (Junio 2026)
+
+### Corregido
+- **Historial**: ofertas que no cumplen reglas/tarifas se registran como **Vista** (👁), no Rechazada. Rechazada queda para cuando se descarta la oferta (Cancel, detalle distinto con acción cancelar, fallo al tomar, etc.).
+
+### Añadido
+- **Reanalizar tras Refresh** (Config → Clics): tras pulsar Refresh, relee la pantalla con reintentos rápidos y evalúa ofertas en el mismo ciclo (activado por defecto).
+
+---
+
+## v0.2.3 (Junio 2026)
+
+### Corregido
+- **Tomar oferta sin espera**: eliminado el retardo fijo de 650 ms. Tras abrir la tarjeta, valida al instante; si Offer Details aún no cargó, reintenta automáticamente (hasta 50 ciclos, sin pausa configurable) y pulsa Schedule en cuanto la verificación es correcta.
+
+---
+
+## v0.2.2 (Junio 2026)
+
+### Corregido
+- **Espera antes de llamar**: el campo configurable ya no retrasa Schedule ni la toma de oferta; la oferta se procesa al abrir detalle (650 ms fijos internos). **Espera antes de llamar (ms)** vive en «Llamar al tomar bloque» y aplica a Schedule, notificación programada y alertas con «Llamar».
+
+### Actualizado
+- Respaldos con la clave antigua `flex_offer_take_detail_delay_ms` migran a `call_on_block_delay_ms`.
+
+---
+
+## v0.2.1 (Junio 2026)
+
+### Añadido
+- **Sonido al pulsar oferta**: repetitions, probar, detener y tono del sistema (como alertas).
+- **Espera en detalle (ms)**: configurable antes de validar / Schedule tras abrir Offer Details.
+
+### Actualizado
+- Log de tarifas: «Ninguna regla de tarifa coincide» sin nombre de estación.
+- Cabecera del bot: bandeja **HORAS** (suma de horas de bloques aceptados), no millas.
+
+---
+
+## v0.2.0 (Junio 2026)
+
+### Añadido
+- **Config → Si lista y detalle no coinciden** (Offer Details, pantalla de Schedule/Cancel): toggle exclusivo **Sonido y quedarse** vs **Cancelar oferta** (Cancel + confirmación); sonido de aviso configurable.
+
+### Corregido
+- **Rechazo falso en detalle**: si la lista ya validó la oferta y el pago coincide, se reutilizan datos de la lista cuando Flex no parsea bien el detalle.
+- Log de rechazo en detalle incluye qué se leyó en pantalla (`Leído: pago=…, horario=…`).
+
+---
+
+## v0.1.100 (Junio 2026)
+
+### Añadido
+- **Verificación lista ↔ detalle** al tomar oferta: compara pago, estación y horario; rechaza si el bloque ya no está disponible o los datos no coinciden (clic erróneo / oferta que desapareció).
+- **Sonido al pulsar oferta** en Config (junto a Aceptar automáticamente): opcional, con tono o archivo propio.
+- **Log detallado**: motivo concreto al tomar o no tomar (criterio clásico, regla de tarifa, mismatch, Schedule, etc.).
+- **Fecha del bloque** en historial y export TXT (formato corto, p. ej. «vie 15») junto al horario.
+
+### Actualizado
+- Las ofertas rechazadas en lista se registran siempre con el motivo específico (no solo «Criterio grabber»).
+
+---
+
+## v0.1.99 (Junio 2026)
+
+### Actualizado
+- **Paquete Flex (Config)**: valor por defecto `com.amazon.flex.rabbit, com.amazon.rabbit`; texto de ayuda e hint del campo aclaran el nombre real de la app y que se pueden listar varios paquetes separados por coma (notificaciones y detección de primer plano).
+
+---
+
+## v0.1.98 (Junio 2026)
+
+### Corregido
+- **Crash tras importar / al abrir Alertas**: `FlexAlertasFragment` usaba `settings` en `onCreateView` antes de inicializarlo; ahora se carga en `onCreate` (ViewPager puede crear la vista al recrear la actividad).
+
+---
+
+## v0.1.97 (Junio 2026)
+
+### Corregido
+- **Importar configuración**: cada clave se valida por separado; si un valor es inválido no se importa, se conserva el ajuste local previo y aparece en la pantalla de resultado como «omitido» con el motivo.
+- **Crash tras importar**: `applyImportedConfig` con comprobación de fragmento adjunto, try/catch y `recreate()` del tema diferido; recarga de Config envuelta en try/catch; receptor de Home sin `requireContext()` si no está adjunto.
+
+---
+
+## v0.1.96 (Junio 2026)
+
+### Corregido
+- **Crash al abrir la app**: `SoundPickerHelper` se registraba en `onViewCreated` (demasiado tarde); ViewPager precarga Config y lanzaba `IllegalStateException`. Registro movido a `onCreate` en Config y Alertas.
+- **Historial**: contenedor de ofertas vuelve a `LinearLayout` con estilo Card (FrameLayout directo con `orientation` rompía el layout).
+- **Log bot / toggles**: inicialización del filtro tras crear el adapter; casts seguros en `SegmentedToggleStyle`.
+
+---
+
+## v0.1.95 (Junio 2026)
+
+### Actualizado
+- **Presentación por pestaña**: Home (estado → accesos → tema → respaldo al final); Config (menos secciones abiertas, nota banner Flex); Historial (KPIs desplazables + vacío); Alertas/Tarifas/Estadísticas/Log bot con toggles legibles en tema claro y oscuro (`SegmentedToggleStyle`).
+
+### Corregido
+- **Tema**: filtros del Log bot y rango de Estadísticas ya no usan fondo blanco fijo en modo oscuro; botones de texto con acento del tema; inputs de Alertas con colores de texto/hint correctos.
+
+---
+
+## v0.1.94 (Junio 2026)
+
+### Corregido
+- **Crash / estabilidad**: lectura del banner Flex envuelta en try/catch; servicio de accesibilidad no actúa antes de inicializar el lector; importación y recarga de Config sin `requireContext()` si el fragmento no está adjunto; toggles con `safeCheck` al rellenar el formulario; flag `suppressUiEvents` evita persist/markDirty durante recarga.
+- **Foco en formularios**: `formFocusHost()` resuelve el ScrollView desde el control activo (Config, Home, etc.); restauración de foco bidireccional; secciones plegables conservan el campo seleccionado.
+
+---
+
+## v0.1.93 (Junio 2026)
+
+### Corregido
+- **Ráfaga + banner Flex**: detecta el mensaje in-app «You've tapped too many times…» (no es notificación). Frases corregidas (`tapped too many`, `too many times`, `for too long`). Se comprueba en cada tick de ráfaga, detiene la ráfaga y pausa el bot aunque «Pausar por bloqueo» esté desactivado. La ráfaga ya no depende de tener «Clic Refresh» activado.
+
+---
+
+## v0.1.92 (Junio 2026)
+
+### Añadido
+- **Llamar al tomar bloque**: en Config → EN FLEX activa la llamada, el número y cuándo marcar (al aceptar con Schedule o con la notificación «programado»). En Alertas, cada regla puede tener «Llamar al coincidir» para disparar solo con notificaciones concretas.
+
+---
+
+## v0.1.91 (Junio 2026)
+
+### Corregido
+- **Import config**: la importación ya no se pierde al recargar la pestaña Config — el estado guardado de los campos ya no sobrescribe los valores importados; tras importar se guarda en disco, se refresca Config en vivo (sin recrear toda la app salvo cambio de tema) y se sincronizan Home/servicios. Exportar guarda antes el formulario Config si está cargado.
+
+---
+
+## v0.1.90 (Junio 2026)
+
+### Corregido
+- **Import/export config (definitivo)**: exportación solo desde snapshot canónico de `AppSettings`; importación borra ajustes locales (preservando bot y flags de migración), decodifica JSON y restaura cada clave con el tipo correcto vía `restoreFromBackup` (Return, ráfaga, pausa, tarifas, etc.). La UI de Config ya no sobrescribe valores importados al recargar campos.
+
+---
+
+## v0.1.89 (Junio 2026)
+
+### Corregido
+- **Home — exportar/importar config**: el respaldo incluye todos los ajustes efectivos (snapshot de `AppSettings`), no solo claves ya escritas en disco; al importar se borran los ajustes locales (excepto estado del bot) antes de aplicar el archivo, con tipos correctos (enteros Return, ráfaga, pausa, etc.) y valores mostrados en el informe.
+- **Config**: tras importar se recargan tiempos Return y el resto del formulario; al volver a la pestaña se refrescan los segundos de paso/cooldown Return.
+
+---
+
+## v0.1.88 (Junio 2026)
+
+### Corregido
+- **Home — importar config**: parseo robusto (JSON con BOM, valores planos o tipados), verificación de guardado y ventana con listado de ajustes importados y omitidos antes de recargar la app.
+
+---
+
+## v0.1.87 (Junio 2026)
+
+### Corregido
+- **Versión**: ya no sube en cada compilación; solo con `./gradlew :app:bumpVersion` o editando `version.properties` al entregar cambios.
+
+---
+
+## v0.1.83 (Mayo 2026)
+
+### Añadido
+- **Home**: exportar / importar toda la configuración (JSON) con confirmación; respaldo tipado de `pichix_settings`.
+
+### Corregido
+- **Config**: compilación al guardar con switch «Aceptar automáticamente» (smart cast).
+
+---
+
+## v0.1.82 (Mayo 2026)
+
+### Añadido
+- **Home — acceso rápido**: switch «Aceptar automáticamente» sincronizado con Config → EN FLEX (mismo patrón que Return 2).
+
+---
+
+## v0.1.81 (Mayo 2026)
+
+### Corregido
+- **Estadísticas de ofertas**: el scroll ya no salta arriba al ordenar tablas, cambiar filtro de periodo o pulsar Analizar; se conserva posición y foco en el control usado (misma lógica que Config/Tarifas).
+
+---
+
+## v0.1.78 (Mayo 2026)
+
+### Corregido
+- **Log del bot — ráfaga**: todos los eventos durante una sesión se guardan con `burstGroupId`; migración automática de bloques `@@BURST@@` antiguos a líneas individuales en archivo.
+- **Estadísticas — estaciones**: código completo entre paréntesis (sin paréntesis), incluyendo textos con paréntesis internos.
+
+### Actualizado
+- **Estadísticas**: tablas a ancho completo con bordes, filas alternas (zebra), cabeceras en negrita con títulos legibles; resumen superior con etiquetas en negrita y más separación.
 
 ---
 

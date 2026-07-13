@@ -5,6 +5,7 @@ data class OfferLogEntry(
     val hourlyRate: Double,
     val durationHours: Double = 0.0,
     val timeWindow: String = "",
+    val blockDate: String = "",
     val station: String,
     val status: OfferStatus,
     val reason: String,

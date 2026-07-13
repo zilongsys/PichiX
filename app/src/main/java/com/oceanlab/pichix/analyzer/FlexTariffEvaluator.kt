@@ -9,17 +9,20 @@ import java.util.Calendar
 
 class FlexTariffEvaluator(private val settings: AppSettings) {
 
-    fun evaluateListRow(offer: FlexBlockOffer, screenText: String = ""): FlexGrabResult {
+    fun evaluateListRow(offer: FlexBlockOffer, screenText: String = ""): FlexGrabResult =
+        evaluateListRowDetailed(offer, screenText).result
+
+    fun evaluateListRowDetailed(offer: FlexBlockOffer, screenText: String = ""): GrabEval {
         if (FlexTariffRulesStore.load(settings).none { it.enabled }) {
-            return FlexGrabberEvaluator.evaluateListRow(offer, settings, screenText)
+            return FlexGrabberEvaluator.evaluateListRowDetailed(offer, settings, screenText)
         }
         val pay = offer.payAmount ?: FlexGrabberEvaluator.parsePay(offer.payText)
-            ?: return FlexGrabResult.SKIP
+            ?: return GrabEval.skip("Datos incompletos: sin pago en lista")
         val hourly = offer.hourlyRate ?: run {
             offer.durationHours?.takeIf { it > 0 }?.let { pay / it }
                 ?: FlexGrabberEvaluator.hourlyFromPayAndTime(pay, offer.timeText, "")
-        } ?: return FlexGrabResult.SKIP
-        return evaluateInternal(
+        } ?: return GrabEval.skip("Datos incompletos: sin \$/h calculable")
+        return evaluateInternalDetailed(
             station = offer.stationText,
             pay = pay,
             hourly = hourly,
@@ -35,16 +38,24 @@ class FlexTariffEvaluator(private val settings: AppSettings) {
         payRangeText: String,
         timeWindowText: String,
         screenText: String = "",
-    ): FlexGrabResult {
+    ): FlexGrabResult = evaluateDetailScreenDetailed(station, payRangeText, timeWindowText, screenText).result
+
+    fun evaluateDetailScreenDetailed(
+        station: String,
+        payRangeText: String,
+        timeWindowText: String,
+        screenText: String = "",
+    ): GrabEval {
         if (FlexTariffRulesStore.load(settings).none { it.enabled }) {
-            return FlexGrabberEvaluator.evaluateDetailScreen(
+            return FlexGrabberEvaluator.evaluateDetailScreenDetailed(
                 payRangeText, timeWindowText, settings, station, screenText,
             )
         }
-        val pay = FlexGrabberEvaluator.parsePay(payRangeText) ?: return FlexGrabResult.SKIP
+        val pay = FlexGrabberEvaluator.parsePay(payRangeText)
+            ?: return GrabEval.skip("Detalle: sin pago legible")
         val hourly = FlexGrabberEvaluator.hourlyFromPayAndTime(pay, timeWindowText)
-            ?: return FlexGrabResult.SKIP
-        return evaluateInternal(
+            ?: return GrabEval.skip("Detalle: sin \$/h calculable")
+        return evaluateInternalDetailed(
             station = station,
             pay = pay,
             hourly = hourly,
@@ -53,6 +64,48 @@ class FlexTariffEvaluator(private val settings: AppSettings) {
             combinedText = "$screenText $station $payRangeText $timeWindowText",
         )
     }
+
+    private fun evaluateInternalDetailed(
+        station: String,
+        pay: Double,
+        hourly: Double,
+        timeText: String,
+        durationHours: Double?,
+        combinedText: String,
+    ): GrabEval {
+        val active = FlexTariffRulesStore.load(settings).filter { it.enabled }.sortedBy { it.sortOrder }
+        if (active.isEmpty()) {
+            return GrabEval.reject("Sin reglas de tarifa activas")
+        }
+        val nowMinutes = currentMinutesOfDay()
+        val lower = combinedText.lowercase()
+        val detectedType = detectBlockType(lower)
+
+        for (rule in active) {
+            if (!FlexStationMatcher.matches(station, rule)) continue
+            if (!matchesBlockType(detectedType, rule)) continue
+            if (!matchesPay(pay, hourly, rule)) continue
+            if (!matchesBlockStartWindow(timeText, rule)) continue
+            if (!matchesLeadTime(timeText, rule)) continue
+            if (!matchesDuration(durationHours, rule)) continue
+            if (!matchesWeekday(rule)) continue
+            if (!matchesPhoneSchedule(nowMinutes, rule)) continue
+            val excluded = findExcludedKeyword(lower, rule.excludedKeywords)
+            if (excluded != null) {
+                return GrabEval.reject(
+                    "Regla «${ruleLabel(rule)}»: palabra excluida «$excluded»",
+                )
+            }
+
+            val label = ruleLabel(rule)
+            val reason = "Regla «$label»: \$${"%.2f".format(pay)} · ${"%.2f".format(hourly)} \$/h"
+            return if (settings.dryRunMode) GrabEval.simulated(reason) else GrabEval.accept(reason)
+        }
+        return GrabEval.reject("Ninguna regla de tarifa coincide")
+    }
+
+    private fun ruleLabel(rule: FlexTariffRule): String =
+        rule.name.ifBlank { rule.stationPattern.ifBlank { "#${rule.sortOrder + 1}" } }
 
     private fun evaluateInternal(
         station: String,

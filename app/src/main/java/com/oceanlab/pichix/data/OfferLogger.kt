@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.oceanlab.pichix.analyzer.FlexBlockOffer
 import com.oceanlab.pichix.analyzer.FlexGrabberEvaluator
+import com.oceanlab.pichix.ui.OfferLogRowUi
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -62,6 +63,7 @@ class OfferLogger(private val context: Context) {
         if (tracedEntry.status == OfferStatus.ACCEPTED || tracedEntry.status == OfferStatus.SIMULATED) {
             markDedupKey(dedupKey(tracedEntry.copy(status = OfferStatus.SEEN)), now)
             markDedupKey(dedupKey(tracedEntry.copy(status = OfferStatus.REJECTED)), now)
+            markDedupKey(dedupKey(tracedEntry.copy(status = OfferStatus.MISS)), now)
         }
         try {
             store.appendEntry(tracedEntry)
@@ -103,7 +105,7 @@ class OfferLogger(private val context: Context) {
     }
 
     private fun shouldDedupStatus(status: OfferStatus): Boolean =
-        status == OfferStatus.SEEN || status == OfferStatus.REJECTED
+        status == OfferStatus.SEEN || status == OfferStatus.REJECTED || status == OfferStatus.MISS
 
     private fun dedupKey(entry: OfferLogEntry): String =
         "${signature(entry)}|${entry.status.name}"
@@ -397,7 +399,8 @@ class OfferLogger(private val context: Context) {
             sb.appendLine(sep)
             sb.appendLine("${i + 1}. $statusIcon [${dateFormat.format(Date(e.timestamp))}]")
             sb.appendLine("   Estación: ${e.station}")
-            sb.appendLine("   Horario:  ${e.timeWindow.ifBlank { "—" }}")
+            val schedule = OfferLogRowUi.scheduleLabel(e)
+            sb.appendLine("   Bloque:   $schedule")
             sb.appendLine(
                 "   Precio: \$${"%.2f".format(e.price)}  |  \$/h: ${"%.2f".format(e.hourlyRate)}  |  " +
                     "Duración: ${"%.1f".format(e.durationHours)} h",

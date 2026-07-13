@@ -4,7 +4,11 @@ import com.oceanlab.pichix.data.AppSettings
 
 object FlexOfferSelector {
 
-    data class EvaluatedOffer(val offer: FlexBlockOffer, val result: FlexGrabResult)
+    data class EvaluatedOffer(
+        val offer: FlexBlockOffer,
+        val result: FlexGrabResult,
+        val reason: String = "",
+    )
 
     fun pickAcceptable(
         evaluated: List<EvaluatedOffer>,

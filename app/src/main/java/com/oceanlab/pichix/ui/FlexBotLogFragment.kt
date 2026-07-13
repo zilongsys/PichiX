@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.res.ColorStateList
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -78,7 +77,6 @@ class FlexBotLogFragment : Fragment() {
         toggleCategory = view.findViewById(R.id.toggleBotLogCategory)
         tvPageInfo = view.findViewById(R.id.tvBotLogPageInfo)
         btnLoadMore = view.findViewById(R.id.btnBotLogLoadMore)
-        setupCategoryFilters()
 
         val rv = view.findViewById<RecyclerView>(R.id.rvBotLog)
         rv.layoutManager = LinearLayoutManager(requireContext()).apply { stackFromEnd = true }
@@ -102,6 +100,7 @@ class FlexBotLogFragment : Fragment() {
             },
         )
         rv.adapter = adapter
+        setupCategoryFilters()
 
         view.findViewById<MaterialButton>(R.id.btnBotLogScrollTop).setOnClickListener {
             followTail = false
@@ -153,46 +152,20 @@ class FlexBotLogFragment : Fragment() {
     private fun setupCategoryFilters() {
         val ctx = requireContext()
         categoryFilters.forEachIndexed { index, (category, labelRes) ->
-            val btn = MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            val btn = SegmentedToggleStyle.createSegmentButton(ctx, getString(labelRes)).apply {
                 id = View.generateViewId()
-                text = getString(labelRes)
-                textSize = 10f
-                minHeight = 0
-                minimumHeight = 0
-                insetTop = 0
-                insetBottom = 0
                 tag = category
                 isChecked = index == 0
             }
             toggleCategory.addView(btn)
         }
-        toggleCategory.addOnButtonCheckedListener { group, checkedId, isChecked ->
-            if (!isChecked) return@addOnButtonCheckedListener
-            val btn = group.findViewById<MaterialButton>(checkedId)
+        SegmentedToggleStyle.wireGroup(toggleCategory) { checkedId ->
+            val btn = toggleCategory.findViewById<MaterialButton>(checkedId)
             activeCategory = btn?.tag as? String ?: FILTER_ALL
             visibleLimit = PAGE_SIZE
-            styleCategoryToggle(checkedId)
             refreshAdapter()
         }
         toggleCategory.check(toggleCategory.getChildAt(0).id)
-        styleCategoryToggle(toggleCategory.getChildAt(0).id)
-    }
-
-    private fun styleCategoryToggle(checkedId: Int) {
-        val ctx = requireContext()
-        val activeBg = ContextCompat.getColor(ctx, R.color.tab_active_bg)
-        val activeText = ContextCompat.getColor(ctx, R.color.white)
-        val inactiveBg = ContextCompat.getColor(ctx, R.color.white)
-        val inactiveText = ContextCompat.getColor(ctx, R.color.text_primary)
-        val activeStroke = ContextCompat.getColor(ctx, R.color.accent_teal_dark)
-        val inactiveStroke = ContextCompat.getColor(ctx, R.color.border_subtle)
-        for (i in 0 until toggleCategory.childCount) {
-            val btn = toggleCategory.getChildAt(i) as MaterialButton
-            val selected = btn.id == checkedId
-            btn.backgroundTintList = ColorStateList.valueOf(if (selected) activeBg else inactiveBg)
-            btn.setTextColor(if (selected) activeText else inactiveText)
-            btn.strokeColor = ColorStateList.valueOf(if (selected) activeStroke else inactiveStroke)
-        }
     }
 
     override fun onStart() {
@@ -434,7 +407,12 @@ class FlexBotLogFragment : Fragment() {
                         val expanded = isBurstExpanded(row.burstId)
                         val arrow = if (expanded) "▼" else "▶"
                         val hint = if (expanded) " · doble toque para comprimir" else " · toque para ver detalle"
-                        tvMessage.text = "$arrow ${BotEventBurstCodec.summary(entry)}$hint"
+                        val title = if (BotEventBurstCodec.isBurstBundle(entry)) {
+                            BotEventBurstCodec.summary(entry)
+                        } else {
+                            entry.message.ifBlank { "Ráfaga" }
+                        }
+                        tvMessage.text = "$arrow $title$hint"
                     }
                     RowKind.BURST_DETAIL -> {
                         padStart(24)

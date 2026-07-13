@@ -513,6 +513,13 @@
 
     <style name="AccentButton" parent="SparkButtonPrimary"/>
 
+    <style name="SparkTextButton" parent="Widget.MaterialComponents.Button.TextButton">
+        <item name="android:textColor">@color/colorAccent</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:minWidth">0dp</item>
+    </style>
+
     <style name="SparkButtonSecondary" parent="Widget.MaterialComponents.Button.OutlinedButton">
         <item name="android:minHeight">48dp</item>
         <item name="android:paddingTop">12dp</item>

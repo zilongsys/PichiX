@@ -134,25 +134,44 @@ object FlexGrabberEvaluator {
         return pay / hours
     }
 
-    fun evaluateListRow(offer: FlexBlockOffer, settings: AppSettings, screenText: String = ""): FlexGrabResult {
+    fun evaluateListRow(offer: FlexBlockOffer, settings: AppSettings, screenText: String = ""): FlexGrabResult =
+        evaluateListRowDetailed(offer, settings, screenText).result
+
+    fun evaluateListRowDetailed(
+        offer: FlexBlockOffer,
+        settings: AppSettings,
+        screenText: String = "",
+    ): GrabEval {
         if (settings.usesFlexDetailedTariff() && FlexTariffRulesStore.load(settings).any { it.enabled }) {
-            return FlexTariffEvaluator(settings).evaluateListRow(offer, screenText)
+            return FlexTariffEvaluator(settings).evaluateListRowDetailed(offer, screenText)
         }
-        val pay = offer.payAmount ?: parsePay(offer.payText) ?: return FlexGrabResult.SKIP
-        if (pay < settings.flexMinBlockPay) return FlexGrabResult.REJECT
+        val pay = offer.payAmount ?: parsePay(offer.payText)
+            ?: return GrabEval.skip("Datos incompletos: sin pago en lista")
+        if (pay < settings.flexMinBlockPay) {
+            return GrabEval.reject(
+                "Pago \$${"%.2f".format(pay)} < mínimo \$${"%.2f".format(settings.flexMinBlockPay)}",
+            )
+        }
 
         val startHour = offer.startHour ?: parseStartHour(offer.timeText)
         if (startHour != null && startHour < settings.flexMinStartHour) {
-            return FlexGrabResult.REJECT
+            return GrabEval.reject(
+                "Inicio ${startHour}:00 < mínimo ${settings.flexMinStartHour}:00",
+            )
         }
 
         val hourly = offer.hourlyRate
             ?: hourlyFromPayAndTime(pay, offer.timeText)
-            ?: return FlexGrabResult.SKIP
+            ?: return GrabEval.skip("Datos incompletos: sin \$/h calculable")
 
-        if (hourly < settings.flexMinHourlyRate) return FlexGrabResult.REJECT
+        if (hourly < settings.flexMinHourlyRate) {
+            return GrabEval.reject(
+                "\$/h ${"%.2f".format(hourly)} < mínimo ${"%.2f".format(settings.flexMinHourlyRate)}",
+            )
+        }
 
-        return if (settings.dryRunMode) FlexGrabResult.SIMULATED_ACCEPT else FlexGrabResult.ACCEPT
+        val reason = "Clásico: \$${"%.2f".format(pay)} · ${"%.2f".format(hourly)} \$/h"
+        return if (settings.dryRunMode) GrabEval.simulated(reason) else GrabEval.accept(reason)
     }
 
     fun evaluateDetailScreen(
@@ -161,20 +180,95 @@ object FlexGrabberEvaluator {
         settings: AppSettings,
         station: String = "",
         screenText: String = "",
-    ): FlexGrabResult {
+    ): FlexGrabResult = evaluateDetailScreenDetailed(
+        payRangeText, timeWindowText, settings, station, screenText,
+    ).result
+
+    fun evaluateDetailScreenDetailed(
+        payRangeText: String,
+        timeWindowText: String,
+        settings: AppSettings,
+        station: String = "",
+        screenText: String = "",
+    ): GrabEval {
         if (settings.usesFlexDetailedTariff() && FlexTariffRulesStore.load(settings).any { it.enabled }) {
-            return FlexTariffEvaluator(settings).evaluateDetailScreen(
+            return FlexTariffEvaluator(settings).evaluateDetailScreenDetailed(
                 station, payRangeText, timeWindowText, screenText,
             )
         }
-        val pay = parsePay(payRangeText) ?: return FlexGrabResult.SKIP
-        if (pay < settings.flexMinBlockPay) return FlexGrabResult.REJECT
-        val hourly = hourlyFromPayAndTime(pay, timeWindowText) ?: return FlexGrabResult.SKIP
-        if (hourly < settings.flexMinHourlyRate) return FlexGrabResult.REJECT
+        val pay = parsePay(payRangeText)
+            ?: return GrabEval.skip("Detalle: sin pago legible")
+        if (pay < settings.flexMinBlockPay) {
+            return GrabEval.reject(
+                "Detalle pago \$${"%.2f".format(pay)} < mínimo \$${"%.2f".format(settings.flexMinBlockPay)}",
+            )
+        }
+        val hourly = hourlyFromPayAndTime(pay, timeWindowText)
+            ?: return GrabEval.skip("Detalle: sin \$/h calculable")
+        if (hourly < settings.flexMinHourlyRate) {
+            return GrabEval.reject(
+                "Detalle \$/h ${"%.2f".format(hourly)} < mínimo ${"%.2f".format(settings.flexMinHourlyRate)}",
+            )
+        }
         val startHour = parseStartHour(timeWindowText)
         if (startHour != null && startHour < settings.flexMinStartHour) {
-            return FlexGrabResult.REJECT
+            return GrabEval.reject(
+                "Detalle inicio ${startHour}:00 < mínimo ${settings.flexMinStartHour}:00",
+            )
         }
-        return if (settings.dryRunMode) FlexGrabResult.SIMULATED_ACCEPT else FlexGrabResult.ACCEPT
+        val reason = "Detalle OK: \$${"%.2f".format(pay)} · ${"%.2f".format(hourly)} \$/h"
+        return if (settings.dryRunMode) GrabEval.simulated(reason) else GrabEval.accept(reason)
+    }
+
+    /**
+     * Si el detalle no parsea bien pero la lista ya validó la oferta y el pago coincide,
+     * reutiliza duración/\$/h de la lista (evita rechazos falsos en Offer Details).
+     */
+    fun evaluateDetailWithListFallback(
+        offer: FlexBlockOffer,
+        details: Map<String, String>,
+        settings: AppSettings,
+        station: String,
+        screenText: String,
+    ): GrabEval {
+        val primary = evaluateDetailScreenDetailed(
+            payRangeText = details["pay_range"].orEmpty(),
+            timeWindowText = details["time_window"].orEmpty(),
+            settings = settings,
+            station = station,
+            screenText = screenText,
+        )
+        if (primary.accepted) return primary
+
+        if (settings.usesFlexDetailedTariff() &&
+            FlexTariffRulesStore.load(settings).any { it.enabled }
+        ) {
+            return primary
+        }
+
+        val listPay = offer.payAmount ?: parsePay(offer.payText) ?: return primary
+        val detailPay = parsePay(details["pay_range"].orEmpty()) ?: return primary
+        if (kotlin.math.abs(listPay - detailPay) > 0.51) return primary
+
+        val listEval = evaluateListRowDetailed(offer, settings, screenText)
+        if (!listEval.accepted) return primary
+
+        val hourly = offer.hourlyRate
+            ?: hourlyFromPayAndTime(listPay, offer.timeText, offer.durationHours?.toString().orEmpty())
+            ?: return primary
+        if (hourly < settings.flexMinHourlyRate) return primary
+        if (listPay < settings.flexMinBlockPay) return primary
+
+        val startHour = offer.startHour ?: parseStartHour(offer.timeText)
+        if (startHour != null && startHour < settings.flexMinStartHour) return primary
+
+        val note = buildString {
+            append("Detalle OK (lista): \$${"%.2f".format(listPay)} · ${"%.2f".format(hourly)} \$/h")
+            if (primary.reason.isNotBlank()) {
+                append(" · detalle: ")
+                append(primary.reason)
+            }
+        }
+        return if (settings.dryRunMode) GrabEval.simulated(note) else GrabEval.accept(note)
     }
 }

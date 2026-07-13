@@ -20,7 +20,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="ESTADO"
+            android:text="@string/home_section_status"
             android:textColor="@color/text_hint"
             android:textSize="10sp"
             android:textAllCaps="true"
@@ -74,7 +74,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="ACCESOS RÁPIDOS"
+            android:text="@string/home_section_quick"
             android:textColor="@color/text_hint"
             android:textSize="10sp"
             android:textAllCaps="true"
@@ -104,14 +104,14 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="⚡ Botón flotante"
+                    android:text="@string/home_overlay_title"
                     android:textColor="@color/text_primary"
                     android:textSize="13sp"
                     android:textStyle="bold"/>
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Mostrar botón de control sobre otras aplicaciones"
+                    android:text="@string/home_overlay_hint"
                     android:textColor="@color/text_hint"
                     android:textSize="11sp"
                     android:layout_marginTop="3dp"/>
@@ -166,6 +166,48 @@
                 app:trackTint="@color/switch_track_selector"/>
         </LinearLayout>
 
+        <!-- Aceptar automáticamente -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/card_bg"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="14dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="6dp"
+            xmlns:app="http://schemas.android.com/apk/res-auto">
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginEnd="12dp">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/home_auto_accept_title"
+                    android:textColor="@color/text_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold"/>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/home_auto_accept_hint"
+                    android:textColor="@color/text_hint"
+                    android:textSize="11sp"
+                    android:layout_marginTop="3dp"/>
+            </LinearLayout>
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/homeQuickAutoAccept"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:thumbTint="@color/header_switch_thumb"
+                app:trackTint="@color/switch_track_selector"/>
+        </LinearLayout>
+
         <!-- Modo simulación -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -188,14 +230,14 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="🧪 Modo simulación"
+                    android:text="@string/home_simulation_title"
                     android:textColor="@color/text_primary"
                     android:textSize="13sp"
                     android:textStyle="bold"/>
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Abre la oferta y Offer Details pero no pulsa Schedule (igual que «Aceptar automáticamente» desactivado)"
+                    android:text="@string/home_simulation_hint"
                     android:textColor="@color/text_hint"
                     android:textSize="11sp"
                     android:layout_marginTop="3dp"/>
@@ -208,11 +250,11 @@
                 app:trackTint="@color/switch_track_selector"/>
         </LinearLayout>
 
-        <!-- ── APARIENCIA ── -->
+        <!-- Apariencia -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="APARIENCIA"
+            android:text="@string/home_section_appearance"
             android:textColor="@color/text_hint"
             android:textSize="10sp"
             android:textAllCaps="true"
@@ -228,12 +270,13 @@
             android:paddingRight="16dp"
             android:paddingTop="14dp"
             android:paddingBottom="14dp"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:layout_marginBottom="16dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Selecciona el tema de la aplicación"
+                android:text="@string/home_theme_hint"
                 android:textColor="@color/text_primary"
                 android:textSize="13sp"
                 android:layout_marginBottom="12dp"/>
@@ -251,7 +294,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="🌙 Dark"/>
+                    android:text="@string/home_theme_dark"/>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/homeBtnThemeWhite"
@@ -259,10 +302,70 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="☀️ White"/>
+                    android:text="@string/home_theme_light"/>
 
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
+        </LinearLayout>
+
+        <!-- Respaldo configuración -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/home_config_backup_title"
+            android:textColor="@color/text_hint"
+            android:textSize="10sp"
+            android:textAllCaps="true"
+            android:letterSpacing="0.10"
+            android:fontFamily="monospace"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="8dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/card_bg"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="14dp"
+            android:orientation="vertical"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/home_config_export_hint"
+                android:textColor="@color/text_hint"
+                android:textSize="11sp"
+                android:layout_marginBottom="10dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnHomeExportConfig"
+                    style="@style/SparkButtonSecondary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    android:text="@string/home_config_export"
+                    android:textSize="11sp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnHomeImportConfig"
+                    style="@style/SparkButtonSecondary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:text="@string/home_config_import"
+                    android:textSize="11sp"/>
+            </LinearLayout>
         </LinearLayout>
 
     </LinearLayout>

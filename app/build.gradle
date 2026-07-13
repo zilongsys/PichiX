@@ -48,16 +48,16 @@ def bumpVersionProps = { Properties props ->
     props['VERSION_CODE'] = code.toString()
 }
 
-def requestedTasks = gradle.startParameter.taskNames
-def shouldAutoBump = requestedTasks.any { task ->
-    task.contains('assemble') || (task.contains('compile') && task.contains('Kotlin'))
-            || task.contains('install') || task.contains('bundle')
-}
-
-if (shouldAutoBump) {
-    def props = readVersionProps(versionPropsFile)
-    bumpVersionProps(props)
-    writeVersionProps(versionPropsFile, props)
+tasks.register('bumpVersion') {
+    group = 'pichix'
+    description = 'Incrementa PATCH y VERSION_CODE en app/version.properties (solo al entregar cambios).'
+    doLast {
+        def props = readVersionProps(versionPropsFile)
+        bumpVersionProps(props)
+        writeVersionProps(versionPropsFile, props)
+        def name = "${props['VERSION_MAJOR']}.${props['VERSION_MIDDLE']}.${props['VERSION_PATCH']}"
+        println "Versión actualizada: v$name (code ${props['VERSION_CODE']})"
+    }
 }
 
 def versionProps = readVersionProps(versionPropsFile)
