@@ -29,20 +29,40 @@ object FlexGrabberEvaluator {
         """(\d{1,2})\s*:\s*(\d{2})\s*(AM|PM)?\s*[-–]\s*(\d{1,2})\s*:\s*(\d{2})\s*(AM|PM)?""",
         RegexOption.IGNORE_CASE,
     )
-    private val hourOnlyRegex = Regex("""(\d{1,2})\s*:\s*(\d{2})""")
+    /** "2:15 PM", "5:30 PM - 9 PM" (toma la hora de inicio). */
+    private val startWithMinutesRegex = Regex(
+        """(\d{1,2})\s*:\s*(\d{2})\s*(AM|PM)?""",
+        RegexOption.IGNORE_CASE,
+    )
+    /** "4 AM", "6 AM - 10 AM" (Flex a menudo omite :00). */
+    private val startHourMeridiemRegex = Regex(
+        """(\d{1,2})\s*(AM|PM)\b""",
+        RegexOption.IGNORE_CASE,
+    )
 
     fun parsePay(text: String): Double? =
         moneyRegex.find(text.replace(",", ""))?.groupValues?.get(1)?.toDoubleOrNull()
 
+    /**
+     * Minutos desde medianoche del **inicio** del bloque.
+     * Acepta `2:15 PM`, `5:30 PM - 9 PM`, `4 AM`, `4 AM - 8 AM`.
+     */
     fun parseStartMinutesOfDay(timeText: String): Int? {
-        val m = hourOnlyRegex.find(timeText) ?: return null
-        var h = m.groupValues[1].toIntOrNull() ?: return null
-        val min = m.groupValues[2].toIntOrNull() ?: 0
-        val isPm = timeText.contains("PM", ignoreCase = true)
-        val isAm = timeText.contains("AM", ignoreCase = true)
-        if (isPm && h < 12) h += 12
-        if (isAm && h == 12) h = 0
-        return h * 60 + min
+        if (timeText.isBlank()) return null
+        startWithMinutesRegex.find(timeText)?.let { m ->
+            var h = m.groupValues[1].toIntOrNull() ?: return@let
+            val min = m.groupValues[2].toIntOrNull() ?: 0
+            val mer = m.groupValues[3].ifBlank {
+                meridiemNear(timeText, m.range.first)
+            }
+            return clockToMinutesOfDay(h, min, mer)
+        }
+        startHourMeridiemRegex.find(timeText)?.let { m ->
+            val h = m.groupValues[1].toIntOrNull() ?: return@let
+            val mer = m.groupValues[2]
+            return clockToMinutesOfDay(h, 0, mer)
+        }
+        return null
     }
 
     fun minutesUntilBlockStart(timeText: String): Int? {
@@ -56,13 +76,8 @@ object FlexGrabberEvaluator {
     }
 
     fun parseStartHour(timeText: String): Int? {
-        val m = hourOnlyRegex.find(timeText) ?: return null
-        var h = m.groupValues[1].toIntOrNull() ?: return null
-        val isPm = timeText.contains("PM", ignoreCase = true)
-        val isAm = timeText.contains("AM", ignoreCase = true)
-        if (isPm && h < 12) h += 12
-        if (isAm && h == 12) h = 0
-        return h
+        val mins = parseStartMinutesOfDay(timeText) ?: return null
+        return mins / 60
     }
 
     /** Duración en tarjeta de lista: "3 hr 30 min", "1.5 hr", "90 min", "3.30" (h.min). */
@@ -85,15 +100,36 @@ object FlexGrabberEvaluator {
 
     fun parseDurationHours(timeText: String): Double? {
         parseDurationFromLabel(timeText)?.let { return it }
-        val range = hourRangeRegex.find(timeText) ?: return null
-        val h1 = range.groupValues[1].toIntOrNull() ?: return null
-        val m1 = range.groupValues[2].toIntOrNull() ?: 0
-        val h2 = range.groupValues[4].toIntOrNull() ?: return null
-        val m2 = range.groupValues[5].toIntOrNull() ?: 0
-        val startMer = range.groupValues[3].ifBlank { meridiemNear(timeText, range.range.first) }
-        val endMer = range.groupValues[6].ifBlank { meridiemNear(timeText, range.range.last) ?: startMer }
-        val startMin = clockToMinutesOfDay(h1, m1, startMer)
-        var endMin = clockToMinutesOfDay(h2, m2, endMer)
+        hourRangeRegex.find(timeText)?.let { range ->
+            val h1 = range.groupValues[1].toIntOrNull() ?: return@let
+            val m1 = range.groupValues[2].toIntOrNull() ?: 0
+            val h2 = range.groupValues[4].toIntOrNull() ?: return@let
+            val m2 = range.groupValues[5].toIntOrNull() ?: 0
+            val startMer = range.groupValues[3].ifBlank { meridiemNear(timeText, range.range.first) }
+            val endMer = range.groupValues[6].ifBlank { meridiemNear(timeText, range.range.last) ?: startMer }
+            val startMin = clockToMinutesOfDay(h1, m1, startMer)
+            var endMin = clockToMinutesOfDay(h2, m2, endMer)
+            var diffMin = endMin - startMin
+            if (diffMin <= 0) diffMin += 24 * 60
+            val hours = diffMin / 60.0
+            return if (hours in 0.25..10.0) hours else null
+        }
+        // "4 AM - 8 AM" / "6 AM - 10:30 AM"
+        val loose = Regex(
+            """(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?\s*[-–]\s*(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?""",
+            RegexOption.IGNORE_CASE,
+        ).find(timeText) ?: return null
+        val h1 = loose.groupValues[1].toIntOrNull() ?: return null
+        val m1 = loose.groupValues[2].toIntOrNull() ?: 0
+        val h2 = loose.groupValues[4].toIntOrNull() ?: return null
+        val m2 = loose.groupValues[5].toIntOrNull() ?: 0
+        val startMer = loose.groupValues[3].ifBlank { meridiemNear(timeText, loose.range.first) }
+        val endMer = loose.groupValues[6].ifBlank {
+            meridiemNear(timeText, loose.range.last).ifBlank { startMer }
+        }
+        if (startMer.isBlank() && endMer.isBlank()) return null
+        val startMin = clockToMinutesOfDay(h1, m1, startMer.ifBlank { endMer })
+        var endMin = clockToMinutesOfDay(h2, m2, endMer.ifBlank { startMer })
         var diffMin = endMin - startMin
         if (diffMin <= 0) diffMin += 24 * 60
         val hours = diffMin / 60.0

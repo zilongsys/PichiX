@@ -167,7 +167,13 @@ class FlexTariffEvaluator(private val settings: AppSettings) {
                 if (rule.priceMax != null && pay > rule.priceMax) return false
                 true
             }
-            FlexPayCriteriaMode.HOURLY_PAY -> hourly >= rule.minHourlyRate
+            FlexPayCriteriaMode.HOURLY_PAY -> {
+                if (hourly < rule.minHourlyRate) return false
+                // priceMin/Max del formulario también cuentan en modo $/h (antes se ignoraban).
+                if (rule.priceMin > 0.0 && pay < rule.priceMin) return false
+                if (rule.priceMax != null && pay > rule.priceMax) return false
+                true
+            }
             FlexPayCriteriaMode.MANUAL_FIXED ->
                 kotlin.math.abs(pay - rule.priceMin) < 0.51
             FlexPayCriteriaMode.MANUAL_ANY -> true
@@ -176,7 +182,8 @@ class FlexTariffEvaluator(private val settings: AppSettings) {
 
     private fun matchesBlockStartWindow(timeText: String, rule: FlexTariffRule): Boolean {
         if (!rule.blockStartFilterEnabled) return true
-        val startMin = FlexGrabberEvaluator.parseStartMinutesOfDay(timeText) ?: return true
+        // Si el filtro está activo y no se puede leer la hora → no tomar (antes se dejaba pasar).
+        val startMin = FlexGrabberEvaluator.parseStartMinutesOfDay(timeText) ?: return false
         val from = rule.blockStartFromMinutes
         val to = rule.blockStartToMinutes
         return if (from <= to) startMin in from..to else startMin >= from || startMin <= to
@@ -184,7 +191,7 @@ class FlexTariffEvaluator(private val settings: AppSettings) {
 
     private fun matchesLeadTime(timeText: String, rule: FlexTariffRule): Boolean {
         val required = rule.minLeadTimeMinutes ?: return true
-        val until = FlexGrabberEvaluator.minutesUntilBlockStart(timeText) ?: return true
+        val until = FlexGrabberEvaluator.minutesUntilBlockStart(timeText) ?: return false
         return until >= required
     }
 

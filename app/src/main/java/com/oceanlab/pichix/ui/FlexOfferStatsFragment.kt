@@ -224,6 +224,8 @@ class FlexOfferStatsFragment : Fragment() {
     }
 
     private fun showSingleDayPicker() {
+        if (!isAdded || isDetached || isRemoving) return
+        val fm = parentFragmentManager
         val initial = dayStringToUtcMillis(filterFrom ?: dayFmt.format(Date()))
         MaterialDatePicker.Builder.datePicker()
             .setTitleText(getString(R.string.offer_stats_pick_day))
@@ -232,15 +234,22 @@ class FlexOfferStatsFragment : Fragment() {
             .build()
             .apply {
                 addOnPositiveButtonClickListener { selection ->
+                    if (!isAdded) return@addOnPositiveButtonClickListener
                     filterFrom = utcMillisToDayString(selection)
                     filterTo = filterFrom
                     updateRangeUi()
                 }
-                show(parentFragmentManager, "offer_stats_day")
+                try {
+                    show(fm, "offer_stats_day")
+                } catch (e: IllegalStateException) {
+                    Toast.makeText(requireContext(), e.message ?: "No se pudo abrir el calendario", Toast.LENGTH_SHORT).show()
+                }
             }
     }
 
     private fun showRangePicker() {
+        if (!isAdded || isDetached || isRemoving) return
+        val fm = parentFragmentManager
         val builder = MaterialDatePicker.Builder.dateRangePicker()
             .setTitleText(getString(R.string.offer_stats_pick_range))
             .setCalendarConstraints(buildPastConstraints())
@@ -254,11 +263,16 @@ class FlexOfferStatsFragment : Fragment() {
         }
         builder.build().apply {
             addOnPositiveButtonClickListener { selection ->
+                if (!isAdded) return@addOnPositiveButtonClickListener
                 filterFrom = utcMillisToDayString(selection.first)
                 filterTo = utcMillisToDayString(selection.second)
                 updateRangeUi()
             }
-            show(parentFragmentManager, "offer_stats_range")
+            try {
+                show(fm, "offer_stats_range")
+            } catch (e: IllegalStateException) {
+                Toast.makeText(requireContext(), e.message ?: "No se pudo abrir el calendario", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 

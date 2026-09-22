@@ -8,6 +8,17 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.13 (Septiembre 2026)
+
+### Corregido
+- **Horario de inicio del bloque**: parsea `4 AM` / `6 AM` (sin `:00`). Si el filtro de franja está activo y no se puede leer la hora → **no toma** (antes dejaba pasar).
+- **Modo $/h**: también respeta precio mínimo/máximo del bloque (antes solo miraba $/h).
+- **Confirmación ACEPTADA**: no marca scheduled por dumps largos de la lista Offers; mensajes Flex más cortos.
+- **Stats date picker**: evita crash si el fragmento ya no está asociado al FragmentManager.
+- **Pack diagnóstico**: resumen de 7 días + bloques con inicio &lt; 06:00; aviso si falta el log del bot.
+
+---
+
 ## v0.2.12 (Septiembre 2026)
 
 ### Añadido
