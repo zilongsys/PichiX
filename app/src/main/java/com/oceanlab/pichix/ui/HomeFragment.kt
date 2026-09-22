@@ -139,6 +139,9 @@ class HomeFragment : Fragment() {
         view.findViewById<MaterialButton>(R.id.btnHomeImportConfig).setOnClickListener {
             importConfigLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
         }
+        view.findViewById<MaterialButton>(R.id.btnHomeShareDiagPack).setOnClickListener {
+            shareDiagnosticPackFromHome()
+        }
 
         swOverlay?.setOnCheckedChangeRetainingFocus(view) { checked ->
             if (syncing) return@setOnCheckedChangeRetainingFocus
@@ -328,6 +331,30 @@ class HomeFragment : Fragment() {
             swReturn2Offers?.isChecked = settings.flexAutoReturnToOffers
         } finally {
             syncing = false
+        }
+    }
+
+    private fun shareDiagnosticPackFromHome() {
+        val ctx = requireContext()
+        try {
+            val result = com.oceanlab.pichix.util.DiagnosticPack.build(ctx)
+            startActivity(
+                Intent.createChooser(
+                    com.oceanlab.pichix.util.DiagnosticPack.shareIntent(ctx, result.zipFile),
+                    getString(R.string.home_diag_pack_share),
+                ),
+            )
+            Toast.makeText(
+                ctx,
+                getString(R.string.config_share_pack_ok, result.filesIncluded),
+                Toast.LENGTH_SHORT,
+            ).show()
+        } catch (e: Exception) {
+            Toast.makeText(
+                ctx,
+                getString(R.string.config_share_pack_fail, e.message ?: "error"),
+                Toast.LENGTH_LONG,
+            ).show()
         }
     }
 

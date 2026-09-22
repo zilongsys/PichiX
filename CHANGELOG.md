@@ -8,6 +8,13 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.12 (Septiembre 2026)
+
+### Añadido
+- **Pack diagnóstico (ZIP)**: en Home y Config → Log. Incluye resumen de tomas con hora local (destaca 00–05), CSV de ofertas, config/reglas de tarifas y alertas, logs bot/UI y crash. Pensado para compartir y analizar fallos (p. ej. tomas fuera de franja).
+
+---
+
 ## v0.2.11 (Junio 2026)
 
 ### Actualizado

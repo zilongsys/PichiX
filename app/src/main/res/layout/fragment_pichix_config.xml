@@ -2423,6 +2423,15 @@
                     android:layout_height="40dp"
                     android:contentDescription="@string/config_btn_share_logs"
                     app:icon="@drawable/ic_hist_txt" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnShareDiagnosticPack"
+                    style="@style/SparkIconButtonCompact"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="10dp"
+                    android:contentDescription="@string/config_btn_share_pack"
+                    app:icon="@android:drawable/ic_menu_share" />
             </LinearLayout>
 
             <LinearLayout
@@ -2431,7 +2440,7 @@
                 android:orientation="horizontal"
                 android:paddingLeft="16dp"
                 android:paddingRight="16dp"
-                android:paddingBottom="14dp">
+                android:paddingBottom="6dp">
 
                 <ImageView
                     android:layout_width="12dp"
@@ -2443,7 +2452,28 @@
                 <TextView
                     style="@style/ConfigIconLegend"
                     android:text="@string/config_btn_share_logs" />
+
+                <ImageView
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginTop="2dp"
+                    android:src="@android:drawable/ic_menu_share"
+                    app:tint="@color/text_hint" />
+
+                <TextView
+                    style="@style/ConfigIconLegend"
+                    android:text="@string/config_btn_share_pack" />
             </LinearLayout>
+
+            <TextView
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="14dp"
+                android:text="@string/config_share_pack_hint" />
         </LinearLayout>
 
         </LinearLayout>

@@ -397,6 +397,9 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         view.findViewById<MaterialButton>(R.id.btnShareDiagnosticLogs)?.setOnClickListener {
             shareDiagnosticLogs()
         }
+        view.findViewById<MaterialButton>(R.id.btnShareDiagnosticPack)?.setOnClickListener {
+            shareDiagnosticPack()
+        }
 
         btnSave.setOnClickListener {
             configScroll.runRetainingScrollAndFocus {
@@ -1204,6 +1207,31 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         MainActivity.notifyAutoAcceptSettingChanged(requireContext(), settings.flexAutoAccept)
         MonitorPackages.notifyReload(requireContext())
         PichixAccessibilityService.syncEngine(requireContext())
+    }
+
+    private fun shareDiagnosticPack() {
+        val ctx = requireContext()
+        try {
+            val result = com.oceanlab.pichix.util.DiagnosticPack.build(ctx)
+            val intent = com.oceanlab.pichix.util.DiagnosticPack.shareIntent(ctx, result.zipFile)
+            startActivity(
+                Intent.createChooser(
+                    intent,
+                    getString(R.string.config_btn_share_pack),
+                ),
+            )
+            Toast.makeText(
+                ctx,
+                getString(R.string.config_share_pack_ok, result.filesIncluded),
+                Toast.LENGTH_SHORT,
+            ).show()
+        } catch (e: Exception) {
+            Toast.makeText(
+                ctx,
+                getString(R.string.config_share_pack_fail, e.message ?: "error"),
+                Toast.LENGTH_LONG,
+            ).show()
+        }
     }
 
     private fun shareDiagnosticLogs() {

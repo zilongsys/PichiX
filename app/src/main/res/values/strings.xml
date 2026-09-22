@@ -227,6 +227,13 @@
     <string name="config_file_log_title">Guardar log en archivo</string>
     <string name="config_file_log_hint">Escribe eventos del bot en archivos diarios dentro de la app. Útil para diagnosticar sin depender de Logcat.</string>
     <string name="config_btn_share_logs">Compartir diagnóstico PichiX</string>
+    <string name="config_btn_share_pack">Pack diagnóstico (ZIP)</string>
+    <string name="config_share_pack_hint">Genera un ZIP con resumen de tomas (hora local), CSV de ofertas, config/reglas y logs bot/UI. Ideal para analizar tomas fuera de franja (p. ej. madrugada).</string>
+    <string name="config_share_pack_ok">Pack listo (%1$d archivos). Elige app para compartir.</string>
+    <string name="config_share_pack_fail">No se pudo crear el pack: %1$s</string>
+    <string name="home_diag_pack_title">Diagnóstico</string>
+    <string name="home_diag_pack_hint">Exporta un ZIP con logs, ofertas y reglas para analizar el comportamiento del bot.</string>
+    <string name="home_diag_pack_share">Compartir pack</string>
     <string name="config_refresh_button_text_label">Nombre exacto del botón a pulsar</string>
     <string name="config_refresh_button_short">Botón Refresh</string>
     <string name="config_refresh_button_hint">Texto visible en el botón Refresh de Flex que debe pulsar el bot (si «Pulsar Refresh» está activo). Ej.: Refresh.</string>
