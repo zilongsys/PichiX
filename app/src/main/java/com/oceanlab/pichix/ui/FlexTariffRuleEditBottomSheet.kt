@@ -199,6 +199,10 @@ class FlexTariffRuleEditBottomSheet : BottomSheetDialogFragment() {
             when (paySelected()) {
                 FlexPayCriteriaMode.BLOCK_PAY -> layoutPayBlock.visibility = View.VISIBLE
                 FlexPayCriteriaMode.HOURLY_PAY -> layoutPayHourly.visibility = View.VISIBLE
+                FlexPayCriteriaMode.HOURLY_AND_BLOCK -> {
+                    layoutPayBlock.visibility = View.VISIBLE
+                    layoutPayHourly.visibility = View.VISIBLE
+                }
                 FlexPayCriteriaMode.MANUAL_FIXED -> layoutPayManualFixed.visibility = View.VISIBLE
                 FlexPayCriteriaMode.MANUAL_ANY -> tvPayManualAny.visibility = View.VISIBLE
             }
@@ -319,7 +323,8 @@ class FlexTariffRuleEditBottomSheet : BottomSheetDialogFragment() {
         btnCancel.setOnClickListener { dismissAllowingStateLoss() }
         btnSave.setOnClickListener {
             val draft = buildDraft()
-            if (draft.payMode == FlexPayCriteriaMode.BLOCK_PAY &&
+            if ((draft.payMode == FlexPayCriteriaMode.BLOCK_PAY ||
+                    draft.payMode == FlexPayCriteriaMode.HOURLY_AND_BLOCK) &&
                 draft.priceMax != null && draft.priceMax < draft.priceMin
             ) {
                 Toast.makeText(context, "Pago máximo debe ser ≥ mínimo", Toast.LENGTH_SHORT).show()

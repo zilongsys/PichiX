@@ -42,6 +42,8 @@ enum class FlexBlockTypeFilter(val key: String, val label: String) {
 enum class FlexPayCriteriaMode(val key: String, val label: String) {
     BLOCK_PAY("block", "Por pago de bloque"),
     HOURLY_PAY("hourly", "Por pago por hora"),
+    /** Exige $/h mínimo Y pago de bloque mínimo (misma regla). */
+    HOURLY_AND_BLOCK("hourly_and_block", "Por $/h y pago de bloque (ambos)"),
     MANUAL_FIXED("manual_fixed", "Manual (solo ese precio)"),
     MANUAL_ANY("manual_any", "Manual (cualquier precio)");
 
@@ -237,12 +239,15 @@ data class FlexTariffRule(
     fun payCriteriaLabel(): String = when (payMode) {
         FlexPayCriteriaMode.BLOCK_PAY -> priceRangeLabel()
         FlexPayCriteriaMode.HOURLY_PAY -> "$%.0f/h mín".format(minHourlyRate)
+        FlexPayCriteriaMode.HOURLY_AND_BLOCK ->
+            "$%.0f/h mín + %s".format(minHourlyRate, priceRangeLabel())
         FlexPayCriteriaMode.MANUAL_FIXED -> "Fijo $%.0f".format(priceMin)
         FlexPayCriteriaMode.MANUAL_ANY -> "Cualquier pago"
     }
 
     fun secondaryCriteriaLabel(): String? = when (payMode) {
         FlexPayCriteriaMode.HOURLY_PAY -> null
+        FlexPayCriteriaMode.HOURLY_AND_BLOCK -> null
         FlexPayCriteriaMode.MANUAL_ANY -> null
         FlexPayCriteriaMode.MANUAL_FIXED -> null
         FlexPayCriteriaMode.BLOCK_PAY -> "$%.0f/h ref".format(minHourlyRate)

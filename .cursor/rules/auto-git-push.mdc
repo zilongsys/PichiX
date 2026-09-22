@@ -1,16 +1,22 @@
 ---
-description: Tras cambios de código solicitados por el usuario, hacer commit y push a GitHub automáticamente
+description: Tras cambios de código, commit+push a GitHub y generar ZIPs (proyecto completo + solo cambiados)
 alwaysApply: true
 ---
 
-# Git automático en PichiX
+# Entrega automática en PichiX (GitHub + ZIPs)
 
 Cuando el usuario pida un cambio de código y lo implementes en este repositorio:
 
-1. Al **terminar** la tarea (código compilable, sin secretos en el commit), haz **commit y push** sin pedir confirmación extra.
-2. **No** incluyas en el commit: `.env`, `local.properties`, `*.jks`, keystores ni credenciales.
-3. Mensaje de commit: una línea clara en español o inglés; mencionar `vX.Y.Z` tras actualizar versión (ver regla `version-bump.mdc`: PATCH 0–100, al llegar a 100 subir el segmento anterior).
-4. Comandos (PowerShell, repo en la raíz del workspace):
+## 1. Versión y changelog
+- Subir versión solo al entregar: `./gradlew :app:bumpVersion` o editar `app/version.properties`.
+- Documentar en `CHANGELOG.md` con `## vX.Y.Z` (Añadido / Actualizado / Corregido / Eliminado).
+- PATCH 0–100; al 100 → MIDDLE+1; si MIDDLE=100 → MAJOR+1.
+
+## 2. Commit y push a GitHub (sin pedir confirmación)
+1. Al **terminar** la tarea (código compilable, sin secretos), haz **commit y push**.
+2. **No** incluyas: `.env`, `local.properties`, `*.jks`, keystores ni credenciales.
+3. Mensaje: una línea clara; mencionar `vX.Y.Z` tras bump.
+4. PowerShell (raíz del repo):
 
 ```powershell
 git add -A
@@ -19,8 +25,32 @@ git -c user.name="onlyeyes" -c user.email="onlyeyes@users.noreply.github.com" co
 git push origin HEAD
 ```
 
-5. Si el cambio es una **versión estable** nueva, además: `git tag vX.Y.Z` y `git push origin --tags` (solo si `versionName`/`CHANGELOG` se actualizaron).
-6. Si `git push` falla por auth, indica al usuario que ejecute `gh auth login` y reintenta una vez.
-7. **Excepciones** (no commit automático): solo preguntas, revisión sin editar archivos, o el usuario dice explícitamente "sin commit" / "no subas".
+5. Versión estable nueva: `git tag vX.Y.Z` y `git push origin --tags` si version/CHANGELOG se actualizaron.
+6. Si `git push` falla por auth: indicar `gh auth login` y reintentar una vez.
+7. **Excepciones** (no commit): solo preguntas, revisión sin editar, o el usuario dice "sin commit" / "no subas".
 
 Remoto: `origin` → https://github.com/zilongsys/PichiX
+
+## 3. ZIPs de entrega (obligatorio tras cada cambio de código)
+Tras commit/push (o al terminar si no hubo commit), generar **dos** ZIP en `dist/` (crear carpeta si no existe). Usar el script:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\pack-delivery.ps1
+```
+
+O equivalente manual:
+
+### A) Proyecto completo (solo fuentes del proyecto)
+- Nombre: `dist/PichiX-vX.Y.Z-full.zip`
+- Incluir código fuente, recursos, Gradle scripts, docs del repo.
+- **Excluir** artefactos de Android Studio / build:
+  - `**/build/**`, `.gradle/**`, `local.properties`, `*.iml`, `.idea/**` (salvo si el repo las versiona a propósito; por defecto excluir),
+  - `captures/`, `.cxx/`, `*.apk`, `*.aab`, `*.jks`, `*.keystore`,
+  - `dist/*.zip` (no anidar zips previos), `.git/`, `node_modules/`.
+
+### B) Solo ficheros mejorados/cambiados en esta entrega
+- Nombre: `dist/PichiX-vX.Y.Z-changed.zip`
+- Incluir únicamente los paths tocados en el commit (o diff vs `HEAD~1` / archivos editados en la tarea).
+- Misma exclusión de secretos/build.
+
+Indicar al usuario las rutas absolutas de ambos ZIP al final de la respuesta.

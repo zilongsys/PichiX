@@ -167,10 +167,12 @@ class FlexTariffEvaluator(private val settings: AppSettings) {
                 if (rule.priceMax != null && pay > rule.priceMax) return false
                 true
             }
-            FlexPayCriteriaMode.HOURLY_PAY -> {
+            // Solo $/h: otras reglas (p. ej. por bloque) se evalúan por orden de prioridad.
+            FlexPayCriteriaMode.HOURLY_PAY -> hourly >= rule.minHourlyRate
+            // Misma regla exige las dos condiciones.
+            FlexPayCriteriaMode.HOURLY_AND_BLOCK -> {
                 if (hourly < rule.minHourlyRate) return false
-                // priceMin/Max del formulario también cuentan en modo $/h (antes se ignoraban).
-                if (rule.priceMin > 0.0 && pay < rule.priceMin) return false
+                if (pay < rule.priceMin) return false
                 if (rule.priceMax != null && pay > rule.priceMax) return false
                 true
             }

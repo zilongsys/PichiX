@@ -11,3 +11,4 @@ captures/
 *.apk
 *.ap_
 *.aab
+dist/
