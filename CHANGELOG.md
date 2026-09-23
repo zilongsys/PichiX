@@ -8,6 +8,16 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.24 (Septiembre 2026)
+
+### Añadido
+- **Buscar en Configuración**: campo de búsqueda arriba del listado para filtrar secciones y opciones que coincidan (sin distinguir mayúsculas ni acentos).
+
+### Actualizado
+- Sección **Centro de control** también se puede plegar/desplegar como el resto.
+
+---
+
 ## v0.2.23 (Septiembre 2026)
 
 ### Corregido

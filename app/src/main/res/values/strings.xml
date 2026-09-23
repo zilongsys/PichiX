@@ -78,6 +78,8 @@
     <string name="config_perm_banner_missing">Faltan %1$d permiso(s) para que el bot funcione correctamente. Toca para ir a Permisos.</string>
     <string name="config_perm_banner_ok">Todos los permisos necesarios están activos.</string>
     <string name="config_save_footer_hint">Return 2, Clics y tiempos se aplican al instante. Pulsa Guardar para el resto.</string>
+    <string name="config_search_hint">Buscar en configuración…</string>
+    <string name="config_search_empty">Ninguna opción coincide con la búsqueda.</string>
     <string name="config_save_footer_dirty">Cambios sin guardar</string>
     <string name="config_flex_package_short">Paquete Flex</string>
     <string name="config_overlay_onoff_title">Botón encendido / apagado</string>

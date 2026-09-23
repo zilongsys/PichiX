@@ -8,6 +8,8 @@ import android.content.IntentFilter
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -41,6 +43,10 @@ import com.oceanlab.pichix.util.AlertManager
 import com.oceanlab.pichix.util.PermissionStatusHelper
 import com.oceanlab.pichix.util.SoundPickerHelper
 import com.oceanlab.pichix.util.SoundUriLabel
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener {
 
@@ -193,6 +199,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         tvPermissionBanner = view.findViewById(R.id.tvConfigPermissionBanner)
         configScroll.setupFormFocus()
         setupExpandableSections(view, configScroll)
+        setupConfigSearch(view)
         setupPermissionBanner(view, configScroll)
         setupConfigFooterNote(view, configScroll)
         setupAmazonHint(view, configScroll)
@@ -655,6 +662,37 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             sectionKey = "ui",
             startExpanded = false,
         )
+        ConfigSectionBinder.bind(
+            view.findViewById(R.id.headerSectionDashboard),
+            view.findViewById(R.id.sectionDashboard),
+            scrollHost,
+            sectionKey = "dashboard",
+            startExpanded = false,
+        )
+    }
+
+    private fun setupConfigSearch(view: View) {
+        val etSearch = view.findViewById<TextInputEditText>(R.id.etConfigSearch)
+        val emptyLabel = view.findViewById<TextView>(R.id.tvConfigSearchEmpty)
+        val sections = listOf(
+            ConfigSearchFilter.Section("permisos", view.findViewById(R.id.headerSectionPermisos), view.findViewById(R.id.sectionPermisos), true),
+            ConfigSearchFilter.Section("amazon", view.findViewById(R.id.headerSectionAmazon), view.findViewById(R.id.sectionAmazon), false),
+            ConfigSearchFilter.Section("overlay", view.findViewById(R.id.headerSectionOverlay), view.findViewById(R.id.sectionOverlay), true),
+            ConfigSearchFilter.Section("click_rhythm", view.findViewById(R.id.headerSectionClickRhythm), view.findViewById(R.id.sectionClickRhythm), false),
+            ConfigSearchFilter.Section("flex_behavior", view.findViewById(R.id.headerSectionAuto), view.findViewById(R.id.sectionAuto), false),
+            ConfigSearchFilter.Section("click_screen", view.findViewById(R.id.headerSectionClickScreen), view.findViewById(R.id.sectionClickScreen), false),
+            ConfigSearchFilter.Section("pause", view.findViewById(R.id.headerSectionPause), view.findViewById(R.id.sectionPause), false),
+            ConfigSearchFilter.Section("log", view.findViewById(R.id.headerSectionLog), view.findViewById(R.id.sectionLog), false),
+            ConfigSearchFilter.Section("ui", view.findViewById(R.id.headerSectionUi), view.findViewById(R.id.sectionUi), false),
+            ConfigSearchFilter.Section("dashboard", view.findViewById(R.id.headerSectionDashboard), view.findViewById(R.id.sectionDashboard), false),
+        )
+        etSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            override fun afterTextChanged(s: Editable?) {
+                ConfigSearchFilter.apply(s?.toString().orEmpty(), sections, emptyLabel)
+            }
+        })
     }
 
     private fun setupPermissionBanner(view: View, scrollHost: ScrollView) {

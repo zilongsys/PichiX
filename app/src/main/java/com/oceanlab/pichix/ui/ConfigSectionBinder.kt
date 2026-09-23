@@ -19,7 +19,6 @@ object ConfigSectionBinder {
         startExpanded: Boolean = true,
     ) {
         val settings = AppSettings(header.context)
-        var open = settings.isConfigSectionExpanded(sectionKey, startExpanded)
         val baseTitle = header.text.toString()
             .removeSuffix(" ▼")
             .removeSuffix(" ▶")
@@ -28,14 +27,17 @@ object ConfigSectionBinder {
         header.isClickable = true
         header.preventCollapsibleHeaderFocusSteal()
         header.applySelectableForeground()
-        applyExpandedState(header, content, open)
+        applyExpandedState(
+            header,
+            content,
+            settings.isConfigSectionExpanded(sectionKey, startExpanded),
+        )
 
         header.setOnClickListener {
             val focused = header.rootView.findFocus()
             val toggle = {
-                open = !open
-                applyExpandedState(header, content, open)
-                settings.setConfigSectionExpanded(sectionKey, open)
+                val open = !settings.isConfigSectionExpanded(sectionKey, startExpanded)
+                setExpanded(header, content, sectionKey, open)
             }
             when (scrollHost) {
                 is ScrollView -> scrollHost.runRetainingScrollForSectionToggle(header, toggle)
@@ -70,8 +72,23 @@ object ConfigSectionBinder {
         sectionKey: String,
     ) {
         if (content.visibility == View.VISIBLE) return
+        setExpanded(header, content, sectionKey, expanded = true)
+    }
+
+    /** Solo UI (no persiste). Útil al filtrar por búsqueda. */
+    fun showExpandedVisual(header: TextView, content: View, expanded: Boolean) {
+        applyExpandedState(header, content, expanded)
+    }
+
+    /** Fija el estado expandido y lo persiste (p. ej. al filtrar / limpiar búsqueda). */
+    fun setExpanded(
+        header: TextView,
+        content: View,
+        sectionKey: String,
+        expanded: Boolean,
+    ) {
         val settings = AppSettings(header.context)
-        settings.setConfigSectionExpanded(sectionKey, true)
-        applyExpandedState(header, content, true)
+        settings.setConfigSectionExpanded(sectionKey, expanded)
+        applyExpandedState(header, content, expanded)
     }
 }

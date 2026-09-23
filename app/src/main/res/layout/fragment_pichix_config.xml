@@ -6,6 +6,44 @@
     android:background="@color/bg_page"
     android:orientation="vertical">
 
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilConfigSearch"
+        style="@style/PichiXTextInputLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="14dp"
+        android:hint="@string/config_search_hint"
+        app:endIconMode="clear_text"
+        app:startIconDrawable="@android:drawable/ic_menu_search"
+        app:startIconTint="@color/text_hint">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etConfigSearch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:imeOptions="actionSearch"
+            android:inputType="text|textNoSuggestions"
+            android:maxLines="1"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint"
+            android:textCursorDrawable="@drawable/text_cursor_accent"
+            android:textSize="15sp" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:id="@+id/tvConfigSearchEmpty"
+        style="@style/RowHint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="18dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="18dp"
+        android:text="@string/config_search_empty"
+        android:textColor="@color/text_secondary"
+        android:visibility="gone" />
+
     <ScrollView
         android:id="@+id/configScroll"
         android:layout_width="match_parent"
