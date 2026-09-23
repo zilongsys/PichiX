@@ -8,6 +8,16 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.21 (Septiembre 2026)
+
+### Corregido
+- **Conexión con PC**: cursor de texto visible en IP / puerto / ruta / token (`textCursorDrawable` + `colorControlActivated`).
+
+### Nota (Centro de control PC)
+- El servidor PC debe ser **1.1.2+** (protocolo `up` + pestaña Historial + pestañas de ajustes). La versión 1.0.0 ignoraba los lotes del teléfono y solo mostraba logs desde el momento de conexión.
+
+---
+
 ## v0.2.20 (Septiembre 2026)
 
 ### Corregido
