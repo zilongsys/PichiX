@@ -1,12 +1,14 @@
 package com.oceanlab.pichix.dashboardcontrol
 
-// Pantalla "Conexión con PC": dirección, token, activar/desactivar, estado en vivo
+// Pantalla "Conexión con PC": IP, puerto, ruta, token, activar/desactivar, estado en vivo
 // y cuántos registros esperan para enviarse a la PC.
 
 import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.text.Editable
+import android.text.TextWatcher
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -27,9 +29,18 @@ class DashboardControlActivity : AppCompatActivity() {
     private lateinit var status: TextView
     private lateinit var detail: TextView
     private lateinit var pending: TextView
-    private lateinit var url: TextInputEditText
+    private lateinit var host: TextInputEditText
+    private lateinit var port: TextInputEditText
+    private lateinit var path: TextInputEditText
     private lateinit var token: TextInputEditText
+    private lateinit var urlPreview: TextView
     private lateinit var enabled: SwitchMaterial
+
+    private val previewWatcher = object : TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        override fun afterTextChanged(s: Editable?) { updatePreview() }
+    }
 
     private val tick = object : Runnable {
         override fun run() {
@@ -45,13 +56,18 @@ class DashboardControlActivity : AppCompatActivity() {
         status = findViewById(R.id.dcStatus)
         detail = findViewById(R.id.dcDetail)
         pending = findViewById(R.id.dcPending)
-        url = findViewById(R.id.dcUrl)
+        host = findViewById(R.id.dcHost)
+        port = findViewById(R.id.dcPort)
+        path = findViewById(R.id.dcPath)
         token = findViewById(R.id.dcToken)
+        urlPreview = findViewById(R.id.dcUrlPreview)
         enabled = findViewById(R.id.dcEnabled)
 
-        url.setText(DashboardLink.currentUrl(this))
-        token.setText(DashboardLink.currentToken(this))
-        enabled.isChecked = DashboardLink.isEnabled(this)
+        fillFromSaved()
+        host.addTextChangedListener(previewWatcher)
+        port.addTextChangedListener(previewWatcher)
+        path.addTextChangedListener(previewWatcher)
+        updatePreview()
 
         findViewById<android.view.View>(R.id.dcBack).setOnClickListener { finish() }
         findViewById<android.view.View>(R.id.dcSave).setOnClickListener { save() }
@@ -72,16 +88,53 @@ class DashboardControlActivity : AppCompatActivity() {
         super.onPause()
     }
 
+    private fun fillFromSaved() {
+        val ep = DashboardLink.currentEndpoint(this)
+        host.setText(ep.host)
+        port.setText(ep.port.toString())
+        path.setText(ep.path.ifBlank { DashboardLink.DEFAULT_PATH })
+        token.setText(DashboardLink.currentToken(this))
+        enabled.isChecked = DashboardLink.isEnabled(this)
+    }
+
+    private fun readPort(): Int =
+        port.text?.toString()?.trim()?.toIntOrNull()?.takeIf { it in 1..65535 }
+            ?: DashboardLink.DEFAULT_PORT
+
+    private fun readPath(): String {
+        val raw = path.text?.toString()?.trim().orEmpty()
+        return raw.ifBlank { DashboardLink.DEFAULT_PATH }
+    }
+
+    private fun updatePreview() {
+        val h = host.text?.toString()?.trim().orEmpty()
+        val built = if (h.isEmpty()) {
+            "ws://<IP>:${readPort()}${normalizePathPreview(readPath())}"
+        } else {
+            DashboardLink.buildUrl(h, readPort(), readPath())
+        }
+        urlPreview.text = "URL: $built"
+    }
+
+    private fun normalizePathPreview(raw: String): String {
+        var p = raw.trim().ifEmpty { DashboardLink.DEFAULT_PATH }
+        if (!p.startsWith("/")) p = "/$p"
+        return p
+    }
+
     private fun save() {
-        val u = url.text?.toString()?.trim().orEmpty()
+        val h = host.text?.toString()?.trim().orEmpty()
         val t = token.text?.toString()?.trim().orEmpty()
-        if (enabled.isChecked && (u.isEmpty() || t.isEmpty())) {
-            Toast.makeText(this, "Escribe la dirección de la PC y el token", Toast.LENGTH_LONG).show()
+        val p = readPort()
+        val pathPart = readPath()
+        if (enabled.isChecked && (h.isEmpty() || t.isEmpty())) {
+            Toast.makeText(this, "Escribe la IP de la PC y el token", Toast.LENGTH_LONG).show()
             return
         }
-        DashboardLink.configure(this, u, t, enabled.isChecked)
-        url.setText(DashboardLink.currentUrl(this))
-        token.setText(DashboardLink.currentToken(this))
+        val url = if (h.isEmpty()) "" else DashboardLink.buildUrl(h, p, pathPart)
+        DashboardLink.configure(this, url, t, enabled.isChecked)
+        fillFromSaved()
+        updatePreview()
         Toast.makeText(this, if (enabled.isChecked) "Guardado · conectando" else "Guardado · desactivado", Toast.LENGTH_SHORT).show()
         render()
     }

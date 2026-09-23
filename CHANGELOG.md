@@ -8,6 +8,16 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.20 (Septiembre 2026)
+
+### Corregido
+- **Conexión con PC**: campos de IP, puerto, ruta y token visibles (estilo `PichiXTextInputLayout` + color de texto). Ya no es un único campo URL poco claro / invisible.
+
+### Actualizado
+- Pantalla de conexión: IP, puerto (8765), ruta (`/agent`) y token por separado; vista previa de la URL `ws://…`; la ruta ya no está forzada a `/agent` si la PC usa otra.
+
+---
+
 ## v0.2.19 (Septiembre 2026)
 
 ### Corregido

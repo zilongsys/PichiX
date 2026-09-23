@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Pantalla "Conexión con PC" (dashboardcontrol). Usa los estilos de la app: Card, SectionLabel, RowHint, SparkButton*. -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg_page"
@@ -82,41 +83,117 @@
             style="@style/Card"
             android:padding="16dp">
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Dirección de la PC">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/dcUrl"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:importantForAutofill="no"
-                    android:inputType="textUri"
-                    android:singleLine="true" />
-            </com.google.android.material.textfield.TextInputLayout>
-
             <TextView
                 style="@style/RowHint"
                 android:layout_width="match_parent"
-                android:text="La que muestra el Centro de control abajo a la izquierda, p. ej. ws://192.168.0.148:8765/agent. Basta con la IP." />
+                android:layout_marginTop="0dp"
+                android:text="Copia IP, puerto y token del panel izquierdo del Centro de control en la PC (misma Wi‑Fi)." />
 
             <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                style="@style/PichiXTextInputLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:hint="Token">
+                android:hint="IP de la PC"
+                app:placeholderText="192.168.0.148">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/dcHost"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:importantForAutofill="no"
+                    android:inputType="textUri|textNoSuggestions"
+                    android:singleLine="true"
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_hint"
+                    android:textSize="16sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/PichiXTextInputLayout"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:hint="Puerto"
+                    app:placeholderText="8765">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/dcPort"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:importantForAutofill="no"
+                        android:inputType="number"
+                        android:singleLine="true"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_hint"
+                        android:textSize="16sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/PichiXTextInputLayout"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="Ruta"
+                    app:placeholderText="/agent">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/dcPath"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:importantForAutofill="no"
+                        android:inputType="textUri|textNoSuggestions"
+                        android:singleLine="true"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_hint"
+                        android:textSize="16sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/PichiXTextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="Token"
+                app:placeholderText="ABCD-EFGH">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/dcToken"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:importantForAutofill="no"
-                    android:inputType="textCapCharacters|textNoSuggestions"
-                    android:singleLine="true" />
+                    android:inputType="textCapCharacters|textNoSuggestions|textVisiblePassword"
+                    android:singleLine="true"
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_hint"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.08" />
             </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:id="@+id/dcUrlPreview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@color/bg_input"
+                android:fontFamily="monospace"
+                android:padding="10dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <TextView
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:text="Por defecto: puerto 8765 y ruta /agent. Solo cámbialos si el Centro de control muestra otra cosa." />
 
             <com.google.android.material.switchmaterial.SwitchMaterial
                 android:id="@+id/dcEnabled"
@@ -131,13 +208,7 @@
             <TextView
                 style="@style/RowHint"
                 android:layout_width="match_parent"
-                android:text="Activado, todo lo que hace el bot se guarda en el teléfono y se envía a la PC. Si la PC no está (horas o días), se envía completo al reconectar. El bot funciona igual con o sin PC." />
-
-            <TextView
-                style="@style/RowHint"
-                android:layout_width="match_parent"
-                android:layout_marginTop="12dp"
-                android:text="En la PC: ofertas (vistas/aceptadas/rechazadas) → carriles de PichiX + pestaña Historial. Ajustes por grupos (Home, Config, Tarifas, Alertas); con Centro de control reciente cada grupo es una pestaña." />
+                android:text="Activado, todo lo que hace el bot se guarda en el teléfono y se envía a la PC. Si la PC no está, se envía al reconectar." />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/dcSave"

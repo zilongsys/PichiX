@@ -96,6 +96,8 @@ object DashboardLink {
     private const val K_URL = "url"
     private const val K_TOKEN = "token"
     private const val K_ENABLED = "enabled"
+    const val DEFAULT_PORT = 8765
+    const val DEFAULT_PATH = "/agent"
     private const val K_LEVEL = "min_level"
 
     private const val QUEUE_CAP = 20_000
@@ -229,6 +231,30 @@ object DashboardLink {
     fun currentToken(context: Context): String = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(K_TOKEN, "") ?: ""
     fun isEnabled(context: Context): Boolean = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(K_ENABLED, false)
 
+    /** Partes de la URL `ws://host:port/path` para la pantalla de conexión. */
+    data class Endpoint(val host: String, val port: Int = DEFAULT_PORT, val path: String = DEFAULT_PATH)
+
+    fun currentEndpoint(context: Context): Endpoint = parseEndpoint(currentUrl(context))
+
+    fun buildUrl(host: String, port: Int, path: String): String {
+        val h = host.trim()
+        if (h.isEmpty()) return ""
+        val p = if (port in 1..65535) port else DEFAULT_PORT
+        return "ws://$h:$p${normalizePath(path)}"
+    }
+
+    fun parseEndpoint(raw: String): Endpoint {
+        val u = normalizeUrl(raw)
+        if (u.isEmpty()) return Endpoint("", DEFAULT_PORT, DEFAULT_PATH)
+        val rest = u.removePrefix("ws://").removePrefix("wss://")
+        val hostPort = rest.substringBefore('/')
+        val pathRaw = rest.substringAfter('/', missingDelimiterValue = "")
+        val host = hostPort.substringBefore(':').trim()
+        val port = hostPort.substringAfter(':', missingDelimiterValue = DEFAULT_PORT.toString()).toIntOrNull()
+            ?.takeIf { it in 1..65535 } ?: DEFAULT_PORT
+        return Endpoint(host, port, normalizePath(if (pathRaw.isEmpty()) DEFAULT_PATH else "/$pathRaw"))
+    }
+
     /** Ejecuta en el hilo principal y espera el resultado (para comandos que tocan el motor). */
     fun <T> onMain(timeoutMs: Long = 5_000, block: () -> T): T {
         if (Looper.myLooper() == Looper.getMainLooper()) return block()
@@ -269,11 +295,23 @@ object DashboardLink {
     private fun normalizeUrl(raw: String): String {
         var u = raw.trim()
         if (u.isEmpty()) return u
-        if (!u.startsWith("ws://")) u = "ws://" + u.substringAfter("://")
-        val hostPart = u.removePrefix("ws://").substringBefore('/')
-        if (!hostPart.contains(':')) u = u.replaceFirst(hostPart, "$hostPart:8765")
-        if (!u.endsWith("/agent")) u = u.trimEnd('/').substringBefore("/agent") + "/agent"
-        return u
+        u = u.removePrefix("http://").removePrefix("https://")
+        if (!u.startsWith("ws://") && !u.startsWith("wss://")) u = "ws://$u"
+        val rest = u.removePrefix("ws://").removePrefix("wss://")
+        val hostPort = rest.substringBefore('/')
+        val pathRaw = rest.substringAfter('/', missingDelimiterValue = "")
+        val host = hostPort.substringBefore(':').trim()
+        if (host.isEmpty()) return ""
+        val port = hostPort.substringAfter(':', missingDelimiterValue = DEFAULT_PORT.toString()).toIntOrNull()
+            ?.takeIf { it in 1..65535 } ?: DEFAULT_PORT
+        return "ws://$host:$port${normalizePath(if (pathRaw.isEmpty()) DEFAULT_PATH else "/$pathRaw")}"
+    }
+
+    private fun normalizePath(raw: String): String {
+        var p = raw.trim().ifEmpty { DEFAULT_PATH }
+        if (!p.startsWith("/")) p = "/$p"
+        while (p.length > 1 && p.endsWith('/')) p = p.dropLast(1)
+        return p.ifEmpty { DEFAULT_PATH }
     }
 
     private fun signal(lock: Object) {
