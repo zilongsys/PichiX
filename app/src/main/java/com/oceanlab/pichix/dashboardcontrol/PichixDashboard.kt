@@ -243,7 +243,14 @@ object PichixDashboard : DashboardBridge {
         // ── Home ──
         SettingSpec.bool("bot_enabled", "Bot activo", G_HOME,
             help = "Igual que el switch del header en Home",
-            get = { s().isBotEnabled }, set = { s().isBotEnabled = it }),
+            get = { s().isBotEnabled },
+            set = {
+                s().isBotEnabled = it
+                if (it) {
+                    PichixAccessibilityService.pausedAfterAccept = false
+                    PichixAccessibilityService.setMotorPausedForNavigation(false, app)
+                }
+            }),
         SettingSpec.bool("overlay_enabled", "Botón flotante", G_HOME,
             get = { s().overlayEnabled }, set = { s().overlayEnabled = it }),
         SettingSpec.bool("dry_run", "Modo simulación (no acepta de verdad)", G_HOME,

@@ -378,6 +378,11 @@ class HomeFragment : Fragment() {
                 "Bloque tomado — espera el siguiente",
                 colorAmber
             )
+            PichixAccessibilityService.motorPausedForNavigation -> Triple(
+                "⏸ Navegación manual",
+                "Motor en pausa — pulsa ▶ en el flotante o reactiva el switch",
+                colorAmber
+            )
             dryRun -> Triple(
                 "🧪 Modo simulación activo",
                 "Evaluando bloques sin aceptarlos",

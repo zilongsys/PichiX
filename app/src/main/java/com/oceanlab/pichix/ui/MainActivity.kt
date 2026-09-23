@@ -140,7 +140,13 @@ class MainActivity : AppCompatActivity() {
                 selectSidebarItem(1)
                 return@setOnCheckedChangeRetainingFocus
             }
-            if (checked) PichixAccessibilityService.pausedAfterAccept = false
+            if (checked) {
+                PichixAccessibilityService.pausedAfterAccept = false
+                // Activar el bot debe reanudar el motor: si quedó en «Navegación manual»
+                // (FAB ⏸ o comando PC), el switch parecía no encender y el cartel naranja
+                // seguía bloqueando clics/scroll.
+                PichixAccessibilityService.setMotorPausedForNavigation(false, this)
+            }
             settings.isBotEnabled = checked
             BotEventLog.log(
                 this,

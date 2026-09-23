@@ -171,10 +171,11 @@ class OverlayService : Service() {
     }
 
     private fun toggleBot() {
-        val enabling = !settings.isBotEnabled || PichixAccessibilityService.pausedAfterAccept
+        val enabling = !settings.isBotEnabled || PichixAccessibilityService.pausedAfterAccept ||
+            PichixAccessibilityService.motorPausedForNavigation
         if (enabling) {
             PichixAccessibilityService.pausedAfterAccept = false
-            PichixAccessibilityService.motorPausedForNavigation = false
+            PichixAccessibilityService.setMotorPausedForNavigation(false, this)
             settings.isBotEnabled = true
             BotServiceCoordinator.syncForegroundService(this)
             PichixAccessibilityService.syncEngine(this)

@@ -8,6 +8,13 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.22 (Septiembre 2026)
+
+### Corregido
+- **Activar bot**: si el motor estaba en «Navegación manual» (FAB ⏸ o comando PC), el switch del header ya no se queda en naranja sin arrancar: al activar se reanuda el motor (igual que el botón flotante ON).
+
+---
+
 ## v0.2.21 (Septiembre 2026)
 
 ### Corregido
