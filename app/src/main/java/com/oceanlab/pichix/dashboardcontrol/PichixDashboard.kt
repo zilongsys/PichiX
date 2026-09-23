@@ -220,7 +220,7 @@ object PichixDashboard : DashboardBridge {
     private fun tariffRulesJson(): String {
         val arr = JSONArray()
         FlexTariffRulesStore.load(s()).sortedBy { it.sortOrder }.forEach { arr.put(it.toJson()) }
-        return arr.toString(2)
+        return arr.toString() // compacto: el hello no debe hincharse con pretty-print
     }
 
     private fun applyTariffRulesJson(raw: String) {

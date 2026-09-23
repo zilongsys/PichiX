@@ -8,6 +8,13 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.19 (Septiembre 2026)
+
+### Corregido
+- **Centro de control**: JSON de reglas de tarifas se envía compacto (sin pretty-print) para no hinchar el `hello` ni congelar la UI de la PC.
+
+---
+
 ## v0.2.18 (Septiembre 2026)
 
 ### Añadido
