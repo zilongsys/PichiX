@@ -8,6 +8,15 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.16 (Septiembre 2026)
+
+### Actualizado
+- **Centro de control · Ajustes**: el schema sigue la organización de la app — **Home**, **Config** (Control del bot, Ritmo, En Flex, Pantalla y ofertas, Pausas, Diagnóstico, Preferencias), **Tarifas** y **Alertas**. Más ajustes expuestos (bot, overlay, ráfaga duración, pausas, llamadas, logs…).
+- Al aplicar cambios desde la PC se sincronizan FGS, overlay, logs y UI (como al guardar en el teléfono).
+- Las pestañas solo de consulta (Historial, Estadísticas, Log, Simulador, Revisión) no tienen ajustes remotos; las reglas detailed de Tarifas se editan en el teléfono.
+
+---
+
 ## v0.2.15 (Septiembre 2026)
 
 ### Añadido
