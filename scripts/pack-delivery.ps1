@@ -26,6 +26,13 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
             $Version = $Matches[1].Trim()
         } elseif ($props -match 'versionName\s*=\s*([^\r\n]+)') {
             $Version = $Matches[1].Trim()
+        } else {
+            $maj = if ($props -match 'VERSION_MAJOR\s*=\s*(\d+)') { $Matches[1] } else { $null }
+            $mid = if ($props -match 'VERSION_MIDDLE\s*=\s*(\d+)') { $Matches[1] } else { $null }
+            $pat = if ($props -match 'VERSION_PATCH\s*=\s*(\d+)') { $Matches[1] } else { $null }
+            if ($maj -ne $null -and $mid -ne $null -and $pat -ne $null) {
+                $Version = "$maj.$mid.$pat"
+            }
         }
     }
 }
