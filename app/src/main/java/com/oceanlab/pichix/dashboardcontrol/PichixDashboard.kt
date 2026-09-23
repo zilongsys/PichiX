@@ -401,5 +401,15 @@ object PichixDashboard : DashboardBridge {
             get = { s().callOnBlockOnScheduledNotification }, set = { s().callOnBlockOnScheduledNotification = it }),
         SettingSpec.long("call_on_block_delay_ms", "Retraso de la llamada", G_ALERTAS, 0, 10_000, "ms",
             get = { s().callOnBlockDelayMs }, set = { s().callOnBlockDelayMs = it }),
+        SettingSpec.int(
+            "call_on_block_sound_repeats_before_call",
+            "Repeticiones de sonido antes de llamar",
+            G_ALERTAS,
+            0,
+            20,
+            null,
+            get = { s().callOnBlockSoundRepeatsBeforeCall },
+            set = { s().callOnBlockSoundRepeatsBeforeCall = it },
+        ),
     )
 }

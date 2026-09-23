@@ -840,7 +840,7 @@ class PichixAccessibilityService : AccessibilityService() {
                 ),
             )
             postObserver("No toma en detalle: $station — $reason")
-            finishBlockTakeFlow(pauseBot = settings.autoPauseAfterAccept)
+            finishBlockTakeFlow(pauseBot = shouldPauseAfterMiss())
             return
         }
 
@@ -986,7 +986,7 @@ class PichixAccessibilityService : AccessibilityService() {
             },
         )
         if (accepted && settings.callOnBlockWhenAccepted) {
-            CallOnBlockHelper.maybeCall(
+            CallOnBlockHelper.maybeCallAfterSound(
                 this,
                 settings,
                 "bloque aceptado: $station",
@@ -1079,9 +1079,8 @@ class PichixAccessibilityService : AccessibilityService() {
                         "Detalle distinto — Cancel pulsado, confirma manualmente"
                     },
                 )
-                finishBlockTakeFlow(
-                    pauseBot = if (confirmed) settings.autoPauseAfterAccept else shouldPauseAfterMiss(),
-                )
+                // Cancelación por mismatch ≠ aceptación; seguir según continue-on-miss.
+                finishBlockTakeFlow(pauseBot = shouldPauseAfterMiss())
             }, 550)
             return
         }

@@ -323,5 +323,6 @@ object PichixConfigBackup {
         "pause_by_over_clicks_minutes" to "Pausa over-clicks (min)",
         "call_on_block_enabled" to "Llamar al tomar bloque",
         "call_on_block_phone" to "Número llamada bloque",
+        "call_on_block_sound_repeats_before_call" to "Repeticiones sonido antes de llamar",
     )
 }

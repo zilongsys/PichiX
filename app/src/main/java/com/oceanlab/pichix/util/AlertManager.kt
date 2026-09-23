@@ -46,10 +46,33 @@ class AlertManager(private val context: Context) {
             stopGlobal()
             prepareSystemVolumeForAlert()
             val uri = resolveUri(soundUri)
-            playSound(uri, volumeFraction(), repeatCount.coerceIn(1, 20))
+            playSound(uri, volumeFraction(), repeatCount.coerceIn(1, 20), onDone = null)
             if (settings.vibrateOnAlert) vibrate()
         } catch (e: Exception) {
             Log.e(TAG, "playFlexNotificationAlert: ${e.message}")
+        }
+    }
+
+    /**
+     * Reproduce el sonido [repeatCount] veces y luego invoca [onDone] en el hilo principal.
+     * Si [repeatCount] ≤ 0, llama a [onDone] de inmediato (sin reproducir).
+     */
+    fun playThen(soundUri: String, repeatCount: Int, onDone: () -> Unit) {
+        if (repeatCount <= 0) {
+            handler.post { onDone() }
+            return
+        }
+        try {
+            stopGlobal()
+            prepareSystemVolumeForAlert()
+            val uri = resolveUri(soundUri)
+            playSound(uri, volumeFraction(), repeatCount.coerceIn(1, 20)) {
+                handler.post { onDone() }
+            }
+            if (settings.vibrateOnAlert) vibrate()
+        } catch (e: Exception) {
+            Log.e(TAG, "playThen: ${e.message}")
+            handler.post { onDone() }
         }
     }
 
@@ -129,14 +152,30 @@ class AlertManager(private val context: Context) {
         }
     }
 
-    private fun playSound(uri: Uri, volume: Float, repeatCount: Int) {
-        val player = buildPlayer(uri) ?: return
+    private fun playSound(
+        uri: Uri,
+        volume: Float,
+        repeatCount: Int,
+        onDone: (() -> Unit)? = null,
+    ) {
+        val player = buildPlayer(uri)
+        if (player == null) {
+            onDone?.invoke()
+            return
+        }
         val v = volume.coerceIn(0f, 1f)
         player.setVolume(v, v)
         player.isLooping = false
         activePlayer = player
 
         var remaining = repeatCount
+        var finished = false
+        fun finishOnce() {
+            if (finished) return
+            finished = true
+            stopGlobal()
+            onDone?.invoke()
+        }
         player.setOnCompletionListener { mp ->
             if (mp !== activePlayer) return@setOnCompletionListener
             remaining--
@@ -145,15 +184,15 @@ class AlertManager(private val context: Context) {
                     mp.seekTo(0)
                     mp.start()
                 } catch (_: Exception) {
-                    stopGlobal()
+                    finishOnce()
                 }
             } else {
-                stopGlobal()
+                finishOnce()
             }
         }
 
         val maxMs = (player.duration.takeIf { it > 0 } ?: 5000) * repeatCount + 3000L
-        val safeStop = Runnable { stopGlobal() }
+        val safeStop = Runnable { finishOnce() }
         stopRunnable = safeStop
         handler.postDelayed(safeStop, maxMs.toLong())
         player.start()

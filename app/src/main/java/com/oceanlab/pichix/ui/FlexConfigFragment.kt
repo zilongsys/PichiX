@@ -906,6 +906,8 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             settings.callOnBlockOnScheduledNotification
         view.findViewById<TextInputEditText>(R.id.etCallOnBlockDelayMs)
             .setText(settings.callOnBlockDelayMs.toString())
+        view.findViewById<TextInputEditText>(R.id.etCallOnBlockSoundRepeats)
+            .setText(settings.callOnBlockSoundRepeatsBeforeCall.toString())
         updateCallOnBlockVisibility(view, settings.callOnBlockEnabled)
     }
 
@@ -915,6 +917,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         val swWhenAccepted = view.findViewById<SwitchMaterial>(R.id.switchCallOnBlockWhenAccepted)
         val swOnScheduled = view.findViewById<SwitchMaterial>(R.id.switchCallOnBlockOnScheduled)
         val etCallDelay = view.findViewById<TextInputEditText>(R.id.etCallOnBlockDelayMs)
+        val etSoundRepeats = view.findViewById<TextInputEditText>(R.id.etCallOnBlockSoundRepeats)
         swCallOnBlock.setOnCheckedChangeRetainingFocus(view) { checked ->
             if (checked && !CallOnBlockHelper.hasCallPermission(requireContext())) {
                 swCallOnBlock.isChecked = false
@@ -935,6 +938,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             markDirty()
         }
         etCallDelay.onUserTextChanged(onDirty = markDirty)
+        etSoundRepeats.onUserTextChanged(onDirty = markDirty)
     }
 
     private fun persistCallOnBlockFromView(view: View) {
@@ -948,6 +952,9 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         settings.callOnBlockDelayMs =
             view.findViewById<TextInputEditText>(R.id.etCallOnBlockDelayMs).text
                 ?.toString()?.toLongOrNull()?.coerceIn(0L, 10_000L) ?: 0L
+        settings.callOnBlockSoundRepeatsBeforeCall =
+            view.findViewById<TextInputEditText>(R.id.etCallOnBlockSoundRepeats).text
+                ?.toString()?.toIntOrNull()?.coerceIn(0, 20) ?: 0
     }
 
     private fun persistReturnTimingSettings(

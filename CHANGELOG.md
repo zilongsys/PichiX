@@ -8,6 +8,16 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.23 (Septiembre 2026)
+
+### Corregido
+- **PERDIDA / miss**: el bot ya no pausa al fallar en detalle u otras abandonos sin aceptación; usa «continuar tras miss» (`flexContinueOnTakeMiss`, por defecto activo). Solo pausa con `autoPauseAfterAccept` en aceptación real, simulación/abrir detalle intencional, o mismatch con quedarse en pantalla.
+
+### Añadido
+- **Llamar al tomar bloque**: opción «Repeticiones de sonido antes de llamar» (0 = marcar al instante; N = reproducir N veces y luego llamar, respetando también la espera en ms).
+
+---
+
 ## v0.2.22 (Septiembre 2026)
 
 ### Corregido

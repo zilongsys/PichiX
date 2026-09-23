@@ -30,7 +30,22 @@ object CallOnBlockHelper {
         ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) ==
             PackageManager.PERMISSION_GRANTED
 
-    fun maybeCall(context: Context, settings: AppSettings, reason: String): Boolean {
+    /**
+     * Llamada tras aceptar bloque: respeta repeticiones de sonido antes de marcar.
+     * Orden: sonido N veces → espera [callOnBlockDelayMs] si >0 → marcar.
+     */
+    fun maybeCallAfterSound(context: Context, settings: AppSettings, reason: String): Boolean =
+        maybeCall(context, settings, reason, skipSound = false)
+
+    /**
+     * @param skipSound true si el sonido ya se reprodujo (p. ej. alerta Flex); solo delay + llamada.
+     */
+    fun maybeCall(
+        context: Context,
+        settings: AppSettings,
+        reason: String,
+        skipSound: Boolean = false,
+    ): Boolean {
         if (!settings.callOnBlockEnabled) return false
         val phone = normalizePhone(settings.callOnBlockPhoneNumber)
         if (phone.length < 7) return false
@@ -41,10 +56,24 @@ object CallOnBlockHelper {
         }
         val appContext = context.applicationContext
         val delayMs = settings.callOnBlockDelayMs
-        if (delayMs <= 0L) {
-            return placeCall(appContext, phone, reason)
+        val repeats = settings.callOnBlockSoundRepeatsBeforeCall
+        val afterSoundOrImmediate: () -> Unit = {
+            if (delayMs <= 0L) {
+                placeCall(appContext, phone, reason)
+            } else {
+                handler.postDelayed({ placeCall(appContext, phone, reason) }, delayMs)
+            }
         }
-        handler.postDelayed({ placeCall(appContext, phone, reason) }, delayMs)
+        if (!skipSound && repeats > 0) {
+            val soundUri = if (settings.offerClickSoundEnabled) {
+                settings.offerClickSoundUri
+            } else {
+                ""
+            }
+            AlertManager(appContext).playThen(soundUri, repeats, afterSoundOrImmediate)
+            return true
+        }
+        afterSoundOrImmediate()
         return true
     }
 

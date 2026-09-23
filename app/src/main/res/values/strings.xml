@@ -15,7 +15,9 @@
     <string name="config_btn_test_sound">Probar sonido</string>
     <string name="config_btn_sound_system_default">Sonido del sistema</string>
     <string name="config_call_on_block_delay_title">Espera antes de llamar (ms)</string>
-    <string name="config_call_on_block_delay_hint">Tras aceptar bloque, coincidir alerta o notificación programada, espera antes de marcar. 0 = llamada inmediata.</string>
+    <string name="config_call_on_block_delay_hint">Tras el sonido (si hay repeticiones) o al instante, espera estos ms antes de marcar. 0 = sin espera extra.</string>
+    <string name="config_call_on_block_sound_repeats_title">Repeticiones de sonido antes de llamar</string>
+    <string name="config_call_on_block_sound_repeats_hint">Cuántas veces reproducir el sonido (clic de oferta si está activo) antes de marcar. 0 = llamar al instante, sin esperar sonido.</string>
     <string name="config_btn_pick_offer_click_sound">Elegir sonido al pulsar oferta</string>
     <string name="header_total_hours_label">HORAS</string>
     <string name="config_detail_mismatch_title">Si lista y detalle no coinciden (Offer Details)</string>

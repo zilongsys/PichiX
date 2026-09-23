@@ -1590,6 +1590,32 @@
                     android:layout_marginRight="16dp"
                     android:layout_marginBottom="6dp"
                     android:text="@string/config_call_on_block_delay_hint" />
+
+                <LinearLayout style="@style/Row" android:layout_marginBottom="8dp">
+                    <TextView
+                        style="@style/RowLabel"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/config_call_on_block_sound_repeats_title" />
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etCallOnBlockSoundRepeats"
+                        style="@style/MediumInput"
+                        android:layout_width="72dp"
+                        android:layout_height="44dp"
+                        android:gravity="center"
+                        android:hint="0"
+                        android:inputType="number" />
+                </LinearLayout>
+
+                <TextView
+                    style="@style/RowHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:layout_marginBottom="6dp"
+                    android:text="@string/config_call_on_block_sound_repeats_hint" />
             </LinearLayout>
 
             <View style="@style/DividerFull" />

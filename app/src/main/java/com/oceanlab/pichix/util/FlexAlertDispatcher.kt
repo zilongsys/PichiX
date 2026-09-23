@@ -55,10 +55,12 @@ object FlexAlertDispatcher {
                 Log.d(TAG, "Alerta [${source.name}] '${rule.displayName()}' → ${rule.matchSummary()}")
                 AlertManager(context).playFlexNotificationAlert(rule.soundUri, rule.repeatCount)
                 if (rule.callOnMatch) {
+                    // Sonido ya disparado por la regla; no repetir en el helper.
                     CallOnBlockHelper.maybeCall(
                         context,
                         settings,
                         "alerta ${source.name.lowercase()}: ${rule.displayName()}",
+                        skipSound = true,
                     )
                 }
                 postObserverEvent(context, "Alerta (${sourceLabel(source)}): ${rule.displayName()}")

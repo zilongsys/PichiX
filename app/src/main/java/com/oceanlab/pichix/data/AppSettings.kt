@@ -488,6 +488,14 @@ class AppSettings(context: Context) {
         }
         set(value) = prefs.edit().putLong(KEY_CALL_ON_BLOCK_DELAY_MS, value.coerceIn(0L, 10_000L)).apply()
 
+    /**
+     * Cuántas veces reproducir el sonido (clic de oferta si está activo, si no el del sistema)
+     * antes de marcar. 0 = llamar sin esperar sonido (solo aplica [callOnBlockDelayMs]).
+     */
+    var callOnBlockSoundRepeatsBeforeCall: Int
+        get() = prefs.getInt(KEY_CALL_ON_BLOCK_SOUND_REPEATS, 0).coerceIn(0, 20)
+        set(value) = prefs.edit().putInt(KEY_CALL_ON_BLOCK_SOUND_REPEATS, value.coerceIn(0, 20)).apply()
+
     fun usesFlexDetailedTariff(): Boolean = flexTariffMode == TARIFF_MODE_DETAILED
 
     fun usesDetailMismatchAutoCancel(): Boolean =
@@ -579,6 +587,7 @@ class AppSettings(context: Context) {
         KEY_CALL_ON_BLOCK_WHEN_ACCEPTED to callOnBlockWhenAccepted,
         KEY_CALL_ON_BLOCK_ON_SCHEDULED to callOnBlockOnScheduledNotification,
         KEY_CALL_ON_BLOCK_DELAY_MS to callOnBlockDelayMs,
+        KEY_CALL_ON_BLOCK_SOUND_REPEATS to callOnBlockSoundRepeatsBeforeCall,
     )
 
     /** Restaura ajustes desde respaldo JSON (un solo commit). Omite claves inválidas y conserva el valor local previo. */
@@ -783,6 +792,7 @@ class AppSettings(context: Context) {
             KEY_OFFER_CLICK_SOUND_ENABLED -> editor.putBoolean(key, asBool(value))
             KEY_OFFER_CLICK_SOUND_URI -> editor.putString(key, asString(value))
             KEY_OFFER_CLICK_SOUND_REPEAT -> editor.putInt(key, asInt(value).coerceIn(1, 20))
+            KEY_CALL_ON_BLOCK_SOUND_REPEATS -> editor.putInt(key, asInt(value).coerceIn(0, 20))
             KEY_FLEX_OFFER_TAKE_DETAIL_DELAY_MS,
             KEY_CALL_ON_BLOCK_DELAY_MS,
             -> editor.putLong(KEY_CALL_ON_BLOCK_DELAY_MS, asLong(value).coerceIn(0L, 10_000L))
@@ -980,6 +990,7 @@ class AppSettings(context: Context) {
         private const val KEY_CALL_ON_BLOCK_WHEN_ACCEPTED = "call_on_block_when_accepted"
         private const val KEY_CALL_ON_BLOCK_ON_SCHEDULED = "call_on_block_on_scheduled"
         private const val KEY_CALL_ON_BLOCK_DELAY_MS = "call_on_block_delay_ms"
+        private const val KEY_CALL_ON_BLOCK_SOUND_REPEATS = "call_on_block_sound_repeats_before_call"
 
         /** No se borran al importar (estado en vivo + flags de migración). */
         val PRESERVE_ON_IMPORT: Set<String> = setOf(
