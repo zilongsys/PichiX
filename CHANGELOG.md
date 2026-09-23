@@ -8,6 +8,13 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.25 (Septiembre 2026)
+
+### Corregido
+- **Compilación**: `ConfigSearchFilter` usa `java.text.Normalizer` (el import de Android no existía).
+
+---
+
 ## v0.2.24 (Septiembre 2026)
 
 ### Añadido

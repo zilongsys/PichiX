@@ -1,6 +1,6 @@
 package com.oceanlab.pichix.ui
 
-import android.text.Normalizer
+import java.text.Normalizer
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
