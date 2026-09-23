@@ -8,6 +8,13 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.17 (Septiembre 2026)
+
+### Corregido
+- **PichixDashboard**: constantes de grupos (`G_HOME`, etc.) movidas al propio `object` — un `companion object` dentro de un `object` no es válido en Kotlin y rompía `compileDebugKotlin`.
+
+---
+
 ## v0.2.16 (Septiembre 2026)
 
 ### Actualizado

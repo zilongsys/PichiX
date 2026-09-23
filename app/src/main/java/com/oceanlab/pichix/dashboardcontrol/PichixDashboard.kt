@@ -36,6 +36,17 @@ import java.util.Locale
 
 object PichixDashboard : DashboardBridge {
 
+    private const val G_HOME = "Home"
+    private const val G_CFG_CONTROL = "Config · Control del bot"
+    private const val G_CFG_RITMO = "Config · Ritmo del bot"
+    private const val G_CFG_FLEX = "Config · En Flex"
+    private const val G_CFG_PANTALLA = "Config · Pantalla y ofertas"
+    private const val G_CFG_PAUSAS = "Config · Pausas"
+    private const val G_CFG_DIAG = "Config · Diagnóstico"
+    private const val G_CFG_PREF = "Config · Preferencias"
+    private const val G_TARIFAS = "Tarifas"
+    private const val G_ALERTAS = "Alertas"
+
     private lateinit var app: Context
     private var settingsImpl: DashboardSettings? = null
     @Volatile private var statsCache: DayStats? = null
@@ -330,17 +341,4 @@ object PichixDashboard : DashboardBridge {
         SettingSpec.long("call_on_block_delay_ms", "Retraso de la llamada", G_ALERTAS, 0, 10_000, "ms",
             get = { s().callOnBlockDelayMs }, set = { s().callOnBlockDelayMs = it }),
     )
-
-    private companion object {
-        const val G_HOME = "Home"
-        const val G_CFG_CONTROL = "Config · Control del bot"
-        const val G_CFG_RITMO = "Config · Ritmo del bot"
-        const val G_CFG_FLEX = "Config · En Flex"
-        const val G_CFG_PANTALLA = "Config · Pantalla y ofertas"
-        const val G_CFG_PAUSAS = "Config · Pausas"
-        const val G_CFG_DIAG = "Config · Diagnóstico"
-        const val G_CFG_PREF = "Config · Preferencias"
-        const val G_TARIFAS = "Tarifas"
-        const val G_ALERTAS = "Alertas"
-    }
 }
