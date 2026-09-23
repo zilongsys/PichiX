@@ -8,6 +8,13 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.26 (Septiembre 2026)
+
+### Corregido
+- **Buscar en Configuración**: filtra opción a opción (no toda la sección/card). Solo deja visibles las filas cuyo texto coincide; al limpiar restaura hints colapsados y layouts de modo.
+
+---
+
 ## v0.2.25 (Septiembre 2026)
 
 ### Corregido
