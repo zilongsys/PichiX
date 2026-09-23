@@ -95,6 +95,7 @@ object BotEventLog {
     fun log(context: Context, category: String, message: String) {
         if (appContext == null) init(context)
         val item = Pending(System.currentTimeMillis(), category, message)
+        com.oceanlab.pichix.dashboardcontrol.PichixDashboard.onBotEvent(category, message)
         if (!queue.offer(item)) {
             queue.poll()
             queue.offer(item)
@@ -193,6 +194,7 @@ object BotEventLog {
     }
 
     private fun enqueueControl(category: String, message: String) {
+        com.oceanlab.pichix.dashboardcontrol.PichixDashboard.onBotEvent(category, message)
         if (!queue.offer(Pending(System.currentTimeMillis(), category, message))) {
             queue.poll()
             queue.offer(Pending(System.currentTimeMillis(), category, message))

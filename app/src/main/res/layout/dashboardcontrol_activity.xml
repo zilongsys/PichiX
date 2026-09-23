@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pantalla "Conexión con PC" (dashboardcontrol). Usa los estilos de la app: Card, SectionLabel, RowHint, SparkButton*. -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_page"
+    android:fillViewport="true"
+    android:fitsSystemWindows="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="24dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/dcBack"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Volver"
+                android:src="?attr/homeAsUpIndicator"
+                android:tint="@color/text_primary" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:text="Conexión con PC"
+                android:textColor="@color/text_primary"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            style="@style/SectionLabel"
+            android:layout_marginTop="4dp"
+            android:text="Estado" />
+
+        <LinearLayout
+            style="@style/Card"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/dcStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_primary"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/dcDetail"
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/dcPending"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <TextView
+            style="@style/SectionLabel"
+            android:text="Centro de control" />
+
+        <LinearLayout
+            style="@style/Card"
+            android:padding="16dp">
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Dirección de la PC">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/dcUrl"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:importantForAutofill="no"
+                    android:inputType="textUri"
+                    android:singleLine="true" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:text="La que muestra el Centro de control abajo a la izquierda, p. ej. ws://192.168.0.148:8765/agent. Basta con la IP." />
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="Token">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/dcToken"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:importantForAutofill="no"
+                    android:inputType="textCapCharacters|textNoSuggestions"
+                    android:singleLine="true" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/dcEnabled"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:minHeight="48dp"
+                android:text="Conectar con la PC"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
+
+            <TextView
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:text="Activado, todo lo que hace el bot se guarda en el teléfono y se envía a la PC. Si la PC no está (horas o días), se envía completo al reconectar. El bot funciona igual con o sin PC." />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/dcSave"
+                style="@style/SparkButtonPrimary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Guardar y conectar" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/dcRetry"
+                style="@style/SparkButtonSecondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Reintentar ahora" />
+        </LinearLayout>
+
+        <TextView
+            style="@style/SectionLabel"
+            android:text="Pendientes de enviar" />
+
+        <LinearLayout
+            style="@style/Card"
+            android:padding="16dp">
+
+            <TextView
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:layout_marginTop="0dp"
+                android:text="Se guardan hasta 7 días. Borrarlos no afecta al bot ni al historial de la app, pero la PC no los recibirá." />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/dcClear"
+                style="@style/SparkButtonSecondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Borrar pendientes" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

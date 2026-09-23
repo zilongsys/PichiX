@@ -71,6 +71,7 @@ object PichiFileLog {
     }
 
     private fun enqueue(channel: Channel, tag: String, level: String, msg: String, force: Boolean = false) {
+        if (channel == Channel.BOT) com.oceanlab.pichix.dashboardcontrol.PichixDashboard.onFileLog(level, tag, msg)
         if (!force && !fileLogEnabled) return
         val line = LogLine(channel, tag, level, msg)
         if (!queue.offer(line)) {

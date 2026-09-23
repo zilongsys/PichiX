@@ -9,5 +9,6 @@ class PichixApplication : Application() {
         super.onCreate()
         PichiFileLog.init(this)
         BotEventLog.init(this)
+        com.oceanlab.pichix.dashboardcontrol.PichixDashboard.init(this)
     }
 }

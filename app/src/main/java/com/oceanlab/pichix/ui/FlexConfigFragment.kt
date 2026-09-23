@@ -400,6 +400,14 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         view.findViewById<MaterialButton>(R.id.btnShareDiagnosticPack)?.setOnClickListener {
             shareDiagnosticPack()
         }
+        view.findViewById<MaterialButton>(R.id.btnDashboardConnection)?.setOnClickListener {
+            startActivity(
+                Intent(
+                    requireContext(),
+                    com.oceanlab.pichix.dashboardcontrol.DashboardControlActivity::class.java,
+                ),
+            )
+        }
 
         btnSave.setOnClickListener {
             configScroll.runRetainingScrollAndFocus {
@@ -1662,6 +1670,10 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             refreshPermissionStatuses()
             reloadReturnTimingFromSettings()
             refreshSaveFooter()
+        }
+        view?.findViewById<MaterialButton>(R.id.btnDashboardConnection)?.let { btn ->
+            val status = com.oceanlab.pichix.dashboardcontrol.DashboardLink.info().status.label
+            btn.text = "Conexión con PC · $status"
         }
         if (!AppSettings.isPendingConfigUiReload()) {
             suppressAutoPersist = false

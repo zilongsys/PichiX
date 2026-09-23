@@ -2504,6 +2504,33 @@
 
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/headerSectionDashboard"
+            style="@style/SectionLabel"
+            android:text="Centro de control" />
+
+        <LinearLayout
+            android:id="@+id/sectionDashboard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+        <LinearLayout style="@style/Card">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDashboardConnection"
+                style="@style/SparkButtonSecondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="12dp"
+                android:text="Conexión con PC" />
+        </LinearLayout>
+
+        </LinearLayout>
+
     </LinearLayout>
     </ScrollView>
 

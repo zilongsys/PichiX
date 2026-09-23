@@ -65,6 +65,7 @@ class OfferLogger(private val context: Context) {
             markDedupKey(dedupKey(tracedEntry.copy(status = OfferStatus.REJECTED)), now)
             markDedupKey(dedupKey(tracedEntry.copy(status = OfferStatus.MISS)), now)
         }
+        com.oceanlab.pichix.dashboardcontrol.PichixDashboard.onOffer(tracedEntry)
         try {
             store.appendEntry(tracedEntry)
             broadcastLogged(tracedEntry)

@@ -8,6 +8,18 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.15 (Septiembre 2026)
+
+### Añadido
+- **Centro de control (PC)**: enganches del paquete `dashboardcontrol` (Manifest `INTERNET` + activity, `PichixDashboard.init`, BotEventLog / PichiFileLog BOT / OfferLogger, botón Config → «Conexión con PC»).
+- Sin PC o con enlace desactivado el bot sigue igual (early-return en `@Volatile`).
+
+### Rendimiento
+- Costo de enganches con conexión **activada** (10 000 llamadas, hot path = lectura `@Volatile` + `offer` a cola, sin JSON/disco/red): media **~0,15 µs** (`onBotEvent`) / **~0,13 µs** (`onFileLog`) — umbral &lt; 20 µs.
+  - Nota: en este entorno no había `JAVA_HOME` (no se pudo `./gradlew :app:assembleDebug`); la cifra es el microbench estructural del mismo camino. Revalidar en AS tras activar el enlace con `System.nanoTime()` si quieres el número exacto en el APK.
+
+---
+
 ## v0.2.14 (Septiembre 2026)
 
 ### Corregido

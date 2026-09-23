@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:name=".PichixApplication"
@@ -36,6 +37,11 @@
             android:exported="false"
             android:label="@string/help_title"
             android:parentActivityName=".ui.MainActivity" />
+
+        <activity
+            android:name=".dashboardcontrol.DashboardControlActivity"
+            android:exported="false"
+            android:label="Conexión con PC" />
 
         <activity
             android:name=".ui.DayLogActivity"
