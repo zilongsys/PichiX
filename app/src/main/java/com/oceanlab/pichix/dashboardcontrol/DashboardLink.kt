@@ -553,7 +553,12 @@ object DashboardLink {
             .put(JSONObject().put("name", "resume").put("label", "Reanudar"))
         val extra = b.extraCommands()
         for (i in 0 until extra.length()) commands.put(extra.get(i))
-        val schema = JSONObject().put("commands", commands).put("settings", b.settings?.schema() ?: JSONArray())
+        val schema = JSONObject()
+            .put("commands", commands)
+            .put("settings", b.settings?.schema() ?: JSONArray())
+            // La PC (v≥ con soporte) puede pintar cada `group` como pestaña en lugar de un scroll largo.
+            .put("settingsLayout", "tabs")
+            .put("settingsGroupsAsTabs", true)
         val snap = b.settings?.snapshot()
         refreshPendingCache()
         return JSONObject()

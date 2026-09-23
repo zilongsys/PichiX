@@ -21,6 +21,8 @@ import com.oceanlab.pichix.BuildConfig
 import com.oceanlab.pichix.data.AppSettings
 import com.oceanlab.pichix.data.BotEventLog
 import com.oceanlab.pichix.data.DayStats
+import com.oceanlab.pichix.data.FlexTariffRule
+import com.oceanlab.pichix.data.FlexTariffRulesStore
 import com.oceanlab.pichix.data.OfferLogEntry
 import com.oceanlab.pichix.data.OfferLogger
 import com.oceanlab.pichix.data.OfferStatus
@@ -196,6 +198,42 @@ object PichixDashboard : DashboardBridge {
     private fun money(v: Double): String =
         if (v % 1.0 == 0.0) "\$${v.toLong()}" else "\$" + String.format(Locale.US, "%.2f", v)
 
+    private fun tariffRulesPreview(): String {
+        val rules = FlexTariffRulesStore.load(s()).sortedBy { it.sortOrder }
+        if (rules.isEmpty()) {
+            return if (s().usesFlexDetailedTariff()) {
+                "Modo detailed activo, pero no hay reglas guardadas."
+            } else {
+                "Modo classic: los mínimos de abajo aplican. Cambia a detailed para usar reglas."
+            }
+        }
+        val mode = if (s().usesFlexDetailedTariff()) "detailed (activo)" else "classic (estas reglas no se usan hasta cambiar el modo)"
+        return buildString {
+            appendLine("Modo: $mode · ${rules.size} regla(s)")
+            rules.forEachIndexed { i, r ->
+                val on = if (r.enabled) "ON" else "off"
+                appendLine("${i + 1}. [$on] ${r.name.ifBlank { "(sin nombre)" }} — ${r.previewText()}")
+            }
+        }.trimEnd()
+    }
+
+    private fun tariffRulesJson(): String {
+        val arr = JSONArray()
+        FlexTariffRulesStore.load(s()).sortedBy { it.sortOrder }.forEach { arr.put(it.toJson()) }
+        return arr.toString(2)
+    }
+
+    private fun applyTariffRulesJson(raw: String) {
+        val trimmed = raw.trim()
+        if (trimmed.isEmpty()) {
+            FlexTariffRulesStore.save(s(), emptyList())
+            return
+        }
+        val arr = JSONArray(trimmed)
+        val rules = (0 until arr.length()).map { FlexTariffRule.fromJson(arr.getJSONObject(it)) }
+        FlexTariffRulesStore.save(s(), rules)
+    }
+
     // ------------------------------------------------------------------ ajustes
     // Grupos = pestañas/secciones de la app (mismo orden visual).
     // Historial / Estadísticas / Log / Simulador / Revisión no exponen ajustes editables.
@@ -312,13 +350,29 @@ object PichixDashboard : DashboardBridge {
         // ── Tarifas ──
         SettingSpec.choice("flex_tariff_mode", "Modo de tarifas", G_TARIFAS,
             listOf(AppSettings.TARIFF_MODE_CLASSIC, AppSettings.TARIFF_MODE_DETAILED),
-            help = "classic = criterios rápidos; detailed = reglas por estación (editar en el teléfono)",
+            help = "classic = mínimos rápidos abajo; detailed = usa las reglas (resumen + JSON)",
             get = { s().flexTariffMode }, set = { s().flexTariffMode = it }),
-        SettingSpec.float("flex_min_hourly", "Mínimo por hora (classic)", G_TARIFAS, 0.0, 500.0, 0.5, "\$/h",
+        SettingSpec.text(
+            "flex_tariff_rules_preview",
+            "Reglas activas (resumen)",
+            G_TARIFAS,
+            help = "Solo lectura orientativa. En modo detailed el bot usa estas reglas (orden = prioridad).",
+            get = { tariffRulesPreview() },
+            set = { /* solo lectura: ignorar cambios desde la PC */ },
+        ),
+        SettingSpec.text(
+            "flex_tariff_rules_json",
+            "Reglas detailed (JSON editable)",
+            G_TARIFAS,
+            help = "Array JSON de reglas (mismo formato que en el teléfono). Tras guardar, el motor las recarga.",
+            get = { tariffRulesJson() },
+            set = { applyTariffRulesJson(it) },
+        ),
+        SettingSpec.float("flex_min_hourly", "Mínimo por hora (solo classic)", G_TARIFAS, 0.0, 500.0, 0.5, "\$/h",
             get = { s().flexMinHourlyRate.toString().toDouble() }, set = { s().flexMinHourlyRate = it.toFloat() }),
-        SettingSpec.float("flex_min_block", "Mínimo por bloque (classic)", G_TARIFAS, 0.0, 5000.0, 1.0, "\$",
+        SettingSpec.float("flex_min_block", "Mínimo por bloque (solo classic)", G_TARIFAS, 0.0, 5000.0, 1.0, "\$",
             get = { s().flexMinBlockPay.toString().toDouble() }, set = { s().flexMinBlockPay = it.toFloat() }),
-        SettingSpec.int("flex_min_start_hour", "Hora mínima de inicio (classic)", G_TARIFAS, 0, 23, "h",
+        SettingSpec.int("flex_min_start_hour", "Hora mínima de inicio (solo classic)", G_TARIFAS, 0, 23, "h",
             get = { s().flexMinStartHour }, set = { s().flexMinStartHour = it }),
 
         // ── Alertas ──

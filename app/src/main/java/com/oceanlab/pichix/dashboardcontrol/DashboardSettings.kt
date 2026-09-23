@@ -73,7 +73,7 @@ class SettingSpec private constructor(
         "int" -> number(raw)?.takeIf { it % 1.0 == 0.0 && inRange(it) }?.toLong()
         "float" -> number(raw)?.takeIf { inRange(it) }
         "enum" -> (raw as? String)?.takeIf { options?.contains(it) == true }
-        else -> (raw as? String)?.takeIf { it.length <= 2_000 }
+        else -> (raw as? String)?.takeIf { it.length <= 200_000 }
     }
 
     private fun number(raw: Any?): Double? = when (raw) {

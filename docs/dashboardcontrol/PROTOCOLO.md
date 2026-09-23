@@ -79,10 +79,14 @@ Log: `lv` = `D` `I` `W` `E`. Evento: `tone` = `ok` (verde) · `bad` (rojo) · `w
    {"key":"flex_min_hourly","label":"Mínimo por hora","type":"float","group":"Criterios",
     "min":0,"max":500,"step":0.5,"unit":"$/h","help":"texto corto"},
    {"key":"flex_click_mode","label":"Modo de clic","type":"enum","options":["basic","smart"],"group":"Clics"},
-   {"key":"flex_auto_accept","label":"Aceptar automáticamente","type":"bool","group":"Comportamiento"}]}
+   {"key":"flex_auto_accept","label":"Aceptar automáticamente","type":"bool","group":"Comportamiento"}],
+ "settingsLayout":"tabs",
+ "settingsGroupsAsTabs":true}
 ```
 Tipos: `bool`, `int`, `float`, `string`, `enum`. El dashboard dibuja el formulario a partir de esto:
 no hay que tocar la PC para agregar un ajuste o una app nueva.
+Si `settingsLayout` = `"tabs"` (o `settingsGroupsAsTabs` = true), la PC debería mostrar **cada `group` como pestaña** (menos scroll).
+Las ofertas vistas/aceptadas/rechazadas llegan como eventos `bloque` en los **carriles** y en la pestaña **Historial** de la PC.
 
 ### state (cada 3 s, y dentro de los acks de pause/resume)
 ```json

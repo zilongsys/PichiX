@@ -8,6 +8,18 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.18 (Septiembre 2026)
+
+### Añadido
+- **Tarifas en la PC**: resumen de reglas detailed + JSON editable (además del modo y los mínimos classic).
+- Schema `settingsLayout=tabs` / `settingsGroupsAsTabs` para que el Centro de control pinte cada grupo como pestaña (requiere PC con soporte).
+
+### Actualizado
+- Límite de strings en `set_settings` subido a 200 000 caracteres (necesario para el JSON de reglas).
+- PROTOCOLO: documenta pestañas por grupo y dónde ver ofertas (carriles + Historial).
+
+---
+
 ## v0.2.17 (Septiembre 2026)
 
 ### Corregido

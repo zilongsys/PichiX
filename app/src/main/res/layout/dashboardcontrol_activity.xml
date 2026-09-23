@@ -133,6 +133,12 @@
                 android:layout_width="match_parent"
                 android:text="Activado, todo lo que hace el bot se guarda en el teléfono y se envía a la PC. Si la PC no está (horas o días), se envía completo al reconectar. El bot funciona igual con o sin PC." />
 
+            <TextView
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:layout_marginTop="12dp"
+                android:text="En la PC: ofertas (vistas/aceptadas/rechazadas) → carriles de PichiX + pestaña Historial. Ajustes por grupos (Home, Config, Tarifas, Alertas); con Centro de control reciente cada grupo es una pestaña." />
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/dcSave"
                 style="@style/SparkButtonPrimary"
