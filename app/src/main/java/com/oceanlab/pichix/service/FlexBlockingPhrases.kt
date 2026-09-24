@@ -17,15 +17,11 @@ object FlexBlockingPhrases {
         "clicked too quickly",
         "click too fast",
         "tap too fast",
-        "slow down",
-        "try again later",
         "demasiados clic",
         "demasiados toque",
         "demasiados toques",
         "has hecho demasiados",
         "demasiado tiempo",
-        "inténtalo más tarde",
-        "intentalo mas tarde",
     )
 
     val OTHER_BLOCK_PHRASES = listOf(
@@ -41,10 +37,19 @@ object FlexBlockingPhrases {
     fun findFlexThrottleNeedle(text: String, ignoreCase: Boolean = true): String? {
         if (text.isBlank()) return null
         val hay = if (ignoreCase) text.lowercase() else text
-        return FLEX_THROTTLE_PHRASES.firstOrNull { needle ->
+        FLEX_THROTTLE_PHRASES.firstOrNull { needle ->
             val n = if (ignoreCase) needle.lowercase() else needle
             hay.contains(n)
+        }?.let { return it }
+        // «try again later» / «slow down» solo con contexto de demasiados toques.
+        val soft = listOf("try again later", "inténtalo más tarde", "intentalo mas tarde", "slow down")
+        val hasSoft = soft.any { hay.contains(it) }
+        if (!hasSoft) return null
+        val tapCtx = listOf("tap", "click", "clic", "toque", "too many", "demasiado")
+        if (tapCtx.any { hay.contains(it) }) {
+            return soft.first { hay.contains(it) }
         }
+        return null
     }
 
     fun isFlexThrottleBanner(text: String): Boolean = findFlexThrottleNeedle(text) != null

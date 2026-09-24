@@ -96,6 +96,9 @@ class PichixAccessibilityService : AccessibilityService() {
             LocalBroadcastManager.getInstance(context).sendBroadcast(Intent(MOTOR_PAUSE_CHANGED))
             PichixForegroundService.refreshNotification(context)
         }
+
+        /** true mientras hay detalle/Schedule en curso (el outcome manda sobre observadores). */
+        fun isTakeFlowActivePublic(): Boolean = instance?.isTakeFlowActive() == true
     }
 
     private lateinit var settings: AppSettings
@@ -467,7 +470,9 @@ class PichixAccessibilityService : AccessibilityService() {
         if (!::reader.isInitialized) return
         settings = AppSettings(this)
         if (motorPausedForNavigation) return
-        if (!isMotorForegroundAllowed()) return
+        val takeActive = isTakeFlowActive()
+        // Durante toma: no cancelar el flujo por un blip de primer plano (p. ej. marcador).
+        if (!isMotorForegroundAllowed(cancelPendingIfDenied = !takeActive) && !takeActive) return
         val text = reader.readFullScreenText()
         val flags = reader.detectScreenFlags(text, settings)
         trackScreenChange(text, flags)
@@ -478,24 +483,30 @@ class PichixAccessibilityService : AccessibilityService() {
             flags.offerScheduled -> postObserver("Oferta programada en pantalla")
         }
 
-        if (flags.captcha && settings.autoPauseOnCaptcha) {
+        if (flags.captcha && settings.autoPauseOnCaptcha && !takeActive) {
             pausedAfterAccept = true
             postBotPaused()
         }
 
         val overlayText = reader.readFlexOverlayText()
         maybeStopBurstForFlexBanner(overlayText)
-        PauseByOverClicksController.onScreenText(this, overlayText)
+        // El flujo de toma decide pausa/continuación; no pausar por banners de PERDIDA aquí.
+        if (!takeActive) {
+            PauseByOverClicksController.onScreenText(this, overlayText)
+        }
         if (overlayText.isNotBlank()) {
             FlexAlertDispatcher.onFlexText(
                 context = this,
                 settings = settings,
                 text = overlayText,
                 source = FlexMessageHub.Source.IN_APP,
+                allowSideEffects = !takeActive,
             )
         }
 
-        maybeAutoReturnToOffers(text, flags)
+        if (!takeActive) {
+            maybeAutoReturnToOffers(text, flags)
+        }
     }
 
     /** Detiene la ráfaga si Flex muestra el banner in-app de demasiados toques. */
@@ -665,7 +676,11 @@ class PichixAccessibilityService : AccessibilityService() {
             return
         }
 
-        if (settings.offerClickSoundEnabled) {
+        // Si tras aceptar se llamará con sonido, no adelantar el audio aquí (evita cortar/duplicar).
+        val deferOfferSoundForCall = shouldSchedule &&
+            settings.callOnBlockEnabled &&
+            settings.callOnBlockWhenAccepted
+        if (settings.offerClickSoundEnabled && !deferOfferSoundForCall) {
             AlertManager(this).playFlexNotificationAlert(
                 settings.offerClickSoundUri,
                 settings.offerClickSoundRepeatCount,
@@ -691,7 +706,7 @@ class PichixAccessibilityService : AccessibilityService() {
         val runnable = object : Runnable {
             override fun run() {
                 if (detailAcceptRunnable !== this) return
-                if (!isMotorForegroundAllowed()) {
+                if (!isMotorForegroundAllowed(cancelPendingIfDenied = false)) {
                     logger.log(
                         offer.toLogEntry(
                             OfferStatus.MISS,
@@ -880,11 +895,26 @@ class PichixAccessibilityService : AccessibilityService() {
         actionStartedAt: Long,
     ) {
         cancelScheduleOutcomeFlow()
+        // Evita que un toast/notif previo clasifique mal este intento.
+        FlexMessageHub.clearRecent()
         var attempt = 0
         val runnable = object : Runnable {
             override fun run() {
                 if (scheduleOutcomeRunnable !== this) return
-                if (!isMotorForegroundAllowed()) {
+                if (!isMotorForegroundAllowed(cancelPendingIfDenied = false)) {
+                    // El marcador/llamada puede quitar el foco: si el hub ya vio «scheduled», es ACEPTADA.
+                    val hubReading = FlexTakeOutcomeReader.readWithRecentNotification(
+                        screenText = "",
+                        overlayText = "",
+                    )
+                    if (hubReading.result == FlexTakeOutcomeReader.Result.SCHEDULED) {
+                        cancelScheduleOutcomeFlow()
+                        completeAcceptedTake(
+                            offer, hubReading.flexMessage, station, blockDateShort,
+                            listReason, detailReason, actionStartedAt,
+                        )
+                        return
+                    }
                     handleTakeMiss(
                         offer,
                         "Flex salió de primer plano tras Schedule",
@@ -897,6 +927,9 @@ class PichixAccessibilityService : AccessibilityService() {
                 attempt++
                 val screenText = reader.readFullScreenText()
                 val overlayText = reader.readFlexOverlayText()
+                if (overlayText.isNotBlank()) {
+                    FlexMessageHub.recordInApp(overlayText)
+                }
                 val reading = FlexTakeOutcomeReader.readWithRecentNotification(
                     screenText = screenText,
                     overlayText = overlayText,
@@ -904,17 +937,10 @@ class PichixAccessibilityService : AccessibilityService() {
                 when (reading.result) {
                     FlexTakeOutcomeReader.Result.SCHEDULED -> {
                         cancelScheduleOutcomeFlow()
-                        logScheduleOutcome(
-                            offer,
-                            accepted = true,
-                            flexMessage = reading.flexMessage,
-                            station,
-                            blockDateShort,
-                            listReason,
-                            detailReason,
-                            actionStartedAt,
+                        completeAcceptedTake(
+                            offer, reading.flexMessage, station, blockDateShort,
+                            listReason, detailReason, actionStartedAt,
                         )
-                        finishBlockTakeFlow(pauseBot = settings.autoPauseAfterAccept)
                     }
                     FlexTakeOutcomeReader.Result.BLOCK_UNAVAILABLE -> {
                         cancelScheduleOutcomeFlow()
@@ -945,6 +971,36 @@ class PichixAccessibilityService : AccessibilityService() {
         }
         scheduleOutcomeRunnable = runnable
         handler.post(runnable)
+    }
+
+    /** Orden: log → pausar (si aplica) → luego sonido+llamada (el marcador no debe ganar la carrera). */
+    private fun completeAcceptedTake(
+        offer: FlexBlockOffer,
+        flexMessage: String,
+        station: String,
+        blockDateShort: String,
+        listReason: String,
+        detailReason: String,
+        actionStartedAt: Long,
+    ) {
+        logScheduleOutcome(
+            offer = offer,
+            accepted = true,
+            flexMessage = flexMessage,
+            station = station,
+            blockDateShort = blockDateShort,
+            listReason = listReason,
+            detailReason = detailReason,
+            actionStartedAt = actionStartedAt,
+        )
+        finishBlockTakeFlow(pauseBot = settings.autoPauseAfterAccept)
+        if (settings.callOnBlockWhenAccepted) {
+            CallOnBlockHelper.maybeCallAfterSound(
+                this,
+                settings,
+                "bloque aceptado: $station",
+            )
+        }
     }
 
     private fun logScheduleOutcome(
@@ -985,13 +1041,6 @@ class PichixAccessibilityService : AccessibilityService() {
                 "PERDIDA: $station — ${flexMessage.ifBlank { "block unavailable" }}"
             },
         )
-        if (accepted && settings.callOnBlockWhenAccepted) {
-            CallOnBlockHelper.maybeCallAfterSound(
-                this,
-                settings,
-                "bloque aceptado: $station",
-            )
-        }
     }
 
     private fun cancelScheduleOutcomeFlow() {
@@ -1157,20 +1206,19 @@ class PichixAccessibilityService : AccessibilityService() {
         performDirectionalScroll(scrollingDown)
     }
 
-    private fun isMotorForegroundAllowed(): Boolean {
+    private fun isMotorForegroundAllowed(cancelPendingIfDenied: Boolean = true): Boolean {
         val target = MonitorPackages.primaryTarget(this) ?: return false
         val allowed = FlexForegroundGate.allowMotor(this, settings, target) {
             reader.isFlexForegroundUi()
         }
-        if (!allowed) cancelPendingMotorActions()
+        if (!allowed && cancelPendingIfDenied) cancelPendingMotorActions()
         return allowed
     }
 
+    /** Cancela scroll/refresh pendientes. No aborta detalle/Schedule (tienen su propio manejo). */
     private fun cancelPendingMotorActions() {
         handler.removeCallbacks(scrollSettleRunnable)
-        cancelDetailAcceptRetries()
         cancelPostRefreshAnalysis()
-        cancelScheduleOutcomeFlow()
         scrollInFlight = false
     }
 

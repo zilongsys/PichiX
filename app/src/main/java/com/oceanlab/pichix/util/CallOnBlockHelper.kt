@@ -56,7 +56,7 @@ object CallOnBlockHelper {
         }
         val appContext = context.applicationContext
         val delayMs = settings.callOnBlockDelayMs
-        val repeats = settings.callOnBlockSoundRepeatsBeforeCall
+        val repeats = effectiveSoundRepeats(settings, skipSound)
         val afterSoundOrImmediate: () -> Unit = {
             if (delayMs <= 0L) {
                 placeCall(appContext, phone, reason)
@@ -64,7 +64,7 @@ object CallOnBlockHelper {
                 handler.postDelayed({ placeCall(appContext, phone, reason) }, delayMs)
             }
         }
-        if (!skipSound && repeats > 0) {
+        if (repeats > 0) {
             val soundUri = if (settings.offerClickSoundEnabled) {
                 settings.offerClickSoundUri
             } else {
@@ -75,6 +75,21 @@ object CallOnBlockHelper {
         }
         afterSoundOrImmediate()
         return true
+    }
+
+    /**
+     * Si «repeticiones antes de llamar» > 0, usa ese valor.
+     * Si es 0 pero el sonido de oferta está activo, espera esas repeticiones
+     * (el usuario suele configurar «1» ahí y espera oír el sonido completo).
+     */
+    private fun effectiveSoundRepeats(settings: AppSettings, skipSound: Boolean): Int {
+        if (skipSound) return 0
+        val configured = settings.callOnBlockSoundRepeatsBeforeCall
+        if (configured > 0) return configured
+        if (settings.offerClickSoundEnabled) {
+            return settings.offerClickSoundRepeatCount.coerceIn(1, 20)
+        }
+        return 0
     }
 
     private fun placeCall(context: Context, phone: String, reason: String): Boolean {

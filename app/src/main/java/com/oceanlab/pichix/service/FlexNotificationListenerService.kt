@@ -20,12 +20,14 @@ class FlexNotificationListenerService : NotificationListenerService() {
         if (text.isBlank()) return
 
         val settings = AppSettings(this)
+        val takeActive = PichixAccessibilityService.isTakeFlowActivePublic()
         FlexAlertDispatcher.onFlexText(
             context = this,
             settings = settings,
             text = text,
             source = FlexMessageHub.Source.NOTIFICATION,
             dedupSuffix = sbn.key,
+            allowSideEffects = !takeActive,
         )
     }
 

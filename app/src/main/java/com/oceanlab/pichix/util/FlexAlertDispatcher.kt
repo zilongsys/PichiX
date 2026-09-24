@@ -29,6 +29,8 @@ object FlexAlertDispatcher {
         text: String,
         source: FlexMessageHub.Source,
         dedupSuffix: String? = null,
+        /** false = solo registrar en hub (durante flujo de toma; el outcome decide pausa/llamada). */
+        allowSideEffects: Boolean = true,
     ) {
         val trimmed = text.trim()
         if (trimmed.isBlank()) return
@@ -37,6 +39,8 @@ object FlexAlertDispatcher {
             FlexMessageHub.Source.NOTIFICATION -> FlexMessageHub.recordNotification(trimmed)
             FlexMessageHub.Source.IN_APP -> FlexMessageHub.recordInApp(trimmed)
         }
+
+        if (!allowSideEffects) return
 
         PauseByOverClicksController.onNotification(context, trimmed)
         handleBuiltInObservers(context, settings, trimmed, source)

@@ -38,6 +38,14 @@ object FlexMessageHub {
         lastInAppAtMs = System.currentTimeMillis()
     }
 
+    /** Limpia toasts previos al iniciar confirmación Schedule (evita falsos ACEPTADA/PERDIDA). */
+    fun clearRecent() {
+        lastNotificationText = ""
+        lastNotificationAtMs = 0L
+        lastInAppText = ""
+        lastInAppAtMs = 0L
+    }
+
     fun recentNotificationText(withinMs: Long = 20_000L, now: Long = System.currentTimeMillis()): String {
         if (lastNotificationText.isBlank()) return ""
         return if (now - lastNotificationAtMs <= withinMs) lastNotificationText else ""
@@ -46,5 +54,20 @@ object FlexMessageHub {
     fun recentInAppText(withinMs: Long = 20_000L, now: Long = System.currentTimeMillis()): String {
         if (lastInAppText.isBlank()) return ""
         return if (now - lastInAppAtMs <= withinMs) lastInAppText else ""
+    }
+
+    /**
+     * Toast/banner más reciente entre notificación e in-app (para confirmar Schedule).
+     */
+    fun recentFlexToastText(withinMs: Long = 20_000L, now: Long = System.currentTimeMillis()): String {
+        val notifOk = lastNotificationText.isNotBlank() && now - lastNotificationAtMs <= withinMs
+        val inAppOk = lastInAppText.isNotBlank() && now - lastInAppAtMs <= withinMs
+        return when {
+            notifOk && inAppOk ->
+                if (lastInAppAtMs >= lastNotificationAtMs) lastInAppText else lastNotificationText
+            inAppOk -> lastInAppText
+            notifOk -> lastNotificationText
+            else -> ""
+        }
     }
 }

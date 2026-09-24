@@ -71,7 +71,7 @@ object FlexTakeOutcomeReader {
         return Reading(Result.PENDING, "")
     }
 
-    /** Usa hub si no se pasa texto de notificación explícito. */
+    /** Usa hub (notificación + toast in-app) si no se pasa texto explícito. */
     fun readWithRecentNotification(
         screenText: String,
         overlayText: String = "",
@@ -79,7 +79,7 @@ object FlexTakeOutcomeReader {
     ): Reading = read(
         screenText = screenText,
         overlayText = overlayText,
-        notificationText = FlexMessageHub.recentNotificationText(withinMs),
+        notificationText = FlexMessageHub.recentFlexToastText(withinMs),
     )
 
     fun read(text: String): Reading =

@@ -8,6 +8,15 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.29 (Septiembre 2026)
+
+### Corregido
+- **Pausa al tomar bloque**: al confirmar ACEPTADA se pausa antes de llamar; el toast in-app cuenta para el outcome; un blip de primer plano (marcador) ya no cancela el flujo en silencio.
+- **Llamada tras sonido**: si «repeticiones antes de llamar» es 0 pero el sonido de oferta está activo, espera esas repeticiones; no dispara la llamada en paralelo con observadores durante la toma.
+- **PERDIDA / seguir activo**: durante la toma no se pausa por banners de throttle ambiguos ni por alertas/llamadas del dispatcher; frases genéricas («try again later») solo cuentan con contexto de demasiados toques.
+
+---
+
 ## v0.2.28 (Septiembre 2026)
 
 ### Actualizado

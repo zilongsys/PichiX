@@ -490,7 +490,9 @@ class AppSettings(context: Context) {
 
     /**
      * Cuántas veces reproducir el sonido (clic de oferta si está activo, si no el del sistema)
-     * antes de marcar. 0 = llamar sin esperar sonido (solo aplica [callOnBlockDelayMs]).
+     * antes de marcar. Si es 0 y el sonido de oferta está activo, CallOnBlockHelper usa
+     * [offerClickSoundRepeatCount]. 0 sin sonido de oferta = llamar sin esperar sonido
+     * (solo aplica [callOnBlockDelayMs]).
      */
     var callOnBlockSoundRepeatsBeforeCall: Int
         get() = prefs.getInt(KEY_CALL_ON_BLOCK_SOUND_REPEATS, 0).coerceIn(0, 20)
