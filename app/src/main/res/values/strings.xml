@@ -184,6 +184,10 @@
     <string name="home_section_status">Estado</string>
     <string name="home_section_quick">Accesos rápidos</string>
     <string name="home_section_appearance">Apariencia</string>
+    <string name="home_pc_connection_title">Conexión con PC</string>
+    <string name="home_pc_connection_hint">Vincula PichiX con CentroControl para ver logs y controlar el bot desde el PC.</string>
+    <string name="home_pc_connection_btn">Conexión con PC</string>
+    <string name="home_pc_connection_btn_status">Conexión con PC · %1$s</string>
     <string name="home_overlay_title">Botón flotante</string>
     <string name="home_overlay_hint">Mostrar botón de control sobre otras aplicaciones</string>
     <string name="home_simulation_title">Modo simulación</string>

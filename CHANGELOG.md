@@ -8,6 +8,13 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.27 (Septiembre 2026)
+
+### Añadido
+- **Home**: acceso rápido «Conexión con PC» (abre el panel de CentroControl y muestra el estado del enlace).
+
+---
+
 ## v0.2.26 (Septiembre 2026)
 
 ### Corregido

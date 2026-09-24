@@ -131,7 +131,16 @@ class HomeFragment : Fragment() {
 
         syncSwitches()
         setupThemeToggle(activity)
+        refreshPcConnectionButton(view)
 
+        view.findViewById<MaterialButton>(R.id.btnHomeDashboardConnection).setOnClickListener {
+            startActivity(
+                Intent(
+                    requireContext(),
+                    com.oceanlab.pichix.dashboardcontrol.DashboardControlActivity::class.java,
+                ),
+            )
+        }
         view.findViewById<MaterialButton>(R.id.btnHomeExportConfig).setOnClickListener {
             (activity as MainActivity).flushConfigFormBeforeExport()
             exportConfigLauncher.launch(PichixConfigBackup.suggestedExportFileName())
@@ -309,6 +318,7 @@ class HomeFragment : Fragment() {
             registerReceiver(autoAcceptReceiver, IntentFilter(MainActivity.AUTO_ACCEPT_SETTING_CHANGED))
         }
         refreshStatus()
+        refreshPcConnectionButton(view)
     }
 
     override fun onPause() {
@@ -320,6 +330,12 @@ class HomeFragment : Fragment() {
             lbm.unregisterReceiver(autoAcceptReceiver)
         } catch (_: Exception) {
         }
+    }
+
+    private fun refreshPcConnectionButton(root: View? = view) {
+        val btn = root?.findViewById<MaterialButton>(R.id.btnHomeDashboardConnection) ?: return
+        val status = com.oceanlab.pichix.dashboardcontrol.DashboardLink.info().status.label
+        btn.text = getString(R.string.home_pc_connection_btn_status, status)
     }
 
     private fun syncSwitches() {
