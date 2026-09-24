@@ -41,6 +41,9 @@ class HomeFragment : Fragment() {
     private var swDryRun: SwitchMaterial? = null
     private var swAutoAccept: SwitchMaterial? = null
     private var swReturn2Offers: SwitchMaterial? = null
+    private var swPcConnection: SwitchMaterial? = null
+    private var tvPcConnectionStatus: TextView? = null
+    private var suppressPcConnectionSync = false
 
     private var syncing = false
     private var suppressThemeToggle = false
@@ -128,18 +131,16 @@ class HomeFragment : Fragment() {
         swDryRun = view.findViewById(R.id.homeQuickDryRun)
         swAutoAccept = view.findViewById(R.id.homeQuickAutoAccept)
         swReturn2Offers = view.findViewById(R.id.homeQuickReturn2Offers)
+        swPcConnection = view.findViewById(R.id.homeQuickPcConnection)
+        tvPcConnectionStatus = view.findViewById(R.id.homePcConnectionStatus)
 
         syncSwitches()
         setupThemeToggle(activity)
-        refreshPcConnectionButton(view)
+        refreshPcConnectionUi()
 
-        view.findViewById<MaterialButton>(R.id.btnHomeDashboardConnection).setOnClickListener {
-            startActivity(
-                Intent(
-                    requireContext(),
-                    com.oceanlab.pichix.dashboardcontrol.DashboardControlActivity::class.java,
-                ),
-            )
+        view.findViewById<TextView>(R.id.homePcConnectionOpenLink).apply {
+            paint.isUnderlineText = true
+            setOnClickListener { openPcConnectionScreen() }
         }
         view.findViewById<MaterialButton>(R.id.btnHomeExportConfig).setOnClickListener {
             (activity as MainActivity).flushConfigFormBeforeExport()
@@ -186,6 +187,28 @@ class HomeFragment : Fragment() {
             settings.flexAutoReturnToOffers = checked
             MainActivity.notifyReturn2SettingChanged(requireContext(), checked)
             PichixAccessibilityService.syncEngine(requireContext())
+        }
+
+        swPcConnection?.setOnCheckedChangeRetainingFocus(view) { checked ->
+            if (syncing || suppressPcConnectionSync) return@setOnCheckedChangeRetainingFocus
+            val ctx = requireContext()
+            if (checked) {
+                val ep = com.oceanlab.pichix.dashboardcontrol.DashboardLink.currentEndpoint(ctx)
+                val token = com.oceanlab.pichix.dashboardcontrol.DashboardLink.currentToken(ctx)
+                if (ep.host.isBlank() || token.isBlank()) {
+                    suppressPcConnectionSync = true
+                    try {
+                        swPcConnection?.isChecked = false
+                    } finally {
+                        suppressPcConnectionSync = false
+                    }
+                    Toast.makeText(ctx, R.string.home_pc_connection_need_setup, Toast.LENGTH_LONG).show()
+                    openPcConnectionScreen()
+                    return@setOnCheckedChangeRetainingFocus
+                }
+            }
+            com.oceanlab.pichix.dashboardcontrol.DashboardLink.setEnabled(ctx, checked)
+            refreshPcConnectionUi()
         }
 
         refreshStatus()
@@ -318,7 +341,7 @@ class HomeFragment : Fragment() {
             registerReceiver(autoAcceptReceiver, IntentFilter(MainActivity.AUTO_ACCEPT_SETTING_CHANGED))
         }
         refreshStatus()
-        refreshPcConnectionButton(view)
+        refreshPcConnectionUi()
     }
 
     override fun onPause() {
@@ -332,10 +355,27 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun refreshPcConnectionButton(root: View? = view) {
-        val btn = root?.findViewById<MaterialButton>(R.id.btnHomeDashboardConnection) ?: return
+    private fun openPcConnectionScreen() {
+        startActivity(
+            Intent(
+                requireContext(),
+                com.oceanlab.pichix.dashboardcontrol.DashboardControlActivity::class.java,
+            ),
+        )
+    }
+
+    private fun refreshPcConnectionUi() {
+        if (!isAdded) return
+        val ctx = requireContext()
+        val enabled = com.oceanlab.pichix.dashboardcontrol.DashboardLink.isEnabled(ctx)
         val status = com.oceanlab.pichix.dashboardcontrol.DashboardLink.info().status.label
-        btn.text = getString(R.string.home_pc_connection_btn_status, status)
+        suppressPcConnectionSync = true
+        try {
+            swPcConnection?.isChecked = enabled
+        } finally {
+            suppressPcConnectionSync = false
+        }
+        tvPcConnectionStatus?.text = getString(R.string.home_pc_connection_status, status)
     }
 
     private fun syncSwitches() {

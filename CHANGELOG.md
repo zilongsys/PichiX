@@ -8,6 +8,13 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.28 (Septiembre 2026)
+
+### Actualizado
+- **Home · Conexión con PC**: switch para activar/desactivar el enlace; debajo, texto enlace «Configurar IP, puerto y token» que abre la pantalla de detalle.
+
+---
+
 ## v0.2.27 (Septiembre 2026)
 
 ### Añadido

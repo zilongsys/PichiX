@@ -94,29 +94,56 @@
             android:orientation="vertical"
             android:layout_marginBottom="6dp">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/home_pc_connection_title"
-                android:textColor="@color/text_primary"
-                android:textSize="13sp"
-                android:textStyle="bold"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginEnd="12dp">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/home_pc_connection_title"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:id="@+id/homePcConnectionStatus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/home_pc_connection_hint"
+                        android:textColor="@color/text_hint"
+                        android:textSize="11sp"
+                        android:layout_marginTop="3dp"/>
+                </LinearLayout>
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/homeQuickPcConnection"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:thumbTint="@color/header_switch_thumb"
+                    app:trackTint="@color/switch_track_selector"/>
+            </LinearLayout>
 
             <TextView
-                android:layout_width="match_parent"
+                android:id="@+id/homePcConnectionOpenLink"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/home_pc_connection_hint"
-                android:textColor="@color/text_hint"
-                android:textSize="11sp"
-                android:layout_marginTop="3dp"
-                android:layout_marginBottom="10dp"/>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnHomeDashboardConnection"
-                style="@style/SparkButtonSecondary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/home_pc_connection_btn" />
+                android:layout_marginTop="10dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"
+                android:text="@string/home_pc_connection_open_link"
+                android:textColor="@color/accent_teal"
+                android:textSize="12sp" />
         </LinearLayout>
 
         <!-- Botón flotante -->

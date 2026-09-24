@@ -205,6 +205,14 @@ object DashboardLink {
         reconnectNow()
     }
 
+    /** Solo activa o desactiva el enlace (mantiene IP/token). */
+    fun setEnabled(context: Context, enabled: Boolean) {
+        appContext = context.applicationContext
+        prefs().edit().putBoolean(K_ENABLED, enabled).apply()
+        reloadConfig()
+        reconnectNow()
+    }
+
     /** Corta la conexión actual (si hay) y reintenta ya. */
     fun reconnectNow() {
         generation.incrementAndGet()
