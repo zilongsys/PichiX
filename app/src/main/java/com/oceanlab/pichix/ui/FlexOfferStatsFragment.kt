@@ -16,6 +16,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.view.isVisible
+import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
@@ -224,32 +225,39 @@ class FlexOfferStatsFragment : Fragment() {
     }
 
     private fun showSingleDayPicker() {
-        if (!isAdded || isDetached || isRemoving) return
+        if (!canShowDatePicker()) return
         val fm = parentFragmentManager
+        dismissPickerIfShowing("offer_stats_day")
         val initial = dayStringToUtcMillis(filterFrom ?: dayFmt.format(Date()))
-        MaterialDatePicker.Builder.datePicker()
+        val picker = MaterialDatePicker.Builder.datePicker()
             .setTitleText(getString(R.string.offer_stats_pick_day))
             .setSelection(initial)
             .setCalendarConstraints(buildPastConstraints())
             .build()
-            .apply {
-                addOnPositiveButtonClickListener { selection ->
-                    if (!isAdded) return@addOnPositiveButtonClickListener
-                    filterFrom = utcMillisToDayString(selection)
-                    filterTo = filterFrom
-                    updateRangeUi()
-                }
-                try {
-                    show(fm, "offer_stats_day")
-                } catch (e: IllegalStateException) {
-                    Toast.makeText(requireContext(), e.message ?: "No se pudo abrir el calendario", Toast.LENGTH_SHORT).show()
-                }
+        picker.addOnPositiveButtonClickListener { selection ->
+            if (!isAdded) return@addOnPositiveButtonClickListener
+            filterFrom = utcMillisToDayString(selection)
+            filterTo = filterFrom
+            updateRangeUi()
+        }
+        view?.post {
+            if (!canShowDatePicker()) return@post
+            try {
+                picker.show(fm, "offer_stats_day")
+            } catch (e: IllegalStateException) {
+                Toast.makeText(
+                    requireContext(),
+                    e.message ?: "No se pudo abrir el calendario",
+                    Toast.LENGTH_SHORT,
+                ).show()
             }
+        }
     }
 
     private fun showRangePicker() {
-        if (!isAdded || isDetached || isRemoving) return
+        if (!canShowDatePicker()) return
         val fm = parentFragmentManager
+        dismissPickerIfShowing("offer_stats_range")
         val builder = MaterialDatePicker.Builder.dateRangePicker()
             .setTitleText(getString(R.string.offer_stats_pick_range))
             .setCalendarConstraints(buildPastConstraints())
@@ -261,19 +269,35 @@ class FlexOfferStatsFragment : Fragment() {
                 ),
             )
         }
-        builder.build().apply {
-            addOnPositiveButtonClickListener { selection ->
-                if (!isAdded) return@addOnPositiveButtonClickListener
-                filterFrom = utcMillisToDayString(selection.first)
-                filterTo = utcMillisToDayString(selection.second)
-                updateRangeUi()
-            }
+        val picker = builder.build()
+        picker.addOnPositiveButtonClickListener { selection ->
+            if (!isAdded) return@addOnPositiveButtonClickListener
+            filterFrom = utcMillisToDayString(selection.first)
+            filterTo = utcMillisToDayString(selection.second)
+            updateRangeUi()
+        }
+        view?.post {
+            if (!canShowDatePicker()) return@post
             try {
-                show(fm, "offer_stats_range")
+                picker.show(fm, "offer_stats_range")
             } catch (e: IllegalStateException) {
-                Toast.makeText(requireContext(), e.message ?: "No se pudo abrir el calendario", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    e.message ?: "No se pudo abrir el calendario",
+                    Toast.LENGTH_SHORT,
+                ).show()
             }
         }
+    }
+
+    private fun canShowDatePicker(): Boolean {
+        if (!isAdded || isDetached || isRemoving || !isResumed) return false
+        return !parentFragmentManager.isStateSaved
+    }
+
+    private fun dismissPickerIfShowing(tag: String) {
+        val existing = parentFragmentManager.findFragmentByTag(tag) as? DialogFragment
+        existing?.dismissAllowingStateLoss()
     }
 
     private fun buildPastConstraints(): CalendarConstraints =

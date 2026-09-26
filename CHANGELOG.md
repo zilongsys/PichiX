@@ -8,6 +8,19 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.30 (Septiembre 2026)
+
+### Corregido
+- **Confirmación tras Schedule**: ya no quema 50 lecturas en &lt;1 s. Poll cada 120 ms hasta 12 s; si no hay toast, el grabber **sigue buscando** y se vigila el hub 10 s más (reclasifica ACEPTADA si llega «Offer scheduled» tarde).
+- **Pausa + llamada al tomar**: el toast/alerta «Offer scheduled» alimenta el flujo de toma (incl. regla «Tomado»); no llama por fuera de ese flujo. Compat: alerta con «llamar» sobre scheduled sigue disparando la llamada al confirmar.
+- **PERDIDA «Someone else reserved»**: ya no pausa por «auto pause on reserved» (es miss de toma, no reserved genérico).
+- **Estadísticas**: crash del MaterialDatePicker al elegir rango/día (fragment no asociado al manager).
+
+### Actualizado
+- Prioridad de velocidad: el clic Schedule y el grabber no se ralentizan; solo la confirmación espera el toast de Flex.
+
+---
+
 ## v0.2.29 (Septiembre 2026)
 
 ### Corregido

@@ -4,8 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.oceanlab.pichix.analyzer.OfferListDetailMatcher
 import com.oceanlab.pichix.data.AppSettings
-import com.oceanlab.pichix.data.FlexAlertRule
 import com.oceanlab.pichix.data.FlexAlertRulesStore
 import com.oceanlab.pichix.data.FlexMessageHub
 import com.oceanlab.pichix.data.FlexState
@@ -40,7 +40,13 @@ object FlexAlertDispatcher {
             FlexMessageHub.Source.IN_APP -> FlexMessageHub.recordInApp(trimmed)
         }
 
-        if (!allowSideEffects) return
+        if (!allowSideEffects) {
+            // Aun sin side-effects, avisar al motor si es toast de programado (reclasificar late recovery).
+            if (isScheduledMessage(trimmed)) {
+                PichixAccessibilityService.onScheduledToastSeen(trimmed)
+            }
+            return
+        }
 
         PauseByOverClicksController.onNotification(context, trimmed)
         handleBuiltInObservers(context, settings, trimmed, source)
@@ -49,6 +55,7 @@ object FlexAlertDispatcher {
 
         val now = System.currentTimeMillis()
         val suffix = dedupSuffix ?: trimmed.take(96)
+        val scheduled = isScheduledMessage(trimmed)
         FlexAlertRulesStore.load(settings)
             .asSequence()
             .filter { it.enabled && it.matchesSource(source) && it.matchesNotificationText(trimmed) }
@@ -59,13 +66,17 @@ object FlexAlertDispatcher {
                 Log.d(TAG, "Alerta [${source.name}] '${rule.displayName()}' → ${rule.matchSummary()}")
                 AlertManager(context).playFlexNotificationAlert(rule.soundUri, rule.repeatCount)
                 if (rule.callOnMatch) {
-                    // Sonido ya disparado por la regla; no repetir en el helper.
-                    CallOnBlockHelper.maybeCall(
-                        context,
-                        settings,
-                        "alerta ${source.name.lowercase()}: ${rule.displayName()}",
-                        skipSound = true,
-                    )
+                    if (scheduled) {
+                        // Pausa+llamada las maneja el flujo de toma / late recovery.
+                        PichixAccessibilityService.onScheduledToastSeen(trimmed)
+                    } else {
+                        CallOnBlockHelper.maybeCall(
+                            context,
+                            settings,
+                            "alerta ${source.name.lowercase()}: ${rule.displayName()}",
+                            skipSound = true,
+                        )
+                    }
                 }
                 postObserverEvent(context, "Alerta (${sourceLabel(source)}): ${rule.displayName()}")
             }
@@ -82,7 +93,16 @@ object FlexAlertDispatcher {
             lower.contains("reserved") || lower.contains("reservad") -> {
                 FlexState.key2 = true
                 postObserverEvent(context, "${sourcePrefix(source)}Oferta reservada")
-                if (settings.autoPauseOnReservedNotification && settings.isBotEnabled) {
+                // «Someone else reserved that block» es PERDIDA de toma, no pausa por reserved.
+                val isTakeMissReserved =
+                    OfferListDetailMatcher.isBlockUnavailable(text) ||
+                        lower.contains("someone else") ||
+                        lower.contains("try reserving another")
+                if (settings.autoPauseOnReservedNotification &&
+                    settings.isBotEnabled &&
+                    !isTakeMissReserved &&
+                    !PichixAccessibilityService.isOutcomeWatchingPublic()
+                ) {
                     PichixAccessibilityService.pausedAfterAccept = true
                     LocalBroadcastManager.getInstance(context)
                         .sendBroadcast(Intent(PichixAccessibilityService.BOT_PAUSED))
@@ -90,23 +110,21 @@ object FlexAlertDispatcher {
                         .sendBroadcast(Intent(PichixAccessibilityService.BOT_STATE_CHANGED))
                 }
             }
-            com.oceanlab.pichix.analyzer.OfferListDetailMatcher.isBlockUnavailable(text) -> {
+            OfferListDetailMatcher.isBlockUnavailable(text) -> {
                 FlexState.key3 = true
                 postObserverEvent(context, "${sourcePrefix(source)}Bloque no disponible")
             }
             isScheduledMessage(text) -> {
                 val now = System.currentTimeMillis()
-                if (now - lastBuiltInScheduledAtMs < DEDUP_MS) return
+                if (now - lastBuiltInScheduledAtMs < DEDUP_MS) {
+                    PichixAccessibilityService.onScheduledToastSeen(text)
+                    return
+                }
                 lastBuiltInScheduledAtMs = now
                 FlexState.key1 = true
                 postObserverEvent(context, "${sourcePrefix(source)}Bloque programado")
-                if (settings.callOnBlockOnScheduledNotification) {
-                    CallOnBlockHelper.maybeCall(
-                        context,
-                        settings,
-                        "${source.name.lowercase()} programado",
-                    )
-                }
+                PichixAccessibilityService.onScheduledToastSeen(text)
+                // No llamar aquí: completeAcceptedTake / when_accepted / alerta Tomado vía onScheduledToastSeen.
             }
         }
     }

@@ -28,6 +28,7 @@ import com.oceanlab.pichix.data.OfferStatus
 import com.oceanlab.pichix.service.accessibility.FlexForegroundGate
 import com.oceanlab.pichix.service.accessibility.FlexListScroller
 import com.oceanlab.pichix.data.FlexMessageHub
+import com.oceanlab.pichix.data.FlexAlertRulesStore
 import com.oceanlab.pichix.util.FlexAlertDispatcher
 import com.oceanlab.pichix.util.AlertManager
 import com.oceanlab.pichix.util.BlockDateFormatter
@@ -50,7 +51,21 @@ class PichixAccessibilityService : AccessibilityService() {
         /** Reintentos tras Refresh hasta releer lista actualizada. */
         private const val POST_REFRESH_MAX_ATTEMPTS = 40
         /** Reintentos tras Schedule hasta leer mensaje de Flex (scheduled / unavailable). */
-        private const val SCHEDULE_OUTCOME_MAX_ATTEMPTS = 50
+        /** Tope de lecturas (con [SCHEDULE_OUTCOME_POLL_MS] ≈ ventana [SCHEDULE_OUTCOME_MAX_MS]). */
+        private const val SCHEDULE_OUTCOME_MAX_ATTEMPTS = 100
+        /**
+         * Intervalo entre lecturas de confirmación tras Schedule.
+         * Corto para pillar el toast pronto, sin quemar todos los intentos en <1 s.
+         */
+        private const val SCHEDULE_OUTCOME_POLL_MS = 120L
+        /** Ventana máxima esperando toast/notif tras pulsar Schedule. */
+        private const val SCHEDULE_OUTCOME_MAX_MS = 12_000L
+        /**
+         * Tras timeout sin toast: el grabber sigue (velocidad) pero vigilamos el hub
+         * por si Flex muestra «Offer scheduled» tarde.
+         */
+        private const val SCHEDULE_LATE_RECOVERY_MS = 10_000L
+        private const val SCHEDULE_LATE_POLL_MS = 200L
         const val BOT_STATE_CHANGED = MainActivity.BOT_STATE_CHANGED
         const val BOT_PAUSED = MainActivity.BOT_PAUSED
         const val BOT_RESUMED = "com.oceanlab.pichix.BOT_RESUMED"
@@ -97,8 +112,22 @@ class PichixAccessibilityService : AccessibilityService() {
             PichixForegroundService.refreshNotification(context)
         }
 
-        /** true mientras hay detalle/Schedule en curso (el outcome manda sobre observadores). */
+        /** true mientras hay detalle/Schedule en curso (el grabber no debe interferir). */
         fun isTakeFlowActivePublic(): Boolean = instance?.isTakeFlowActive() == true
+
+        /**
+         * true si hay toma en curso O vigilancia de toast tardío tras Schedule.
+         * Los observadores no deben llamar/pausar por su cuenta.
+         */
+        fun isOutcomeWatchingPublic(): Boolean = instance?.isOutcomeWatching() == true
+
+        /**
+         * Toast/notif «Offer scheduled» visto fuera del poll de outcome
+         * (alerta, notification listener). Puede reclasificar una toma reciente.
+         */
+        fun onScheduledToastSeen(flexMessage: String) {
+            instance?.onExternalScheduledToast(flexMessage)
+        }
     }
 
     private lateinit var settings: AppSettings
@@ -131,7 +160,18 @@ class PichixAccessibilityService : AccessibilityService() {
     private var detailAcceptRunnable: Runnable? = null
     private var postRefreshRunnable: Runnable? = null
     private var scheduleOutcomeRunnable: Runnable? = null
+    private var lateAcceptRecoveryRunnable: Runnable? = null
+    private var lateAcceptRecovery: LateAcceptRecovery? = null
 
+    private data class LateAcceptRecovery(
+        val offer: FlexBlockOffer,
+        val station: String,
+        val blockDateShort: String,
+        val listReason: String,
+        val detailReason: String,
+        val actionStartedAt: Long,
+        val expiresAtMs: Long,
+    )
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
@@ -191,6 +231,11 @@ class PichixAccessibilityService : AccessibilityService() {
     private fun stopEngine() {
         handler.removeCallbacksAndMessages(null)
         cancelPendingMotorActions()
+        detailAcceptRunnable = null
+        scheduleOutcomeRunnable = null
+        lateAcceptRecoveryRunnable = null
+        lateAcceptRecovery = null
+        postRefreshRunnable = null
         grabInFlight = false
         returnInFlight = false
         returnSettleUntilMs = 0L
@@ -471,8 +516,9 @@ class PichixAccessibilityService : AccessibilityService() {
         settings = AppSettings(this)
         if (motorPausedForNavigation) return
         val takeActive = isTakeFlowActive()
-        // Durante toma: no cancelar el flujo por un blip de primer plano (p. ej. marcador).
-        if (!isMotorForegroundAllowed(cancelPendingIfDenied = !takeActive) && !takeActive) return
+        val outcomeWatching = isOutcomeWatching()
+        // Durante toma/vigilancia: no cancelar el flujo por un blip de primer plano (p. ej. marcador).
+        if (!isMotorForegroundAllowed(cancelPendingIfDenied = !outcomeWatching) && !outcomeWatching) return
         val text = reader.readFullScreenText()
         val flags = reader.detectScreenFlags(text, settings)
         trackScreenChange(text, flags)
@@ -483,7 +529,7 @@ class PichixAccessibilityService : AccessibilityService() {
             flags.offerScheduled -> postObserver("Oferta programada en pantalla")
         }
 
-        if (flags.captcha && settings.autoPauseOnCaptcha && !takeActive) {
+        if (flags.captcha && settings.autoPauseOnCaptcha && !outcomeWatching) {
             pausedAfterAccept = true
             postBotPaused()
         }
@@ -491,7 +537,7 @@ class PichixAccessibilityService : AccessibilityService() {
         val overlayText = reader.readFlexOverlayText()
         maybeStopBurstForFlexBanner(overlayText)
         // El flujo de toma decide pausa/continuación; no pausar por banners de PERDIDA aquí.
-        if (!takeActive) {
+        if (!outcomeWatching) {
             PauseByOverClicksController.onScreenText(this, overlayText)
         }
         if (overlayText.isNotBlank()) {
@@ -500,7 +546,7 @@ class PichixAccessibilityService : AccessibilityService() {
                 settings = settings,
                 text = overlayText,
                 source = FlexMessageHub.Source.IN_APP,
-                allowSideEffects = !takeActive,
+                allowSideEffects = !outcomeWatching,
             )
         }
 
@@ -644,12 +690,17 @@ class PichixAccessibilityService : AccessibilityService() {
     private fun isTakeFlowActive(): Boolean =
         detailAcceptRunnable != null || scheduleOutcomeRunnable != null
 
+    /** Toma en curso o vigilancia de toast tardío (no bloquea el grabber). */
+    private fun isOutcomeWatching(): Boolean =
+        isTakeFlowActive() || lateAcceptRecoveryRunnable != null
+
     private fun offerListSignatureOf(offers: List<FlexBlockOffer>): String =
         offers.joinToString("|") { o ->
             "${o.payText}:${o.timeText}:${o.stationText}"
         }
 
     private fun handleAccept(offer: FlexBlockOffer, listReason: String) {
+        cancelLateAcceptRecovery()
         val simulation = settings.dryRunMode
         val shouldSchedule = settings.flexAutoAccept && !simulation
         val actionStartedAt = System.currentTimeMillis()
@@ -895,8 +946,10 @@ class PichixAccessibilityService : AccessibilityService() {
         actionStartedAt: Long,
     ) {
         cancelScheduleOutcomeFlow()
+        cancelLateAcceptRecovery()
         // Evita que un toast/notif previo clasifique mal este intento.
         FlexMessageHub.clearRecent()
+        val outcomeStartedAt = System.currentTimeMillis()
         var attempt = 0
         val runnable = object : Runnable {
             override fun run() {
@@ -915,13 +968,16 @@ class PichixAccessibilityService : AccessibilityService() {
                         )
                         return
                     }
-                    handleTakeMiss(
-                        offer,
-                        "Flex salió de primer plano tras Schedule",
-                        station,
-                        blockDateShort,
-                        actionStartedAt,
-                    )
+                    // Sin toast aún: no declarar miss al instante — seguir vigilando (toast suele tardar).
+                    attempt++
+                    if (System.currentTimeMillis() - outcomeStartedAt >= SCHEDULE_OUTCOME_MAX_MS) {
+                        cancelScheduleOutcomeFlow()
+                        beginLateAcceptRecovery(
+                            offer, station, blockDateShort, listReason, detailReason, actionStartedAt,
+                        )
+                    } else {
+                        handler.postDelayed(this, SCHEDULE_OUTCOME_POLL_MS)
+                    }
                     return
                 }
                 attempt++
@@ -937,6 +993,11 @@ class PichixAccessibilityService : AccessibilityService() {
                 when (reading.result) {
                     FlexTakeOutcomeReader.Result.SCHEDULED -> {
                         cancelScheduleOutcomeFlow()
+                        BotEventLog.log(
+                            this@PichixAccessibilityService,
+                            BotEventLog.CAT_OFFER,
+                            "Confirmación Flex (intento $attempt): ${reading.flexMessage.ifBlank { "scheduled" }}",
+                        )
                         completeAcceptedTake(
                             offer, reading.flexMessage, station, blockDateShort,
                             listReason, detailReason, actionStartedAt,
@@ -953,17 +1014,19 @@ class PichixAccessibilityService : AccessibilityService() {
                         )
                     }
                     FlexTakeOutcomeReader.Result.PENDING -> {
-                        if (attempt >= SCHEDULE_OUTCOME_MAX_ATTEMPTS) {
+                        val elapsed = System.currentTimeMillis() - outcomeStartedAt
+                        if (elapsed >= SCHEDULE_OUTCOME_MAX_MS || attempt >= SCHEDULE_OUTCOME_MAX_ATTEMPTS) {
                             cancelScheduleOutcomeFlow()
-                            handleTakeMiss(
-                                offer,
-                                "Sin confirmación de Flex tras Schedule ($attempt intentos)",
-                                station,
-                                blockDateShort,
-                                actionStartedAt,
+                            BotEventLog.log(
+                                this@PichixAccessibilityService,
+                                BotEventLog.CAT_OFFER,
+                                "Sin toast aún tras ${elapsed}ms ($attempt lecturas) — grabber sigue; vigilando ${SCHEDULE_LATE_RECOVERY_MS}ms más",
+                            )
+                            beginLateAcceptRecovery(
+                                offer, station, blockDateShort, listReason, detailReason, actionStartedAt,
                             )
                         } else {
-                            handler.post(this)
+                            handler.postDelayed(this, SCHEDULE_OUTCOME_POLL_MS)
                         }
                     }
                 }
@@ -971,6 +1034,121 @@ class PichixAccessibilityService : AccessibilityService() {
         }
         scheduleOutcomeRunnable = runnable
         handler.post(runnable)
+    }
+
+    /**
+     * El grabber puede seguir buscando (prioridad: velocidad).
+     * Si llega «Offer scheduled» tarde → ACEPTADA + pausa + llamada.
+     */
+    private fun beginLateAcceptRecovery(
+        offer: FlexBlockOffer,
+        station: String,
+        blockDateShort: String,
+        listReason: String,
+        detailReason: String,
+        actionStartedAt: Long,
+    ) {
+        cancelLateAcceptRecovery()
+        val recovery = LateAcceptRecovery(
+            offer = offer,
+            station = station,
+            blockDateShort = blockDateShort,
+            listReason = listReason,
+            detailReason = detailReason,
+            actionStartedAt = actionStartedAt,
+            expiresAtMs = System.currentTimeMillis() + SCHEDULE_LATE_RECOVERY_MS,
+        )
+        lateAcceptRecovery = recovery
+        val runnable = object : Runnable {
+            override fun run() {
+                if (lateAcceptRecoveryRunnable !== this) return
+                val ctx = lateAcceptRecovery ?: return
+                val reading = FlexTakeOutcomeReader.readWithRecentNotification(
+                    screenText = "",
+                    overlayText = reader.readFlexOverlayText(),
+                )
+                when (reading.result) {
+                    FlexTakeOutcomeReader.Result.SCHEDULED -> {
+                        cancelLateAcceptRecovery()
+                        BotEventLog.log(
+                            this@PichixAccessibilityService,
+                            BotEventLog.CAT_OFFER,
+                            "Confirmación tardía Flex: ${reading.flexMessage.ifBlank { "scheduled" }}",
+                        )
+                        completeAcceptedTake(
+                            ctx.offer,
+                            reading.flexMessage.ifBlank { "Offer scheduled (tardío)" },
+                            ctx.station,
+                            ctx.blockDateShort,
+                            ctx.listReason,
+                            ctx.detailReason,
+                            ctx.actionStartedAt,
+                        )
+                    }
+                    FlexTakeOutcomeReader.Result.BLOCK_UNAVAILABLE -> {
+                        cancelLateAcceptRecovery()
+                        handleTakeMiss(
+                            ctx.offer,
+                            reading.flexMessage.ifBlank { "Block unavailable" },
+                            ctx.station,
+                            ctx.blockDateShort,
+                            ctx.actionStartedAt,
+                        )
+                    }
+                    FlexTakeOutcomeReader.Result.PENDING -> {
+                        if (System.currentTimeMillis() >= ctx.expiresAtMs) {
+                            cancelLateAcceptRecovery()
+                            handleTakeMiss(
+                                ctx.offer,
+                                "Sin confirmación de Flex tras Schedule",
+                                ctx.station,
+                                ctx.blockDateShort,
+                                ctx.actionStartedAt,
+                            )
+                        } else {
+                            handler.postDelayed(this, SCHEDULE_LATE_POLL_MS)
+                        }
+                    }
+                }
+            }
+        }
+        lateAcceptRecoveryRunnable = runnable
+        // Liberar al grabber de inmediato (no esperar al toast).
+        scheduleWork()
+        handler.postDelayed(runnable, SCHEDULE_LATE_POLL_MS)
+    }
+
+    private fun cancelLateAcceptRecovery() {
+        lateAcceptRecoveryRunnable?.let { handler.removeCallbacks(it) }
+        lateAcceptRecoveryRunnable = null
+        lateAcceptRecovery = null
+    }
+
+    /** Llamado desde alertas/notif cuando aparece «Offer scheduled». */
+    private fun onExternalScheduledToast(flexMessage: String) {
+        val msg = flexMessage.ifBlank { "Offer scheduled" }
+        // Outcome poll en curso: el siguiente ciclo lo verá vía hub.
+        if (scheduleOutcomeRunnable != null) return
+        val ctx = lateAcceptRecovery
+        if (ctx != null) {
+            cancelLateAcceptRecovery()
+            BotEventLog.log(this, BotEventLog.CAT_OFFER, "Toast externo → ACEPTADA: $msg")
+            completeAcceptedTake(
+                ctx.offer, msg, ctx.station, ctx.blockDateShort,
+                ctx.listReason, ctx.detailReason, ctx.actionStartedAt,
+            )
+            return
+        }
+        // Sin vigilancia: si auto-pausa al tomar, al menos pausar (toast de éxito sin flujo).
+        if (settings.autoPauseAfterAccept && settings.isBotEnabled && !pausedAfterAccept) {
+            BotEventLog.log(this, BotEventLog.CAT_OFFER, "Toast programado sin flujo activo — pausando")
+            pausedAfterAccept = true
+            postBotPaused()
+            broadcastState()
+            if (shouldCallAfterAcceptedTake()) {
+                CallOnBlockHelper.maybeCallAfterSound(this, settings, "toast programado: $msg")
+            }
+        }
     }
 
     /** Orden: log → pausar (si aplica) → luego sonido+llamada (el marcador no debe ganar la carrera). */
@@ -983,6 +1161,7 @@ class PichixAccessibilityService : AccessibilityService() {
         detailReason: String,
         actionStartedAt: Long,
     ) {
+        cancelLateAcceptRecovery()
         logScheduleOutcome(
             offer = offer,
             accepted = true,
@@ -994,12 +1173,28 @@ class PichixAccessibilityService : AccessibilityService() {
             actionStartedAt = actionStartedAt,
         )
         finishBlockTakeFlow(pauseBot = settings.autoPauseAfterAccept)
-        if (settings.callOnBlockWhenAccepted) {
+        if (shouldCallAfterAcceptedTake()) {
             CallOnBlockHelper.maybeCallAfterSound(
                 this,
                 settings,
                 "bloque aceptado: $station",
             )
+        }
+    }
+
+    /**
+     * Llama tras ACEPTADA si el usuario activó los switches de llamada,
+     * o si tiene una alerta con «llamar» sobre texto tipo Offer scheduled
+     * (compat con regla «Tomado»).
+     */
+    private fun shouldCallAfterAcceptedTake(): Boolean {
+        if (!settings.callOnBlockEnabled) return false
+        if (settings.callOnBlockWhenAccepted || settings.callOnBlockOnScheduledNotification) return true
+        return FlexAlertRulesStore.load(settings).any { rule ->
+            rule.enabled && rule.callOnMatch && rule.effectiveMatchTexts().any { t ->
+                val lower = t.lowercase()
+                lower.contains("scheduled") || lower.contains("programad")
+            }
         }
     }
 
@@ -1187,7 +1382,9 @@ class PichixAccessibilityService : AccessibilityService() {
     private fun finishBlockTakeFlow(pauseBot: Boolean) {
         cancelDetailAcceptRetries()
         cancelScheduleOutcomeFlow()
+        // No cancelar late recovery aquí: timeout de Schedule la arma a propósito.
         if (pauseBot) {
+            cancelLateAcceptRecovery()
             pausedAfterAccept = true
             postBotPaused()
             BotEventLog.log(this, BotEventLog.CAT_PAUSE, "Pausado tras flujo de oferta")
