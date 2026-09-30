@@ -8,6 +8,13 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.32 (Septiembre 2026)
+
+### Corregido
+- Compilación Kotlin: etiqueta `$/h bajo el mínimo` escapada (`\$`) en `NotTakenCause.HOURLY_MIN`.
+
+---
+
 ## v0.2.31 (Septiembre 2026)
 
 ### Añadido

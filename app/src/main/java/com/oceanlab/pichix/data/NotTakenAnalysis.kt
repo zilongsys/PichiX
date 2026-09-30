@@ -10,7 +10,7 @@ import kotlin.math.floor
 enum class NotTakenCause(val label: String, val tunable: Boolean = false) {
     NO_RULE_MATCH("Ninguna regla coincide"),
     STATION_UNCOVERED("Estación sin regla"),
-    HOURLY_MIN("$/h bajo el mínimo", tunable = true),
+    HOURLY_MIN("\$/h bajo el mínimo", tunable = true),
     BLOCK_PAY_MIN("Pago de bloque bajo el mínimo", tunable = true),
     BLOCK_PAY_MAX("Pago de bloque sobre el máximo", tunable = true),
     BLOCK_START_WINDOW("Inicio de bloque fuera de ventana"),
