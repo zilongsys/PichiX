@@ -236,7 +236,7 @@ object PichixDashboard : DashboardBridge {
 
     // ------------------------------------------------------------------ ajustes
     // Grupos = pestañas/secciones de la app (mismo orden visual).
-    // Historial / Estadísticas / Log / Simulador / Revisión no exponen ajustes editables.
+    // Historial / Estadísticas / Análisis / Log / Simulador / Revisión no exponen ajustes editables.
     private fun s() = AppSettings(app)
 
     private fun buildSpecs(): List<SettingSpec> = listOf(

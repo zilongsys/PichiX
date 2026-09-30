@@ -28,6 +28,9 @@ Valores en `app/version.properties`; no editar `versionName` en `build.gradle`.
 | Tarifas | Criterios rápidos o reglas detalladas |
 | Alertas | Acciones por texto de notificación Flex |
 | Historial | Registro de bloques |
+| Estadísticas | Resumen del CSV de ofertas |
+| Análisis | Ofertas no tomadas y sugerencias de reglas |
+| Log bot | Eventos en tiempo real |
 | Simulador / Revisión | En desarrollo |
 
 La pestaña **Filtros** no aplica: filtros y exclusiones van en **Tarifas**.

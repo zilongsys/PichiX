@@ -8,6 +8,17 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.31 (Septiembre 2026)
+
+### Añadido
+- **Análisis** (pestaña tras Estadísticas): ofertas no tomadas — resumen, sugerencias de reglas, casi-pasan, buenas no tomadas, motivos, rangos de pago, estaciones sin cobertura y pérdidas al tomar. Periodos Hoy / 7d / 30d / Todo.
+- Motor `NotTakenAnalysis` (Flex): re-diagnóstico de «Ninguna regla coincide» contra tarifas actuales; baseline de «buena» por P25 de aceptadas ($/h y pago).
+
+### Corregido
+- Rechazos de lista se registran como **RECHAZADA** (antes VISTA); omisiones SKIP siguen como VISTA con nota.
+
+---
+
 ## v0.2.30 (Septiembre 2026)
 
 ### Corregido

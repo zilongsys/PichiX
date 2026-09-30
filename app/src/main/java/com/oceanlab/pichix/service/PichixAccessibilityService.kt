@@ -340,7 +340,7 @@ class PichixAccessibilityService : AccessibilityService() {
                         (if (burstMode) "Ráfaga: " else "") +
                             "No toma: ${item.offer.stationText} ${item.offer.payText} — $detail",
                     )
-                    logger.log(item.offer.toLogEntry(OfferStatus.SEEN, detail))
+                    logger.log(item.offer.toLogEntry(OfferStatus.REJECTED, detail))
                 }
                 FlexGrabResult.SKIP -> {
                     val detail = item.reason.ifBlank { "Datos incompletos" }
@@ -348,7 +348,9 @@ class PichixAccessibilityService : AccessibilityService() {
                         (if (burstMode) "Ráfaga: " else "") +
                             "Omitida: ${item.offer.stationText} ${item.offer.payText} — $detail",
                     )
-                    logger.logSeenIfNew(item.offer)
+                    logger.log(
+                        item.offer.toLogEntry(OfferStatus.SEEN, "Omitida: $detail"),
+                    )
                 }
                 else -> logger.logSeenIfNew(item.offer)
             }

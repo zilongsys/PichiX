@@ -271,6 +271,24 @@ class OfferLogger(private val context: Context) {
             emptyList()
         }
 
+    /** Todas las entradas desde [sinceMs] (0 = todo el historial). Incluye VISTA. */
+    fun getEntriesSince(sinceMs: Long): List<OfferLogEntry> =
+        try {
+            store.readAllEntries()
+                .filter { it.timestamp >= sinceMs }
+        } catch (e: Exception) {
+            Log.e(TAG, "getEntriesSince: ${e.message}")
+            emptyList()
+        }
+
+    fun getAllEntries(): List<OfferLogEntry> =
+        try {
+            store.readAllEntries()
+        } catch (e: Exception) {
+            Log.e(TAG, "getAllEntries: ${e.message}")
+            emptyList()
+        }
+
     fun resetToday() {
         try {
             val today = dayFormat.format(Date())

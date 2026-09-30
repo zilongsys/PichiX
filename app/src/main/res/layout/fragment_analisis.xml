@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/analisisScroll"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_page"
+    android:overScrollMode="never"
+    android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="6dp"
+        android:paddingBottom="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="6dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAnalisisToday"
+                style="@style/SparkButtonCompact"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="3dp"
+                android:text="Hoy"
+                android:textSize="10sp"
+                android:minWidth="0dp"
+                android:minHeight="36dp"
+                android:maxLines="1"
+                android:includeFontPadding="false"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAnalisisWeek"
+                style="@style/SparkButtonCompact"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="3dp"
+                android:text="7 días"
+                android:textSize="10sp"
+                android:minWidth="0dp"
+                android:minHeight="36dp"
+                android:maxLines="1"
+                android:includeFontPadding="false"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAnalisisMonth"
+                style="@style/SparkButtonCompact"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="3dp"
+                android:text="30 días"
+                android:textSize="10sp"
+                android:minWidth="0dp"
+                android:minHeight="36dp"
+                android:maxLines="1"
+                android:includeFontPadding="false"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAnalisisAll"
+                style="@style/SparkButtonCompact"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Todo"
+                android:textSize="10sp"
+                android:minWidth="0dp"
+                android:minHeight="36dp"
+                android:maxLines="1"
+                android:includeFontPadding="false"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="2dp">
+
+            <TextView
+                android:id="@+id/tvAnalisisUpdated"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Actualizado: —"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_secondary"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAnalisisRefresh"
+                style="@style/SparkButtonCompact"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="↻ Actualizar"
+                android:textSize="10sp"
+                android:minWidth="0dp"
+                android:minHeight="32dp"
+                android:includeFontPadding="false"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvAnalisisStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Cargando…"
+            android:textSize="11sp"
+            android:textColor="@color/text_hint"
+            android:layout_marginBottom="4dp"/>
+
+        <LinearLayout
+            android:id="@+id/layoutAnalisisContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"/>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

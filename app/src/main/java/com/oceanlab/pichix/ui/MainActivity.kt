@@ -49,7 +49,7 @@ class MainActivity : AppCompatActivity() {
 
     private val tabNames = arrayOf(
         "Home", "Config", "Tarifas", "Alertas", "Historial",
-        "Estadísticas", "Log bot", "Simulador", "Revisión",
+        "Estadísticas", "Análisis", "Log bot", "Simulador", "Revisión",
     )
     private val dirtyTabs = mutableSetOf<Int>()
     private var isInternalSwitchUpdate = false
@@ -71,6 +71,7 @@ class MainActivity : AppCompatActivity() {
         R.drawable.ic_alert_notifications,
         R.drawable.ic_sidebar_historial,
         R.drawable.ic_hist_calendar,
+        R.drawable.ic_sidebar_analisis,
         R.drawable.ic_hist_txt,
         R.drawable.ic_sidebar_simulador,
         R.drawable.ic_sidebar_revision,
@@ -82,6 +83,7 @@ class MainActivity : AppCompatActivity() {
         R.drawable.ic_alert_notifications,
         R.drawable.ic_sidebar_historial_filled,
         R.drawable.ic_hist_calendar,
+        R.drawable.ic_sidebar_analisis,
         R.drawable.ic_hist_txt,
         R.drawable.ic_sidebar_simulador,
         R.drawable.ic_sidebar_revision_filled,
@@ -175,9 +177,10 @@ class MainActivity : AppCompatActivity() {
                 3 -> FlexAlertasFragment()
                 4 -> FlexHistorialFragment()
                 5 -> FlexOfferStatsFragment()
-                6 -> FlexBotLogFragment()
-                7 -> StubTabFragment.newInstance("Simulador", "Probar criterios sin aceptar bloques reales.")
-                8 -> StubTabFragment.newInstance("Revisión", "Revisión detallada de bloques antes de aceptar.")
+                6 -> AnalisisFragment()
+                7 -> FlexBotLogFragment()
+                8 -> StubTabFragment.newInstance("Simulador", "Probar criterios sin aceptar bloques reales.")
+                9 -> StubTabFragment.newInstance("Revisión", "Revisión detallada de bloques antes de aceptar.")
                 else -> HomeFragment()
             }
         }
@@ -221,19 +224,19 @@ class MainActivity : AppCompatActivity() {
         val containerIds = intArrayOf(
             R.id.sidebarHome, R.id.sidebarConfig, R.id.sidebarTarifas,
             R.id.sidebarAlertas, R.id.sidebarHistorial,
-            R.id.sidebarEstadisticas, R.id.sidebarBotLog,
+            R.id.sidebarEstadisticas, R.id.sidebarAnalisis, R.id.sidebarBotLog,
             R.id.sidebarSimulador, R.id.sidebarRevision,
         )
         val iconIds = intArrayOf(
             R.id.sidebarIconHome, R.id.sidebarIconConfig, R.id.sidebarIconTarifas,
             R.id.sidebarIconAlertas, R.id.sidebarIconHistorial,
-            R.id.sidebarIconEstadisticas, R.id.sidebarIconBotLog,
+            R.id.sidebarIconEstadisticas, R.id.sidebarIconAnalisis, R.id.sidebarIconBotLog,
             R.id.sidebarIconSimulador, R.id.sidebarIconRevision,
         )
         val labelIds = intArrayOf(
             R.id.sidebarLabelHome, R.id.sidebarLabelConfig, R.id.sidebarLabelTarifas,
             R.id.sidebarLabelAlertas, R.id.sidebarLabelHistorial,
-            R.id.sidebarLabelEstadisticas, R.id.sidebarLabelBotLog,
+            R.id.sidebarLabelEstadisticas, R.id.sidebarLabelAnalisis, R.id.sidebarLabelBotLog,
             R.id.sidebarLabelSimulador, R.id.sidebarLabelRevision,
         )
 
@@ -271,7 +274,10 @@ class MainActivity : AppCompatActivity() {
         selectSidebarItem(currentTab)
     }
 
+    fun navigateToTab(index: Int) = selectSidebarItem(index)
+
     private fun selectSidebarItem(index: Int) {
+        if (index !in 0 until TAB_COUNT) return
         if (index != currentTab && dirtyTabs.contains(currentTab)) {
             Toast.makeText(
                 this,
@@ -481,7 +487,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        const val TAB_COUNT = 9
+        const val TAB_COUNT = 10
         const val BOT_STATE_CHANGED = "com.oceanlab.pichix.BOT_STATE_CHANGED"
         const val BOT_PAUSED = "com.oceanlab.pichix.BOT_PAUSED"
         const val RETURN2_SETTING_CHANGED = "com.oceanlab.pichix.RETURN2_SETTING_CHANGED"
