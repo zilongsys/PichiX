@@ -28,6 +28,7 @@ Valores en `app/version.properties`; no editar `versionName` en `build.gradle`.
 | Tarifas | Criterios rápidos o reglas detalladas |
 | Alertas | Acciones por texto de notificación Flex |
 | Historial | Registro de bloques |
+| Calendario | Rutas tomadas por **fecha del bloque** (precio y horario) |
 | Estadísticas | Resumen del CSV de ofertas |
 | Análisis | Ofertas no tomadas y sugerencias de reglas |
 | Log bot | Eventos en tiempo real |

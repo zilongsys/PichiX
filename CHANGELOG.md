@@ -8,6 +8,17 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.33 (Octubre 2026)
+
+### Añadido
+- **Avisos de franja pico**: con el bot apagado, notifica antes de las horas en que más se detectan ofertas (historial ~30 días). Configurable en Config (anticipación y mínimo de ofertas).
+- **Calendario** (pestaña tras Historial): rutas aceptadas del mes por **fecha del bloque** (no del take), con precio, horario y $/h. Metas por día de la semana.
+
+### Corregido
+- **Sonido + llamada al tomar**: el `playThen` ya no pierde el callback si otra alerta corta el audio; se difiere el sonido de clic cuando el take va a sonar+llamar; la dedup de llamada se libera si el Intent falla.
+
+---
+
 ## v0.2.32 (Septiembre 2026)
 
 ### Corregido

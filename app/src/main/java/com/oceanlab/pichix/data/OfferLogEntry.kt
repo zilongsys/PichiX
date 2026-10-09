@@ -6,6 +6,8 @@ data class OfferLogEntry(
     val durationHours: Double = 0.0,
     val timeWindow: String = "",
     val blockDate: String = "",
+    /** Día del bloque en ISO `yyyy-MM-dd` (no el día del take). */
+    val blockDateIso: String = "",
     val station: String,
     val status: OfferStatus,
     val reason: String,
@@ -17,6 +19,12 @@ data class OfferLogEntry(
     val rejectConfirmedAt: Long = 0L,
 ) {
     val accepted: Boolean get() = status == OfferStatus.ACCEPTED
+
+    /** Clave de calendario: fecha del bloque; si falta, no inventa con el take. */
+    fun blockDayKey(): String =
+        blockDateIso.trim().ifBlank {
+            com.oceanlab.pichix.util.BlockDateFormatter.resolveIso("", blockDate, timestamp)
+        }
 }
 
 data class DayStats(

@@ -10,5 +10,9 @@ class PichixApplication : Application() {
         PichiFileLog.init(this)
         BotEventLog.init(this)
         com.oceanlab.pichix.dashboardcontrol.PichixDashboard.init(this)
+        try {
+            com.oceanlab.pichix.util.PeakHoursScheduler.reschedule(this)
+        } catch (_: Exception) {
+        }
     }
 }

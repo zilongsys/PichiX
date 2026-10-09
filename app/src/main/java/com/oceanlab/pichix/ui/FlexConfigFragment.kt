@@ -40,6 +40,7 @@ import com.oceanlab.pichix.service.PichixAccessibilityService
 import com.oceanlab.pichix.util.OverlayPermissionHelper
 import com.oceanlab.pichix.util.CallOnBlockHelper
 import com.oceanlab.pichix.util.AlertManager
+import com.oceanlab.pichix.util.PeakHoursScheduler
 import com.oceanlab.pichix.util.PermissionStatusHelper
 import com.oceanlab.pichix.util.SoundPickerHelper
 import com.oceanlab.pichix.util.SoundUriLabel
@@ -342,6 +343,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         )
         swPauseIgnore.isChecked = settings.pauseByOverClicksIgnoreCase
         bindCallOnBlockFields(view)
+        bindPeakHoursFields(view)
         refreshSoundLabels(view)
         refreshOfferClickSoundLabel(view)
         refreshMismatchSoundLabel(view)
@@ -456,6 +458,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             markDirty()
         }
         setupCallOnBlockControls(view, markDirty)
+        setupPeakHoursControls(view, markDirty)
         swPauseOver.setOnCheckedChangeRetainingFocus(view) { markDirty() }
         swForeground.setOnCheckedChangeRetainingFocus(view) { markDirty() }
         swDebug.setOnCheckedChangeRetainingFocus(view) { checked ->
@@ -995,6 +998,71 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
                 ?.toString()?.toIntOrNull()?.coerceIn(0, 20) ?: 0
     }
 
+    private fun updatePeakHoursVisibility(view: View, enabled: Boolean) {
+        view.findViewById<View>(R.id.layoutPeakHoursOptions).visibility =
+            if (enabled) View.VISIBLE else View.GONE
+    }
+
+    private fun refreshPeakHoursStatus(view: View) {
+        val tv = view.findViewById<TextView>(R.id.tvPeakHoursStatus) ?: return
+        val hours = PeakHoursScheduler.computePeakHours(requireContext(), settings)
+        tv.text = if (hours.isEmpty()) {
+            getString(R.string.config_peak_hours_status_none)
+        } else {
+            val label = hours.joinToString(", ") { "%02d:00".format(it) }
+            getString(R.string.config_peak_hours_status_hours, label)
+        }
+    }
+
+    private fun bindPeakHoursFields(view: View) {
+        view.findViewById<SwitchMaterial>(R.id.switchPeakHoursNotify).isChecked =
+            settings.peakHoursNotifyEnabled
+        view.findViewById<TextInputEditText>(R.id.etPeakHoursLeadMin)
+            .setText(settings.peakHoursLeadMinutes.toString())
+        view.findViewById<TextInputEditText>(R.id.etPeakHoursMinOffers)
+            .setText(settings.peakHoursMinOffers.toString())
+        updatePeakHoursVisibility(view, settings.peakHoursNotifyEnabled)
+        refreshPeakHoursStatus(view)
+    }
+
+    private fun setupPeakHoursControls(view: View, markDirty: () -> Unit) {
+        val sw = view.findViewById<SwitchMaterial>(R.id.switchPeakHoursNotify)
+        val etLead = view.findViewById<TextInputEditText>(R.id.etPeakHoursLeadMin)
+        val etMin = view.findViewById<TextInputEditText>(R.id.etPeakHoursMinOffers)
+        sw.setOnCheckedChangeRetainingFocus(view) { checked ->
+            settings.peakHoursNotifyEnabled = checked
+            updatePeakHoursVisibility(view, checked)
+            PeakHoursScheduler.reschedule(requireContext())
+            refreshPeakHoursStatus(view)
+            markDirty()
+        }
+        etLead.onUserTextChanged(onDirty = {
+            markDirty()
+            settings.peakHoursLeadMinutes =
+                etLead.text?.toString()?.toIntOrNull()?.coerceIn(0, 59) ?: 10
+            PeakHoursScheduler.reschedule(requireContext())
+        })
+        etMin.onUserTextChanged(onDirty = {
+            markDirty()
+            settings.peakHoursMinOffers =
+                etMin.text?.toString()?.toIntOrNull()?.coerceIn(1, 500) ?: 5
+            PeakHoursScheduler.reschedule(requireContext())
+            refreshPeakHoursStatus(view)
+        })
+    }
+
+    private fun persistPeakHoursFromView(view: View) {
+        settings.peakHoursNotifyEnabled =
+            view.findViewById<SwitchMaterial>(R.id.switchPeakHoursNotify).isChecked
+        settings.peakHoursLeadMinutes =
+            view.findViewById<TextInputEditText>(R.id.etPeakHoursLeadMin).text
+                ?.toString()?.toIntOrNull()?.coerceIn(0, 59) ?: 10
+        settings.peakHoursMinOffers =
+            view.findViewById<TextInputEditText>(R.id.etPeakHoursMinOffers).text
+                ?.toString()?.toIntOrNull()?.coerceIn(1, 500) ?: 5
+        PeakHoursScheduler.reschedule(requireContext())
+    }
+
     private fun persistReturnTimingSettings(
         etReturnStepMin: TextInputEditText,
         etReturnStepMax: TextInputEditText,
@@ -1182,7 +1250,10 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         configRootView?.findViewById<SwitchMaterial>(R.id.switchPauseAfterAccept)?.let {
             settings.autoPauseAfterAccept = it.isChecked
         }
-        configRootView?.let { persistCallOnBlockFromView(it) }
+        configRootView?.let {
+            persistCallOnBlockFromView(it)
+            persistPeakHoursFromView(it)
+        }
         settings.pauseByOverClicksEnabled = swPauseOver.isChecked
         settings.flexOnlyWhenForeground = swForeground.isChecked
         settings.overlayEnabled = swOverlayOnOff.isChecked
@@ -1672,6 +1743,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             view.findViewById<SwitchMaterial>(R.id.switchPauseIgnoreCase).isChecked =
                 settings.pauseByOverClicksIgnoreCase
             bindCallOnBlockFields(view)
+        bindPeakHoursFields(view)
             returnTriggers = FlexReturnTriggersStore.load(settings).toMutableList()
             returnTriggersAdapter?.submit(returnTriggers.toList())
             refreshSoundLabels(view)

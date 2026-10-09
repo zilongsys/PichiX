@@ -24,9 +24,16 @@ class AlertManager(private val context: Context) {
         private const val TAG = "PichiXAlertManager"
         @Volatile private var activePlayer: MediaPlayer? = null
         @Volatile private var stopRunnable: Runnable? = null
+        /** Callback de [playThen] pendiente; se invoca aunque el audio se interrumpa. */
+        @Volatile private var pendingThenDone: (() -> Unit)? = null
         private val handler = Handler(Looper.getMainLooper())
 
-        fun stopGlobal() {
+        /**
+         * Detiene el reproductor global.
+         * @param invokePendingThen si hay un [playThen] en curso, dispara su onDone
+         * (evita «sonó pero no llamó» cuando otra alerta corta el audio).
+         */
+        fun stopGlobal(invokePendingThen: Boolean = true) {
             try {
                 stopRunnable?.let { handler.removeCallbacks(it) }
                 stopRunnable = null
@@ -38,12 +45,28 @@ class AlertManager(private val context: Context) {
             } catch (_: Exception) {
             }
             activePlayer = null
+            if (invokePendingThen) {
+                val done = pendingThenDone
+                pendingThenDone = null
+                if (done != null) handler.post { done() }
+            }
+        }
+
+        private fun takePendingThenDone(): (() -> Unit)? {
+            val done = pendingThenDone
+            pendingThenDone = null
+            return done
         }
     }
 
     fun playFlexNotificationAlert(soundUri: String, repeatCount: Int = 2) {
         try {
-            stopGlobal()
+            // Una alerta normal no debe cancelar la secuencia sonido→llamada del take.
+            if (pendingThenDone != null) {
+                Log.d(TAG, "playFlexNotificationAlert omitido: playThen (llamada) en curso")
+                return
+            }
+            stopGlobal(invokePendingThen = false)
             prepareSystemVolumeForAlert()
             val uri = resolveUri(soundUri)
             playSound(uri, volumeFraction(), repeatCount.coerceIn(1, 20), onDone = null)
@@ -56,23 +79,35 @@ class AlertManager(private val context: Context) {
     /**
      * Reproduce el sonido [repeatCount] veces y luego invoca [onDone] en el hilo principal.
      * Si [repeatCount] ≤ 0, llama a [onDone] de inmediato (sin reproducir).
+     * Garantiza [onDone] aunque otra ruta interrumpa el MediaPlayer.
      */
     fun playThen(soundUri: String, repeatCount: Int, onDone: () -> Unit) {
         if (repeatCount <= 0) {
             handler.post { onDone() }
             return
         }
+        var finished = false
+        val wrappedDone: () -> Unit = {
+            if (!finished) {
+                finished = true
+                onDone()
+            }
+        }
         try {
-            stopGlobal()
+            stopGlobal(invokePendingThen = true)
+            pendingThenDone = wrappedDone
             prepareSystemVolumeForAlert()
             val uri = resolveUri(soundUri)
             playSound(uri, volumeFraction(), repeatCount.coerceIn(1, 20)) {
-                handler.post { onDone() }
+                val done = takePendingThenDone()
+                stopGlobal(invokePendingThen = false)
+                done?.invoke()
             }
             if (settings.vibrateOnAlert) vibrate()
         } catch (e: Exception) {
             Log.e(TAG, "playThen: ${e.message}")
-            handler.post { onDone() }
+            pendingThenDone = null
+            handler.post { wrappedDone() }
         }
     }
 
@@ -173,7 +208,21 @@ class AlertManager(private val context: Context) {
         fun finishOnce() {
             if (finished) return
             finished = true
-            stopGlobal()
+            // No invocar pendingThen otra vez: onDone del playThen ya lo gestiona.
+            try {
+                stopRunnable?.let { handler.removeCallbacks(it) }
+                stopRunnable = null
+                if (activePlayer === player) {
+                    try {
+                        if (player.isPlaying) player.stop()
+                        player.reset()
+                        player.release()
+                    } catch (_: Exception) {
+                    }
+                    activePlayer = null
+                }
+            } catch (_: Exception) {
+            }
             onDone?.invoke()
         }
         player.setOnCompletionListener { mp ->

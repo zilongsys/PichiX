@@ -11,6 +11,13 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+data class BlockDayStats(
+    val accepted: Int,
+    val totalEarned: Double,
+    val totalHours: Double,
+    val offers: List<OfferLogEntry>,
+)
+
 class OfferLogger(private val context: Context) {
 
     companion object {
@@ -18,6 +25,7 @@ class OfferLogger(private val context: Context) {
         private const val TAG = "OfferLogger"
         private val recentDedupKeys = java.util.concurrent.ConcurrentHashMap<String, Long>()
         private val firstSeenSignatures = java.util.concurrent.ConcurrentHashMap<String, Long>()
+        @Volatile private var lastPeakRescheduleMs = 0L
     }
 
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
@@ -433,6 +441,35 @@ class OfferLogger(private val context: Context) {
 
     fun getLogFilePath(): String = store.getLogFilePath()
 
+    /** Ganancias por día del bloque (solo aceptadas). Clave = día del mes (1..31). [month] es 0-based. */
+    fun getAcceptedByBlockDayForMonth(year: Int, month: Int): Map<Int, BlockDayStats> {
+        val monthKey = String.format(Locale.US, "%04d-%02d", year, month + 1)
+        val grouped = mutableMapOf<Int, MutableList<OfferLogEntry>>()
+        try {
+            for (entry in getAllEntries()) {
+                if (entry.status != OfferStatus.ACCEPTED) continue
+                val dayKey = entry.blockDayKey().trim()
+                if (dayKey.isBlank() || !dayKey.startsWith(monthKey)) continue
+                val day = dayKey.substring(8, 10).toIntOrNull() ?: continue
+                grouped.getOrPut(day) { mutableListOf() }.add(entry)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "getAcceptedByBlockDayForMonth: ${e.message}")
+        }
+        return grouped.mapValues { (_, entries) ->
+            val sorted = entries.sortedWith(
+                compareBy<OfferLogEntry> { it.timeWindow.trim().ifBlank { "zzz" } }
+                    .thenBy { it.station.trim().lowercase() },
+            )
+            BlockDayStats(
+                accepted = sorted.size,
+                totalEarned = sorted.sumOf { it.price },
+                totalHours = sorted.sumOf { it.durationHours },
+                offers = sorted,
+            )
+        }
+    }
+
     private fun broadcastLogged(entry: OfferLogEntry) {
         LocalBroadcastManager.getInstance(context).sendBroadcast(
             Intent(ACTION_OFFER_LOGGED).apply {
@@ -440,6 +477,31 @@ class OfferLogger(private val context: Context) {
                 putExtra("price", entry.price)
             },
         )
+        // Recalcular franjas pico con poca frecuencia (no en cada VISTA).
+        maybeRefreshPeakHours(entry)
+    }
+
+    private fun maybeRefreshPeakHours(entry: OfferLogEntry) {
+        if (entry.status != OfferStatus.ACCEPTED &&
+            entry.status != OfferStatus.REJECTED &&
+            entry.status != OfferStatus.MISS
+        ) {
+            return
+        }
+        val now = System.currentTimeMillis()
+        synchronized(OfferLogger::class.java) {
+            if (now - lastPeakRescheduleMs < 15 * 60 * 1000L) return
+            lastPeakRescheduleMs = now
+        }
+        try {
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                try {
+                    com.oceanlab.pichix.util.PeakHoursScheduler.reschedule(context)
+                } catch (_: Exception) {
+                }
+            }
+        } catch (_: Exception) {
+        }
     }
 
     private fun broadcastRefresh() {

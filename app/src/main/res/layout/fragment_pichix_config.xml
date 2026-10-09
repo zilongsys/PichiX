@@ -1664,6 +1664,82 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:text="@string/config_peak_hours_title" />
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchPeakHoursNotify"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="6dp"
+                android:text="@string/config_peak_hours_hint" />
+
+            <LinearLayout
+                android:id="@+id/layoutPeakHoursOptions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <LinearLayout style="@style/Row" android:layout_marginBottom="8dp">
+                    <TextView
+                        style="@style/RowLabel"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/config_peak_hours_lead_title" />
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etPeakHoursLeadMin"
+                        style="@style/MediumInput"
+                        android:layout_width="72dp"
+                        android:layout_height="44dp"
+                        android:gravity="center"
+                        android:hint="10"
+                        android:inputType="number" />
+                </LinearLayout>
+
+                <LinearLayout style="@style/Row" android:layout_marginBottom="8dp">
+                    <TextView
+                        style="@style/RowLabel"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/config_peak_hours_min_offers_title" />
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etPeakHoursMinOffers"
+                        style="@style/MediumInput"
+                        android:layout_width="72dp"
+                        android:layout_height="44dp"
+                        android:gravity="center"
+                        android:hint="5"
+                        android:inputType="number" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvPeakHoursStatus"
+                    style="@style/RowHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:layout_marginBottom="6dp"
+                    android:text="" />
+            </LinearLayout>
+
+            <View style="@style/DividerFull" />
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:text="@string/config_flex_foreground_title" />
                 <com.google.android.material.switchmaterial.SwitchMaterial
                     android:id="@+id/switchFlexOnlyForeground"

@@ -167,6 +167,7 @@ class PichixAccessibilityService : AccessibilityService() {
         val offer: FlexBlockOffer,
         val station: String,
         val blockDateShort: String,
+        val blockDateIso: String = "",
         val listReason: String,
         val detailReason: String,
         val actionStartedAt: Long,
@@ -730,9 +731,7 @@ class PichixAccessibilityService : AccessibilityService() {
         }
 
         // Si tras aceptar se llamará con sonido, no adelantar el audio aquí (evita cortar/duplicar).
-        val deferOfferSoundForCall = shouldSchedule &&
-            settings.callOnBlockEnabled &&
-            settings.callOnBlockWhenAccepted
+        val deferOfferSoundForCall = shouldSchedule && willPlaySoundBeforeCallAfterAccept()
         if (settings.offerClickSoundEnabled && !deferOfferSoundForCall) {
             AlertManager(this).playFlexNotificationAlert(
                 settings.offerClickSoundUri,
@@ -825,7 +824,9 @@ class PichixAccessibilityService : AccessibilityService() {
     ) {
         val details = reader.readBlockDetails()
         val station = offer.stationText.ifBlank { details["station"].orEmpty() }
-        val blockDateShort = BlockDateFormatter.formatShort(details["date"].orEmpty())
+        val rawBlockDate = details["date"].orEmpty()
+        val blockDateShort = BlockDateFormatter.formatShort(rawBlockDate)
+        val blockDateIso = BlockDateFormatter.resolveIso(rawBlockDate, blockDateShort)
         val screenText = reader.readFullScreenText()
 
         if (OfferListDetailMatcher.isBlockUnavailable(screenText)) {
@@ -835,6 +836,7 @@ class PichixAccessibilityService : AccessibilityService() {
                 station,
                 blockDateShort,
                 actionStartedAt,
+                blockDateIso = blockDateIso,
             )
             return
         }
@@ -868,6 +870,7 @@ class PichixAccessibilityService : AccessibilityService() {
                     note,
                     stationOverride = station,
                     blockDate = blockDateShort,
+                    blockDateIso = blockDateIso,
                     actionStartedAt = actionStartedAt,
                     actionCompletedAt = System.currentTimeMillis(),
                 ),
@@ -903,6 +906,7 @@ class PichixAccessibilityService : AccessibilityService() {
                     reason,
                     stationOverride = station,
                     blockDate = blockDateShort,
+                    blockDateIso = blockDateIso,
                     actionStartedAt = actionStartedAt,
                     actionCompletedAt = System.currentTimeMillis(),
                 ),
@@ -919,6 +923,7 @@ class PichixAccessibilityService : AccessibilityService() {
                 station,
                 blockDateShort,
                 actionStartedAt,
+                blockDateIso = blockDateIso,
             )
             return
         }
@@ -932,6 +937,7 @@ class PichixAccessibilityService : AccessibilityService() {
             offer = offer,
             station = station,
             blockDateShort = blockDateShort,
+            blockDateIso = blockDateIso,
             listReason = listReason,
             detailReason = detailEval.reason,
             actionStartedAt = actionStartedAt,
@@ -943,6 +949,7 @@ class PichixAccessibilityService : AccessibilityService() {
         offer: FlexBlockOffer,
         station: String,
         blockDateShort: String,
+        blockDateIso: String = "",
         listReason: String,
         detailReason: String,
         actionStartedAt: Long,
@@ -966,7 +973,7 @@ class PichixAccessibilityService : AccessibilityService() {
                         cancelScheduleOutcomeFlow()
                         completeAcceptedTake(
                             offer, hubReading.flexMessage, station, blockDateShort,
-                            listReason, detailReason, actionStartedAt,
+                            listReason, detailReason, actionStartedAt, blockDateIso,
                         )
                         return
                     }
@@ -976,6 +983,7 @@ class PichixAccessibilityService : AccessibilityService() {
                         cancelScheduleOutcomeFlow()
                         beginLateAcceptRecovery(
                             offer, station, blockDateShort, listReason, detailReason, actionStartedAt,
+                            blockDateIso,
                         )
                     } else {
                         handler.postDelayed(this, SCHEDULE_OUTCOME_POLL_MS)
@@ -1002,7 +1010,7 @@ class PichixAccessibilityService : AccessibilityService() {
                         )
                         completeAcceptedTake(
                             offer, reading.flexMessage, station, blockDateShort,
-                            listReason, detailReason, actionStartedAt,
+                            listReason, detailReason, actionStartedAt, blockDateIso,
                         )
                     }
                     FlexTakeOutcomeReader.Result.BLOCK_UNAVAILABLE -> {
@@ -1013,6 +1021,7 @@ class PichixAccessibilityService : AccessibilityService() {
                             station,
                             blockDateShort,
                             actionStartedAt,
+                            blockDateIso = blockDateIso,
                         )
                     }
                     FlexTakeOutcomeReader.Result.PENDING -> {
@@ -1026,6 +1035,7 @@ class PichixAccessibilityService : AccessibilityService() {
                             )
                             beginLateAcceptRecovery(
                                 offer, station, blockDateShort, listReason, detailReason, actionStartedAt,
+                                blockDateIso,
                             )
                         } else {
                             handler.postDelayed(this, SCHEDULE_OUTCOME_POLL_MS)
@@ -1049,12 +1059,14 @@ class PichixAccessibilityService : AccessibilityService() {
         listReason: String,
         detailReason: String,
         actionStartedAt: Long,
+        blockDateIso: String = "",
     ) {
         cancelLateAcceptRecovery()
         val recovery = LateAcceptRecovery(
             offer = offer,
             station = station,
             blockDateShort = blockDateShort,
+            blockDateIso = blockDateIso,
             listReason = listReason,
             detailReason = detailReason,
             actionStartedAt = actionStartedAt,
@@ -1085,6 +1097,7 @@ class PichixAccessibilityService : AccessibilityService() {
                             ctx.listReason,
                             ctx.detailReason,
                             ctx.actionStartedAt,
+                            ctx.blockDateIso,
                         )
                     }
                     FlexTakeOutcomeReader.Result.BLOCK_UNAVAILABLE -> {
@@ -1095,6 +1108,7 @@ class PichixAccessibilityService : AccessibilityService() {
                             ctx.station,
                             ctx.blockDateShort,
                             ctx.actionStartedAt,
+                            blockDateIso = ctx.blockDateIso,
                         )
                     }
                     FlexTakeOutcomeReader.Result.PENDING -> {
@@ -1106,6 +1120,7 @@ class PichixAccessibilityService : AccessibilityService() {
                                 ctx.station,
                                 ctx.blockDateShort,
                                 ctx.actionStartedAt,
+                                blockDateIso = ctx.blockDateIso,
                             )
                         } else {
                             handler.postDelayed(this, SCHEDULE_LATE_POLL_MS)
@@ -1137,7 +1152,7 @@ class PichixAccessibilityService : AccessibilityService() {
             BotEventLog.log(this, BotEventLog.CAT_OFFER, "Toast externo → ACEPTADA: $msg")
             completeAcceptedTake(
                 ctx.offer, msg, ctx.station, ctx.blockDateShort,
-                ctx.listReason, ctx.detailReason, ctx.actionStartedAt,
+                ctx.listReason, ctx.detailReason, ctx.actionStartedAt, ctx.blockDateIso,
             )
             return
         }
@@ -1162,6 +1177,7 @@ class PichixAccessibilityService : AccessibilityService() {
         listReason: String,
         detailReason: String,
         actionStartedAt: Long,
+        blockDateIso: String = "",
     ) {
         cancelLateAcceptRecovery()
         logScheduleOutcome(
@@ -1173,6 +1189,7 @@ class PichixAccessibilityService : AccessibilityService() {
             listReason = listReason,
             detailReason = detailReason,
             actionStartedAt = actionStartedAt,
+            blockDateIso = blockDateIso,
         )
         finishBlockTakeFlow(pauseBot = settings.autoPauseAfterAccept)
         if (shouldCallAfterAcceptedTake()) {
@@ -1192,13 +1209,23 @@ class PichixAccessibilityService : AccessibilityService() {
     private fun shouldCallAfterAcceptedTake(): Boolean {
         if (!settings.callOnBlockEnabled) return false
         if (settings.callOnBlockWhenAccepted || settings.callOnBlockOnScheduledNotification) return true
-        return FlexAlertRulesStore.load(settings).any { rule ->
+        return hasScheduledCallAlertRule()
+    }
+
+    /** True si el flujo post-ACEPTADA reproducirá sonido antes de marcar (o solo marcará). */
+    private fun willPlaySoundBeforeCallAfterAccept(): Boolean {
+        if (!shouldCallAfterAcceptedTake()) return false
+        if (settings.callOnBlockSoundRepeatsBeforeCall > 0) return true
+        return settings.offerClickSoundEnabled
+    }
+
+    private fun hasScheduledCallAlertRule(): Boolean =
+        FlexAlertRulesStore.load(settings).any { rule ->
             rule.enabled && rule.callOnMatch && rule.effectiveMatchTexts().any { t ->
                 val lower = t.lowercase()
                 lower.contains("scheduled") || lower.contains("programad")
             }
         }
-    }
 
     private fun logScheduleOutcome(
         offer: FlexBlockOffer,
@@ -1209,6 +1236,7 @@ class PichixAccessibilityService : AccessibilityService() {
         listReason: String,
         detailReason: String,
         actionStartedAt: Long,
+        blockDateIso: String = "",
     ) {
         val completedAt = System.currentTimeMillis()
         val reason = buildString {
@@ -1226,6 +1254,7 @@ class PichixAccessibilityService : AccessibilityService() {
                 reason,
                 stationOverride = station,
                 blockDate = blockDateShort,
+                blockDateIso = blockDateIso,
                 actionStartedAt = actionStartedAt,
                 actionCompletedAt = completedAt,
             ),
@@ -1256,6 +1285,7 @@ class PichixAccessibilityService : AccessibilityService() {
         station: String,
         blockDateShort: String,
         actionStartedAt: Long,
+        blockDateIso: String = "",
     ) {
         logger.log(
             offer.toLogEntry(
@@ -1263,6 +1293,7 @@ class PichixAccessibilityService : AccessibilityService() {
                 reason,
                 stationOverride = station,
                 blockDate = blockDateShort,
+                blockDateIso = blockDateIso,
                 actionStartedAt = actionStartedAt,
                 actionCompletedAt = System.currentTimeMillis(),
             ),
@@ -1596,18 +1627,24 @@ class PichixAccessibilityService : AccessibilityService() {
         reason: String,
         stationOverride: String = stationText,
         blockDate: String = "",
+        blockDateIso: String = "",
         actionStartedAt: Long = 0L,
         actionCompletedAt: Long = 0L,
     ): OfferLogEntry {
         val pay = payAmount ?: FlexGrabberEvaluator.parsePay(payText) ?: 0.0
         val hours = durationHours ?: 0.0
         val hourly = hourlyRate ?: if (hours > 0.1) pay / hours else 0.0
+        val ref = actionCompletedAt.takeIf { it > 0L } ?: System.currentTimeMillis()
+        val iso = blockDateIso.ifBlank {
+            BlockDateFormatter.resolveIso("", blockDate, ref)
+        }
         return OfferLogEntry(
             price = pay,
             hourlyRate = hourly,
             durationHours = hours,
             timeWindow = timeText,
             blockDate = blockDate,
+            blockDateIso = iso,
             station = stationOverride.ifBlank { stationText },
             status = status,
             reason = reason,

@@ -119,6 +119,28 @@ class AppSettings(context: Context) {
         else -> "\$/h"
     }
 
+    /** Meta por día de la semana (Calendar.MONDAY…SUNDAY). 0 = sin meta. */
+    fun getCalendarWeekdayGoal(dayOfWeek: Int): Double {
+        val key = calendarWeekdayKey(dayOfWeek) ?: return 0.0
+        return prefs.getFloat("calendar_goal_$key", 0f).toDouble()
+    }
+
+    fun setCalendarWeekdayGoal(dayOfWeek: Int, value: Double) {
+        val key = calendarWeekdayKey(dayOfWeek) ?: return
+        prefs.edit().putFloat("calendar_goal_$key", value.coerceAtLeast(0.0).toFloat()).apply()
+    }
+
+    private fun calendarWeekdayKey(dayOfWeek: Int): String? = when (dayOfWeek) {
+        java.util.Calendar.MONDAY -> "lu"
+        java.util.Calendar.TUESDAY -> "ma"
+        java.util.Calendar.WEDNESDAY -> "mi"
+        java.util.Calendar.THURSDAY -> "ju"
+        java.util.Calendar.FRIDAY -> "vi"
+        java.util.Calendar.SATURDAY -> "sa"
+        java.util.Calendar.SUNDAY -> "do"
+        else -> null
+    }
+
     init {
         migrateLegacyOnlyRefreshFlag()
         migrateAutoScrollFromDisable()
@@ -498,6 +520,21 @@ class AppSettings(context: Context) {
         get() = prefs.getInt(KEY_CALL_ON_BLOCK_SOUND_REPEATS, 0).coerceIn(0, 20)
         set(value) = prefs.edit().putInt(KEY_CALL_ON_BLOCK_SOUND_REPEATS, value.coerceIn(0, 20)).apply()
 
+    /** Aviso de franja pico aunque el bot esté apagado. */
+    var peakHoursNotifyEnabled: Boolean
+        get() = prefs.getBoolean(KEY_PEAK_HOURS_NOTIFY, true)
+        set(value) = prefs.edit().putBoolean(KEY_PEAK_HOURS_NOTIFY, value).apply()
+
+    /** Minutos antes de la hora pico para notificar (0–59). */
+    var peakHoursLeadMinutes: Int
+        get() = prefs.getInt(KEY_PEAK_HOURS_LEAD_MIN, 10).coerceIn(0, 59)
+        set(value) = prefs.edit().putInt(KEY_PEAK_HOURS_LEAD_MIN, value.coerceIn(0, 59)).apply()
+
+    /** Mínimo de ofertas detectadas en una hora (últimos 30d) para considerarla pico. */
+    var peakHoursMinOffers: Int
+        get() = prefs.getInt(KEY_PEAK_HOURS_MIN_OFFERS, 5).coerceIn(1, 500)
+        set(value) = prefs.edit().putInt(KEY_PEAK_HOURS_MIN_OFFERS, value.coerceIn(1, 500)).apply()
+
     fun usesFlexDetailedTariff(): Boolean = flexTariffMode == TARIFF_MODE_DETAILED
 
     fun usesDetailMismatchAutoCancel(): Boolean =
@@ -590,6 +627,9 @@ class AppSettings(context: Context) {
         KEY_CALL_ON_BLOCK_ON_SCHEDULED to callOnBlockOnScheduledNotification,
         KEY_CALL_ON_BLOCK_DELAY_MS to callOnBlockDelayMs,
         KEY_CALL_ON_BLOCK_SOUND_REPEATS to callOnBlockSoundRepeatsBeforeCall,
+        KEY_PEAK_HOURS_NOTIFY to peakHoursNotifyEnabled,
+        KEY_PEAK_HOURS_LEAD_MIN to peakHoursLeadMinutes,
+        KEY_PEAK_HOURS_MIN_OFFERS to peakHoursMinOffers,
     )
 
     /** Restaura ajustes desde respaldo JSON (un solo commit). Omite claves inválidas y conserva el valor local previo. */
@@ -824,6 +864,9 @@ class AppSettings(context: Context) {
             KEY_CALL_ON_BLOCK_PHONE -> editor.putString(key, asString(value).trim())
             KEY_CALL_ON_BLOCK_WHEN_ACCEPTED -> editor.putBoolean(key, asBool(value))
             KEY_CALL_ON_BLOCK_ON_SCHEDULED -> editor.putBoolean(key, asBool(value))
+            KEY_PEAK_HOURS_NOTIFY -> editor.putBoolean(key, asBool(value))
+            KEY_PEAK_HOURS_LEAD_MIN -> editor.putInt(key, asInt(value).coerceIn(0, 59))
+            KEY_PEAK_HOURS_MIN_OFFERS -> editor.putInt(key, asInt(value).coerceIn(1, 500))
             else -> writeUnknownBackupEntry(editor, key, value)
         }
     }
@@ -993,6 +1036,9 @@ class AppSettings(context: Context) {
         private const val KEY_CALL_ON_BLOCK_ON_SCHEDULED = "call_on_block_on_scheduled"
         private const val KEY_CALL_ON_BLOCK_DELAY_MS = "call_on_block_delay_ms"
         private const val KEY_CALL_ON_BLOCK_SOUND_REPEATS = "call_on_block_sound_repeats_before_call"
+        private const val KEY_PEAK_HOURS_NOTIFY = "peak_hours_notify_enabled"
+        private const val KEY_PEAK_HOURS_LEAD_MIN = "peak_hours_lead_minutes"
+        private const val KEY_PEAK_HOURS_MIN_OFFERS = "peak_hours_min_offers"
 
         /** No se borran al importar (estado en vivo + flags de migración). */
         val PRESERVE_ON_IMPORT: Set<String> = setOf(

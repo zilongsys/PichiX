@@ -201,6 +201,38 @@
                     android:fontFamily="monospace"/>
             </LinearLayout>
 
+            <!-- CALENDARIO -->
+            <LinearLayout
+                android:id="@+id/sidebarCalendario"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+        android:minHeight="58dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="@drawable/sidebar_icon_ripple">
+                <ImageView
+                    android:id="@+id/sidebarIconCalendario"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:padding="7dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_sidebar_calendario"
+                    android:contentDescription="Calendario"
+                    android:background="@drawable/sidebar_icon_inactive"
+                    app:tint="@color/text_hint"/>
+                <TextView
+                    android:id="@+id/sidebarLabelCalendario"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Calendario"
+                    android:textSize="8sp"
+                    android:textColor="@color/text_hint"
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="monospace"/>
+            </LinearLayout>
+
             <!-- ESTADÍSTICAS -->
             <LinearLayout
                 android:id="@+id/sidebarEstadisticas"

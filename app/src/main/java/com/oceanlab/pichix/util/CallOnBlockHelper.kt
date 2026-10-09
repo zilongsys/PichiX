@@ -23,6 +23,11 @@ object CallOnBlockHelper {
     @Volatile
     private var lastCallAtMs = 0L
 
+    @Volatile
+    private var callGeneration = 0
+
+    private var pendingDial: Runnable? = null
+
     fun normalizePhone(raw: String): String =
         raw.filter { it.isDigit() || it == '+' }.trim()
 
@@ -48,32 +53,49 @@ object CallOnBlockHelper {
     ): Boolean {
         if (!settings.callOnBlockEnabled) return false
         val phone = normalizePhone(settings.callOnBlockPhoneNumber)
-        if (phone.length < 7) return false
+        if (phone.length < 7) {
+            BotEventLog.log(context, BotEventLog.CAT_BOT, "Llamada omitida: teléfono inválido ($reason)")
+            return false
+        }
         val now = System.currentTimeMillis()
         synchronized(this) {
-            if (now - lastCallAtMs < DEDUP_MS) return false
+            if (now - lastCallAtMs < DEDUP_MS) {
+                Log.d(TAG, "dedup: omitida ($reason)")
+                return false
+            }
+            // Reserva el slot; se confirma al marcar. Si el Intent falla, se libera.
             lastCallAtMs = now
         }
+        cancelPendingDial()
+        val gen = ++callGeneration
         val appContext = context.applicationContext
         val delayMs = settings.callOnBlockDelayMs
         val repeats = effectiveSoundRepeats(settings, skipSound)
-        val afterSoundOrImmediate: () -> Unit = {
+
+        val scheduleDial: () -> Unit = {
+            if (gen != callGeneration) return@scheduleDial
             if (delayMs <= 0L) {
-                placeCall(appContext, phone, reason)
+                placeCall(appContext, phone, reason, gen)
             } else {
-                handler.postDelayed({ placeCall(appContext, phone, reason) }, delayMs)
+                val r = Runnable {
+                    if (gen == callGeneration) placeCall(appContext, phone, reason, gen)
+                }
+                pendingDial = r
+                handler.postDelayed(r, delayMs)
             }
         }
+
         if (repeats > 0) {
-            val soundUri = if (settings.offerClickSoundEnabled) {
-                settings.offerClickSoundUri
-            } else {
-                ""
-            }
-            AlertManager(appContext).playThen(soundUri, repeats, afterSoundOrImmediate)
+            val soundUri = settings.offerClickSoundUri
+            BotEventLog.log(
+                appContext,
+                BotEventLog.CAT_BOT,
+                "Sonido ×$repeats antes de llamar ($reason)",
+            )
+            AlertManager(appContext).playThen(soundUri, repeats, scheduleDial)
             return true
         }
-        afterSoundOrImmediate()
+        scheduleDial()
         return true
     }
 
@@ -92,19 +114,28 @@ object CallOnBlockHelper {
         return 0
     }
 
-    private fun placeCall(context: Context, phone: String, reason: String): Boolean {
+    private fun cancelPendingDial() {
+        pendingDial?.let { handler.removeCallbacks(it) }
+        pendingDial = null
+    }
+
+    private fun placeCall(context: Context, phone: String, reason: String, gen: Int): Boolean {
+        if (gen != callGeneration) return false
+        pendingDial = null
         val uri = Uri.parse("tel:$phone")
         return try {
             if (hasCallPermission(context)) {
                 context.startActivity(
                     Intent(Intent.ACTION_CALL, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 )
+                lastCallAtMs = System.currentTimeMillis()
                 BotEventLog.log(context, BotEventLog.CAT_BOT, "Llamada iniciada ($reason)")
                 true
             } else {
                 context.startActivity(
                     Intent(Intent.ACTION_DIAL, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 )
+                lastCallAtMs = System.currentTimeMillis()
                 BotEventLog.log(
                     context,
                     BotEventLog.CAT_BOT,
@@ -114,6 +145,7 @@ object CallOnBlockHelper {
             }
         } catch (e: Exception) {
             Log.e(TAG, "No se pudo llamar a $phone", e)
+            synchronized(this) { lastCallAtMs = 0L }
             BotEventLog.log(context, BotEventLog.CAT_BOT, "Error al llamar: ${e.message ?: "desconocido"}")
             false
         }
