@@ -29,6 +29,8 @@ git push origin HEAD
 6. Si `git push` falla por auth: indicar `gh auth login` y reintentar una vez.
 7. **Excepciones** (no commit): solo preguntas, revisión sin editar, o el usuario dice "sin commit" / "no subas".
 
+CI: cada push a `main` dispara GitHub Actions (`.github/workflows/android.yml`), que compila el APK y crea el Release `vX.Y.Z`. Ver `CLAUDE.md` para el flujo en Claude Code móvil/nube (sin ZIPs).
+
 Remoto: `origin` → https://github.com/zilongsys/PichiX
 
 ## 3. ZIPs de entrega (obligatorio tras cada cambio de código)

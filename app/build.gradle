@@ -80,8 +80,27 @@ android {
         buildConfig true
     }
 
+    // Firma estable opcional (CI): si PICHIX_KEYSTORE_FILE está definida se usa para debug y release,
+    // así los APK de GitHub Actions se instalan como actualización sobre el anterior.
+    // Sin la variable (builds locales) se mantiene la firma debug por defecto.
+    def ciKeystorePath = System.getenv('PICHIX_KEYSTORE_FILE')
+    if (ciKeystorePath) {
+        signingConfigs {
+            ci {
+                storeFile file(ciKeystorePath)
+                storePassword System.getenv('PICHIX_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('PICHIX_KEY_ALIAS')
+                keyPassword System.getenv('PICHIX_KEY_PASSWORD')
+            }
+        }
+    }
+
     buildTypes {
+        debug {
+            if (ciKeystorePath) signingConfig signingConfigs.ci
+        }
         release {
+            if (ciKeystorePath) signingConfig signingConfigs.ci
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
