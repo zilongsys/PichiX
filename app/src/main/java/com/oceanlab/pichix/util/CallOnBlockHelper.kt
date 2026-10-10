@@ -72,7 +72,7 @@ object CallOnBlockHelper {
         val delayMs = settings.callOnBlockDelayMs
         val repeats = effectiveSoundRepeats(settings, skipSound)
 
-        val scheduleDial: () -> Unit = {
+        val scheduleDial: () -> Unit = scheduleDial@{
             if (gen != callGeneration) return@scheduleDial
             if (delayMs <= 0L) {
                 placeCall(appContext, phone, reason, gen)

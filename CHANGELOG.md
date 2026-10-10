@@ -8,6 +8,16 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.34 (Octubre 2026)
+
+### Añadido
+- **CI en GitHub Actions**: cada push a `main` compila el APK y publica el Release `vX.Y.Z`; ramas/PR dejan el APK como artefacto. Firma estable opcional por secretos. Ver `CLAUDE.md`.
+
+### Corregido
+- Compilación Kotlin en `CallOnBlockHelper`: `return@scheduleDial` sin etiqueta de lambda (v0.2.33 no compilaba).
+
+---
+
 ## v0.2.33 (Octubre 2026)
 
 ### Añadido
