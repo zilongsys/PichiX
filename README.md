@@ -31,8 +31,8 @@ Guía para Claude Code: `CLAUDE.md`. Reglas de Cursor: `.cursor/rules/`.
 
 | Pestaña | Función |
 |---------|---------|
-| Home | Estado del bot |
-| Config | Paquete Flex, accesibilidad, notificaciones |
+| Home | Estado del bot, respaldo completo (exportar/importar) |
+| Config | Paquete Flex, accesibilidad, notificaciones, respaldo completo |
 | Tarifas | Criterios rápidos o reglas detalladas |
 | Alertas | Acciones por texto de notificación Flex |
 | Historial | Registro de bloques |

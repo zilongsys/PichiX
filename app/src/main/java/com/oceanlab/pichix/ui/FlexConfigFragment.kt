@@ -34,6 +34,8 @@ import com.oceanlab.pichix.data.FlexReturnScreenTrigger
 import com.oceanlab.pichix.data.FlexReturnTriggersStore
 import com.oceanlab.pichix.data.MonitorPackages
 import com.oceanlab.pichix.data.PichiFileLog
+import com.oceanlab.pichix.data.PichixConfigBackup
+import com.oceanlab.pichix.data.PichixFullBackup
 import com.oceanlab.pichix.service.OverlayService
 import com.oceanlab.pichix.service.PauseByOverClicksController
 import com.oceanlab.pichix.service.PichixAccessibilityService
@@ -77,6 +79,49 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
     private var tvPermissionBanner: TextView? = null
     private var tvSaveDirty: TextView? = null
     private var configRootView: View? = null
+
+    private val exportFullBackupLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument(PichixFullBackup.MIME_TYPE),
+    ) { uri ->
+        if (uri == null || !isAdded) return@registerForActivityResult
+        try {
+            (activity as? MainActivity)?.flushConfigFormBeforeExport()
+            val json = PichixFullBackup.exportAll(requireContext())
+            PichixConfigBackup.writeText(requireContext(), uri, json)
+            Toast.makeText(requireContext(), getString(R.string.config_backup_export_ok), Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(
+                requireContext(),
+                getString(R.string.home_config_error, e.message ?: "error"),
+                Toast.LENGTH_LONG,
+            ).show()
+        }
+    }
+
+    private val importFullBackupLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri == null || !isAdded) return@registerForActivityResult
+        try {
+            val text = PichixConfigBackup.readText(requireContext(), uri)
+            val root = PichixFullBackup.parseBackup(text)
+            if (root == null) {
+                Toast.makeText(requireContext(), R.string.config_backup_file_invalid, Toast.LENGTH_LONG).show()
+                return@registerForActivityResult
+            }
+            if (PichixFullBackup.detectKind(text) == PichixFullBackup.BackupKind.CONFIG_ONLY) {
+                performConfigOnlyImport(text)
+                return@registerForActivityResult
+            }
+            PichixBackupImportDialog.show(this, text, root) { applyAfterFullImport() }
+        } catch (e: Exception) {
+            Toast.makeText(
+                requireContext(),
+                getString(R.string.home_config_error, e.message ?: "error"),
+                Toast.LENGTH_LONG,
+            ).show()
+        }
+    }
 
     private val callPhonePermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -403,6 +448,12 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         }
         setupOfferClickSoundControls(view, markDirty)
         setupDetailMismatchControls(view, markDirty)
+        view.findViewById<MaterialButton>(R.id.btnExportFullBackup)?.setOnClickListener {
+            exportFullBackupLauncher.launch(PichixFullBackup.exportFileName())
+        }
+        view.findViewById<MaterialButton>(R.id.btnImportFullBackup)?.setOnClickListener {
+            importFullBackupLauncher.launch(arrayOf(PichixFullBackup.MIME_TYPE, "application/*", "text/plain"))
+        }
         view.findViewById<MaterialButton>(R.id.btnShareDiagnosticLogs)?.setOnClickListener {
             shareDiagnosticLogs()
         }
@@ -652,6 +703,13 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             startExpanded = false,
         )
         ConfigSectionBinder.bind(
+            view.findViewById(R.id.headerSectionBackup),
+            view.findViewById(R.id.sectionBackup),
+            scrollHost,
+            sectionKey = "backup",
+            startExpanded = false,
+        )
+        ConfigSectionBinder.bind(
             view.findViewById(R.id.headerSectionLog),
             view.findViewById(R.id.sectionLog),
             scrollHost,
@@ -685,6 +743,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             ConfigSearchFilter.Section("flex_behavior", view.findViewById(R.id.headerSectionAuto), view.findViewById(R.id.sectionAuto), false),
             ConfigSearchFilter.Section("click_screen", view.findViewById(R.id.headerSectionClickScreen), view.findViewById(R.id.sectionClickScreen), false),
             ConfigSearchFilter.Section("pause", view.findViewById(R.id.headerSectionPause), view.findViewById(R.id.sectionPause), false),
+            ConfigSearchFilter.Section("backup", view.findViewById(R.id.headerSectionBackup), view.findViewById(R.id.sectionBackup), false),
             ConfigSearchFilter.Section("log", view.findViewById(R.id.headerSectionLog), view.findViewById(R.id.sectionLog), false),
             ConfigSearchFilter.Section("ui", view.findViewById(R.id.headerSectionUi), view.findViewById(R.id.sectionUi), false),
             ConfigSearchFilter.Section("dashboard", view.findViewById(R.id.headerSectionDashboard), view.findViewById(R.id.sectionDashboard), false),
@@ -1331,6 +1390,27 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         MainActivity.notifyAutoAcceptSettingChanged(requireContext(), settings.flexAutoAccept)
         MonitorPackages.notifyReload(requireContext())
         PichixAccessibilityService.syncEngine(requireContext())
+    }
+
+    private fun performConfigOnlyImport(json: String) {
+        try {
+            PichixConfigBackup.importFromJson(requireContext(), json)
+            applyAfterFullImport()
+            Toast.makeText(requireContext(), R.string.home_config_import_applied, Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(
+                requireContext(),
+                getString(R.string.home_config_error, e.message ?: "error"),
+                Toast.LENGTH_LONG,
+            ).show()
+        }
+    }
+
+    private fun applyAfterFullImport() {
+        if (!isAdded) return
+        settings = AppSettings(requireContext())
+        val activity = requireActivity() as MainActivity
+        activity.notifyConfigImported()
     }
 
     private fun shareDiagnosticPack() {

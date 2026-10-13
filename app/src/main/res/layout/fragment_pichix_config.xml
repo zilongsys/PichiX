@@ -2452,6 +2452,61 @@
         </LinearLayout>
 
         <TextView
+            android:id="@+id/headerSectionBackup"
+            style="@style/SectionLabel"
+            android:text="@string/config_section_backup" />
+
+        <LinearLayout
+            android:id="@+id/sectionBackup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout style="@style/Card">
+
+                <TextView
+                    style="@style/RowHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="10dp"
+                    android:text="@string/config_backup_hint" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingBottom="12dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnExportFullBackup"
+                        style="@style/SparkButtonSecondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="6dp"
+                        android:text="@string/config_backup_export"
+                        android:textSize="11sp"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnImportFullBackup"
+                        style="@style/SparkButtonSecondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="6dp"
+                        android:text="@string/config_backup_import"
+                        android:textSize="11sp"/>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
             android:id="@+id/headerSectionLog"
             style="@style/SectionLabel"
             android:text="@string/config_section_log" />

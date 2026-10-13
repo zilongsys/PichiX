@@ -11,6 +11,7 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 ## v0.2.34 (Octubre 2026)
 
 ### Añadido
+- **Respaldo completo** (Inicio y Config): exportar/importar en un JSON configuración, tarifas, alertas, historial CSV, sugerencias de análisis, ajustes del dashboard y logs de archivo; diálogo para elegir secciones al restaurar (compatible con respaldo solo-config y tarifas legacy).
 - **CI en GitHub Actions**: cada push a `main` compila el APK y publica el Release `vX.Y.Z`; ramas/PR dejan el APK como artefacto. Firma estable opcional por secretos. Ver `CLAUDE.md`.
 
 ### Corregido

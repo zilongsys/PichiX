@@ -44,19 +44,33 @@ object PichixConfigBackup {
         return ExportResult(count, json)
     }
 
-    fun exportToJson(context: Context): String {
+    fun exportSettingsObject(context: Context): JSONObject {
         val settings = AppSettings(context.applicationContext)
         val entries = JSONObject()
         settings.snapshotForBackup().forEach { (key, value) ->
             entries.put(key, encodeValue(value))
         }
+        return entries
+    }
+
+    fun exportToJson(context: Context): String {
         return JSONObject().apply {
             put("format", FORMAT)
             put("formatVersion", FORMAT_VERSION)
             put("appVersion", BuildConfig.VERSION_NAME)
             put("exportedAt", Instant.now().toString())
-            put("settings", entries)
+            put("settings", exportSettingsObject(context))
         }.toString(2)
+    }
+
+    /** Importa solo el objeto `settings` (p. ej. desde respaldo completo). */
+    fun importSettingsObject(context: Context, settingsObj: JSONObject): ImportResult {
+        val wrapped = JSONObject().apply {
+            put("format", FORMAT)
+            put("formatVersion", FORMAT_VERSION)
+            put("settings", settingsObj)
+        }
+        return importFromJson(context, wrapped.toString())
     }
 
     fun importFromJson(context: Context, json: String): ImportResult {

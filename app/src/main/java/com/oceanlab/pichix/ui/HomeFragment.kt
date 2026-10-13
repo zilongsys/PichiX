@@ -26,6 +26,8 @@ import com.oceanlab.pichix.data.AppSettings
 import com.oceanlab.pichix.data.MonitorPackages
 import com.oceanlab.pichix.data.PichiFileLog
 import com.oceanlab.pichix.data.PichixConfigBackup
+import com.oceanlab.pichix.data.PichixFullBackup
+import org.json.JSONObject
 import com.oceanlab.pichix.service.OverlayService
 import com.oceanlab.pichix.service.PichixAccessibilityService
 import com.oceanlab.pichix.util.OverlayPermissionHelper
@@ -51,15 +53,16 @@ class HomeFragment : Fragment() {
     private var suppressAutoAcceptSync = false
 
     private val exportConfigLauncher = registerForActivityResult(
-        ActivityResultContracts.CreateDocument("application/json"),
+        ActivityResultContracts.CreateDocument(PichixFullBackup.MIME_TYPE),
     ) { uri ->
         if (uri == null || !isAdded) return@registerForActivityResult
         try {
-            val result = PichixConfigBackup.export(requireContext())
-            PichixConfigBackup.writeText(requireContext(), uri, result.json)
+            val json = PichixFullBackup.exportAll(requireContext())
+            PichixConfigBackup.writeText(requireContext(), uri, json)
+            val counts = PichixFullBackup.describeBackup(JSONObject(json))
             Toast.makeText(
                 requireContext(),
-                getString(R.string.home_config_export_ok_count, result.keysExported),
+                getString(R.string.home_config_export_ok_count, counts.settingsKeys),
                 Toast.LENGTH_LONG,
             ).show()
         } catch (e: Exception) {
@@ -144,7 +147,7 @@ class HomeFragment : Fragment() {
         }
         view.findViewById<MaterialButton>(R.id.btnHomeExportConfig).setOnClickListener {
             (activity as MainActivity).flushConfigFormBeforeExport()
-            exportConfigLauncher.launch(PichixConfigBackup.suggestedExportFileName())
+            exportConfigLauncher.launch(PichixFullBackup.exportFileName())
         }
         view.findViewById<MaterialButton>(R.id.btnHomeImportConfig).setOnClickListener {
             importConfigLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
@@ -225,14 +228,51 @@ class HomeFragment : Fragment() {
 
     private fun performImport(uri: Uri) {
         try {
-            val previousDark = settings.useDarkTheme
             val json = PichixConfigBackup.readText(requireContext(), uri)
-            val result = PichixConfigBackup.importFromJson(requireContext(), json)
-            settings = AppSettings(requireContext())
-            showImportResultDialog(previousDark, result)
+            val root = PichixFullBackup.parseBackup(json)
+            if (root == null) {
+                Toast.makeText(requireContext(), R.string.config_backup_file_invalid, Toast.LENGTH_LONG).show()
+                return
+            }
+            when (PichixFullBackup.detectKind(json)) {
+                PichixFullBackup.BackupKind.FULL,
+                PichixFullBackup.BackupKind.LEGACY_TARIFFS_ONLY,
+                -> {
+                    PichixBackupImportDialog.show(this, json, root) {
+                        applyAfterFullBackupImport()
+                    }
+                }
+                PichixFullBackup.BackupKind.CONFIG_ONLY -> {
+                    val previousDark = settings.useDarkTheme
+                    val result = PichixConfigBackup.importFromJson(requireContext(), json)
+                    settings = AppSettings(requireContext())
+                    showImportResultDialog(previousDark, result)
+                }
+                PichixFullBackup.BackupKind.INVALID -> {
+                    Toast.makeText(requireContext(), R.string.config_backup_file_invalid, Toast.LENGTH_LONG).show()
+                }
+            }
         } catch (e: Exception) {
             showConfigError(e)
         }
+    }
+
+    private fun applyAfterFullBackupImport() {
+        if (!isAdded) return
+        val previousDark = settings.useDarkTheme
+        settings = AppSettings(requireContext())
+        val activity = requireActivity() as MainActivity
+        activity.reloadSettingsFromDisk()
+        if (settings.useDarkTheme != previousDark) {
+            ThemeHelper.setDarkTheme(requireContext(), settings.useDarkTheme)
+            view?.post {
+                if (isAdded) activity.recreate()
+            }
+            return
+        }
+        activity.notifyConfigImported()
+        syncSwitches()
+        refreshStatus()
     }
 
     private fun showImportResultDialog(previousDark: Boolean, result: PichixConfigBackup.ImportResult) {
