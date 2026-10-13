@@ -66,6 +66,8 @@ class PichixAccessibilityService : AccessibilityService() {
          */
         private const val SCHEDULE_LATE_RECOVERY_MS = 10_000L
         private const val SCHEDULE_LATE_POLL_MS = 200L
+        /** Ventana para reclasificar ACEPTADA una toma «sin confirmación» si Flex confirma muy tarde. */
+        private const val UNCONFIRMED_RECLASSIFY_MS = 5 * 60_000L
         const val BOT_STATE_CHANGED = MainActivity.BOT_STATE_CHANGED
         const val BOT_PAUSED = MainActivity.BOT_PAUSED
         const val BOT_RESUMED = "com.oceanlab.pichix.BOT_RESUMED"
@@ -84,8 +86,11 @@ class PichixAccessibilityService : AccessibilityService() {
             instance?.stopEngine()
         }
 
+        fun isBurstActivePublic(): Boolean = instance?.burstActive == true
+
         fun resumeFromPause(context: Context) {
             pausedAfterAccept = false
+            RefreshClickGuard.resetSession()
             syncEngine(context)
             BotEventLog.log(context, BotEventLog.CAT_PAUSE, "Bot reanudado")
             LocalBroadcastManager.getInstance(context).sendBroadcast(Intent(BOT_RESUMED))
@@ -173,6 +178,21 @@ class PichixAccessibilityService : AccessibilityService() {
         val actionStartedAt: Long,
         val expiresAtMs: Long,
     )
+
+    /** Toma en curso (desde abrir tarjeta hasta registrar el resultado). */
+    private data class ActiveTake(
+        val offer: FlexBlockOffer,
+        val actionStartedAt: Long,
+        var station: String,
+        var blockDateShort: String = "",
+        var blockDateIso: String = "",
+        var stage: String,
+    )
+
+    private var activeTake: ActiveTake? = null
+    /** Toma que acabó «sin confirmación»: si Flex confirma tarde, se reclasifica ACEPTADA. */
+    private var recentUnconfirmedTake: LateAcceptRecovery? = null
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
@@ -230,6 +250,8 @@ class PichixAccessibilityService : AccessibilityService() {
     }
 
     private fun stopEngine() {
+        logInterruptedTake("bot detenido")
+        RefreshClickGuard.resetSession()
         handler.removeCallbacksAndMessages(null)
         cancelPendingMotorActions()
         detailAcceptRunnable = null
@@ -391,6 +413,7 @@ class PichixAccessibilityService : AccessibilityService() {
             settings.flexRefreshButtonMatchMode,
             settings.flexRefreshButtonIgnoreCase,
         )
+        if (clicked) onRefreshClickCounted()
         if (!clicked) {
             if (!burstMode) postObserver("Clic: no se encontró «${settings.flexRefreshButtonText}»")
         } else if (burstMode && settings.debugLogEnabled) {
@@ -406,6 +429,25 @@ class PichixAccessibilityService : AccessibilityService() {
             }, 450)
         }
         return clicked
+    }
+
+    private fun onRefreshClickCounted() {
+        when (RefreshClickGuard.onRefreshClick(this, settings)) {
+            RefreshClickGuard.Decision.NONE -> Unit
+            RefreshClickGuard.Decision.WARN -> {
+                val st = RefreshClickGuard.status(this)
+                val msg = "Aviso: ${st.windowClicks} clics Refresh — cerca del límite aprendido (~${st.learnedLimit})"
+                BotEventLog.log(this, BotEventLog.CAT_PAUSE, msg)
+                postObserver(msg)
+                AlertManager(this).playSoundOnce("")
+            }
+            RefreshClickGuard.Decision.PAUSE -> {
+                val st = RefreshClickGuard.status(this)
+                val msg = "${st.windowClicks}/${st.learnedLimit} clics Refresh (límite aprendido)"
+                postObserver("Pausa preventiva: $msg")
+                PauseByOverClicksController.triggerPreventivePause(this, msg)
+            }
+        }
     }
 
     /** Tras Refresh: relee pantalla y evalúa sin esperar al siguiente ciclo del grabber. */
@@ -703,10 +745,16 @@ class PichixAccessibilityService : AccessibilityService() {
         }
 
     private fun handleAccept(offer: FlexBlockOffer, listReason: String) {
-        cancelLateAcceptRecovery()
+        flushLateRecoveryAsMiss("se inició otra toma")
         val simulation = settings.dryRunMode
         val shouldSchedule = settings.flexAutoAccept && !simulation
         val actionStartedAt = System.currentTimeMillis()
+        activeTake = ActiveTake(
+            offer = offer,
+            actionStartedAt = actionStartedAt,
+            station = offer.stationText,
+            stage = "abriendo la tarjeta",
+        )
         BotEventLog.log(
             this,
             BotEventLog.CAT_OFFER,
@@ -772,6 +820,16 @@ class PichixAccessibilityService : AccessibilityService() {
                 attempt++
                 if (!reader.isDetailReadyForAccept(needsSchedule = shouldSchedule)) {
                     val screenText = reader.readFullScreenText()
+                    if (attempt % 5 == 0 || attempt >= DETAIL_ACCEPT_MAX_ATTEMPTS) {
+                        val needle = captchaNeedleNow(screenText, reader.readFlexOverlayText(screenText))
+                        if (needle != null) {
+                            handleTakeCaptcha(
+                                offer, needle, offer.stationText, "", actionStartedAt,
+                                stage = "al abrir Offer Details",
+                            )
+                            return
+                        }
+                    }
                     if (reader.isOnOfferDetailScreen() &&
                         OfferListDetailMatcher.isBlockUnavailable(screenText)
                     ) {
@@ -828,6 +886,12 @@ class PichixAccessibilityService : AccessibilityService() {
         val blockDateShort = BlockDateFormatter.formatShort(rawBlockDate)
         val blockDateIso = BlockDateFormatter.resolveIso(rawBlockDate, blockDateShort)
         val screenText = reader.readFullScreenText()
+        activeTake?.let {
+            it.station = station
+            it.blockDateShort = blockDateShort
+            it.blockDateIso = blockDateIso
+            it.stage = "en Offer Details"
+        }
 
         if (OfferListDetailMatcher.isBlockUnavailable(screenText)) {
             handleTakeMiss(
@@ -928,6 +992,7 @@ class PichixAccessibilityService : AccessibilityService() {
             return
         }
 
+        activeTake?.stage = "tras pulsar Schedule"
         BotEventLog.log(
             this,
             BotEventLog.CAT_OFFER,
@@ -979,6 +1044,18 @@ class PichixAccessibilityService : AccessibilityService() {
                     }
                     // Sin toast aún: no declarar miss al instante — seguir vigilando (toast suele tardar).
                     attempt++
+                    // La verificación anti-bot puede abrirse en otra ventana/paquete (Flex sin foco).
+                    if (attempt % 4 == 0) {
+                        val needle = FlexBlockingPhrases.findCaptchaNeedle(reader.readFullScreenText())
+                        if (needle != null) {
+                            handleTakeCaptcha(
+                                offer, needle, station, blockDateShort, actionStartedAt,
+                                stage = "tras pulsar Schedule",
+                                blockDateIso = blockDateIso,
+                            )
+                            return
+                        }
+                    }
                     if (System.currentTimeMillis() - outcomeStartedAt >= SCHEDULE_OUTCOME_MAX_MS) {
                         cancelScheduleOutcomeFlow()
                         beginLateAcceptRecovery(
@@ -1000,6 +1077,17 @@ class PichixAccessibilityService : AccessibilityService() {
                     screenText = screenText,
                     overlayText = overlayText,
                 )
+                if (reading.result == FlexTakeOutcomeReader.Result.PENDING) {
+                    val needle = captchaNeedleNow(screenText, overlayText)
+                    if (needle != null) {
+                        handleTakeCaptcha(
+                            offer, needle, station, blockDateShort, actionStartedAt,
+                            stage = "tras pulsar Schedule",
+                            blockDateIso = blockDateIso,
+                        )
+                        return
+                    }
+                }
                 when (reading.result) {
                     FlexTakeOutcomeReader.Result.SCHEDULED -> {
                         cancelScheduleOutcomeFlow()
@@ -1077,10 +1165,22 @@ class PichixAccessibilityService : AccessibilityService() {
             override fun run() {
                 if (lateAcceptRecoveryRunnable !== this) return
                 val ctx = lateAcceptRecovery ?: return
+                val overlayText = reader.readFlexOverlayText()
                 val reading = FlexTakeOutcomeReader.readWithRecentNotification(
                     screenText = "",
-                    overlayText = reader.readFlexOverlayText(),
+                    overlayText = overlayText,
                 )
+                if (reading.result == FlexTakeOutcomeReader.Result.PENDING) {
+                    val needle = captchaNeedleNow("", overlayText)
+                    if (needle != null) {
+                        handleTakeCaptcha(
+                            ctx.offer, needle, ctx.station, ctx.blockDateShort, ctx.actionStartedAt,
+                            stage = "esperando confirmación tras Schedule",
+                            blockDateIso = ctx.blockDateIso,
+                        )
+                        return
+                    }
+                }
                 when (reading.result) {
                     FlexTakeOutcomeReader.Result.SCHEDULED -> {
                         cancelLateAcceptRecovery()
@@ -1114,6 +1214,7 @@ class PichixAccessibilityService : AccessibilityService() {
                     FlexTakeOutcomeReader.Result.PENDING -> {
                         if (System.currentTimeMillis() >= ctx.expiresAtMs) {
                             cancelLateAcceptRecovery()
+                            rememberUnconfirmedTake(ctx)
                             handleTakeMiss(
                                 ctx.offer,
                                 "Sin confirmación de Flex tras Schedule",
@@ -1154,6 +1255,31 @@ class PichixAccessibilityService : AccessibilityService() {
                 ctx.offer, msg, ctx.station, ctx.blockDateShort,
                 ctx.listReason, ctx.detailReason, ctx.actionStartedAt, ctx.blockDateIso,
             )
+            return
+        }
+        val recent = recentUnconfirmedTake?.takeIf { System.currentTimeMillis() < it.expiresAtMs }
+        if (recent != null && !isTakeFlowActive()) {
+            recentUnconfirmedTake = null
+            BotEventLog.log(this, BotEventLog.CAT_OFFER, "Confirmación muy tardía → reclasificada ACEPTADA: ${recent.station}")
+            logScheduleOutcome(
+                offer = recent.offer,
+                accepted = true,
+                flexMessage = "$msg (confirmación tardía; antes marcada sin confirmación)",
+                station = recent.station,
+                blockDateShort = recent.blockDateShort,
+                listReason = recent.listReason,
+                detailReason = recent.detailReason,
+                actionStartedAt = recent.actionStartedAt,
+                blockDateIso = recent.blockDateIso,
+            )
+            if (settings.autoPauseAfterAccept && settings.isBotEnabled && !pausedAfterAccept) {
+                pausedAfterAccept = true
+                postBotPaused()
+                BotEventLog.log(this, BotEventLog.CAT_PAUSE, "Pausado tras confirmación tardía")
+            }
+            if (shouldCallAfterAcceptedTake()) {
+                CallOnBlockHelper.maybeCallAfterSound(this, settings, "confirmación tardía: ${recent.station}")
+            }
             return
         }
         // Sin vigilancia: si auto-pausa al tomar, al menos pausar (toast de éxito sin flujo).
@@ -1267,6 +1393,88 @@ class PichixAccessibilityService : AccessibilityService() {
                 "PERDIDA: $station — ${flexMessage.ifBlank { "block unavailable" }}"
             },
         )
+    }
+
+    private fun captchaNeedleNow(screenText: String, overlayText: String): String? =
+        FlexBlockingPhrases.findCaptchaNeedle(overlayText)
+            ?: FlexBlockingPhrases.findCaptchaNeedle(screenText)
+
+    /** Ventana anti-bot durante la toma: registrar la oferta intentada y pausar. */
+    private fun handleTakeCaptcha(
+        offer: FlexBlockOffer,
+        needle: String,
+        station: String,
+        blockDateShort: String,
+        actionStartedAt: Long,
+        stage: String,
+        blockDateIso: String = "",
+    ) {
+        cancelDetailAcceptRetries()
+        cancelScheduleOutcomeFlow()
+        cancelLateAcceptRecovery()
+        val st = station.ifBlank { offer.stationText }
+        logger.log(
+            offer.toLogEntry(
+                OfferStatus.MISS,
+                "Verificación anti-bot («$needle») $stage",
+                stationOverride = st,
+                blockDate = blockDateShort,
+                blockDateIso = blockDateIso,
+                actionStartedAt = actionStartedAt,
+                actionCompletedAt = System.currentTimeMillis(),
+            ),
+            bypassDedup = true,
+        )
+        BotEventLog.log(this, BotEventLog.CAT_OFFER, "Captcha $stage: $st ${offer.payText}")
+        postObserver("Captcha al tomar: $st ${offer.payText}")
+        if (settings.autoPauseOnCaptcha) {
+            PauseByOverClicksController.triggerCaptchaPause(this, needle)
+        }
+        finishBlockTakeFlow(pauseBot = false)
+    }
+
+    /** Vigilancia tardía pendiente al empezar otra toma: registrar la anterior en vez de perderla. */
+    private fun flushLateRecoveryAsMiss(why: String) {
+        val ctx = lateAcceptRecovery ?: return
+        cancelLateAcceptRecovery()
+        rememberUnconfirmedTake(ctx)
+        logger.log(
+            ctx.offer.toLogEntry(
+                OfferStatus.MISS,
+                "Sin confirmación de Flex tras Schedule ($why)",
+                stationOverride = ctx.station,
+                blockDate = ctx.blockDateShort,
+                blockDateIso = ctx.blockDateIso,
+                actionStartedAt = ctx.actionStartedAt,
+                actionCompletedAt = System.currentTimeMillis(),
+            ),
+            bypassDedup = true,
+        )
+    }
+
+    private fun rememberUnconfirmedTake(ctx: LateAcceptRecovery) {
+        recentUnconfirmedTake = ctx.copy(expiresAtMs = System.currentTimeMillis() + UNCONFIRMED_RECLASSIFY_MS)
+    }
+
+    /** La toma se cortó sin registrar resultado (p. ej. bot apagado durante la verificación). */
+    private fun logInterruptedTake(why: String) {
+        if (!::logger.isInitialized) return
+        val take = activeTake ?: return
+        activeTake = null
+        lateAcceptRecovery?.let { rememberUnconfirmedTake(it) }
+        logger.log(
+            take.offer.toLogEntry(
+                OfferStatus.MISS,
+                "Toma interrumpida ($why) ${take.stage}",
+                stationOverride = take.station,
+                blockDate = take.blockDateShort,
+                blockDateIso = take.blockDateIso,
+                actionStartedAt = take.actionStartedAt,
+                actionCompletedAt = System.currentTimeMillis(),
+            ),
+            bypassDedup = true,
+        )
+        BotEventLog.log(this, BotEventLog.CAT_OFFER, "Toma interrumpida ($why): ${take.station} ${take.offer.payText}")
     }
 
     private fun cancelScheduleOutcomeFlow() {
@@ -1415,12 +1623,15 @@ class PichixAccessibilityService : AccessibilityService() {
     private fun finishBlockTakeFlow(pauseBot: Boolean) {
         cancelDetailAcceptRetries()
         cancelScheduleOutcomeFlow()
+        activeTake = null
         // No cancelar late recovery aquí: timeout de Schedule la arma a propósito.
         if (pauseBot) {
             cancelLateAcceptRecovery()
             pausedAfterAccept = true
             postBotPaused()
             BotEventLog.log(this, BotEventLog.CAT_PAUSE, "Pausado tras flujo de oferta")
+        } else if (pausedAfterAccept) {
+            BotEventLog.log(this, BotEventLog.CAT_OFFER, "Flujo de oferta terminado — bot en pausa")
         } else {
             BotEventLog.log(this, BotEventLog.CAT_OFFER, "Flujo de oferta terminado — bot sigue activo")
             scheduleWork()

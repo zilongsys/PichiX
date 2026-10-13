@@ -77,6 +77,7 @@ object PichixFullBackup {
         root.put("flex_alert_rules", exportAlertRules(app))
         root.put("offer_log_csv", exportOfferLogCsv(app))
         exportAppliedSuggestions(app)?.let { root.put("applied_suggestions_json", it) }
+        root.put("refresh_guard_json", com.oceanlab.pichix.service.RefreshClickGuard.exportJson(app))
         exportDashboardSettings(app)?.let { root.put("dashboard_settings", it) }
         root.put("file_logs", exportFileLogs(app))
         return root.toString(2)
@@ -248,6 +249,12 @@ object PichixFullBackup {
                 )
                 if (imp.keysImported > 0) {
                     parts.add("configuración")
+                }
+                if (root.has("refresh_guard_json")) {
+                    com.oceanlab.pichix.service.RefreshClickGuard.importJson(
+                        context,
+                        root.optString("refresh_guard_json", "[]"),
+                    )
                 }
             }
             if (parts.isEmpty()) {

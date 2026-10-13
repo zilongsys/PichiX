@@ -98,7 +98,8 @@ class AlertManager(private val context: Context) {
             pendingThenDone = wrappedDone
             prepareSystemVolumeForAlert()
             val uri = resolveUri(soundUri)
-            playSound(uri, volumeFraction(), repeatCount.coerceIn(1, 20)) {
+            // Canal de alarma: el aviso previo a la llamada debe oírse aunque el móvil esté en silencio.
+            playSound(uri, volumeFraction(), repeatCount.coerceIn(1, 20), forceAlarm = true) {
                 val done = takePendingThenDone()
                 stopGlobal(invokePendingThen = false)
                 done?.invoke()
@@ -164,8 +165,8 @@ class AlertManager(private val context: Context) {
             RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
         }
 
-    private fun buildPlayer(uri: Uri): MediaPlayer? {
-        val usage = if (settings.alertForceVolumeEnabled) {
+    private fun buildPlayer(uri: Uri, forceAlarm: Boolean = false): MediaPlayer? {
+        val usage = if (forceAlarm || settings.alertForceVolumeEnabled) {
             AudioAttributes.USAGE_ALARM
         } else {
             AudioAttributes.USAGE_NOTIFICATION_EVENT
@@ -191,9 +192,22 @@ class AlertManager(private val context: Context) {
         uri: Uri,
         volume: Float,
         repeatCount: Int,
+        forceAlarm: Boolean = false,
         onDone: (() -> Unit)? = null,
     ) {
-        val player = buildPlayer(uri)
+        val defaultUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        val player = buildPlayer(uri, forceAlarm)
+            ?: if (uri != defaultUri) {
+                Log.w(TAG, "Sonido no disponible ($uri), uso tono por defecto")
+                com.oceanlab.pichix.data.BotEventLog.log(
+                    context,
+                    com.oceanlab.pichix.data.BotEventLog.CAT_BOT,
+                    "Sonido elegido no se pudo abrir — uso tono por defecto",
+                )
+                buildPlayer(defaultUri, forceAlarm)
+            } else {
+                null
+            }
         if (player == null) {
             onDone?.invoke()
             return

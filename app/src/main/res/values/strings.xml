@@ -182,6 +182,15 @@
     <string name="home_config_export">Exportar todo</string>
     <string name="home_config_import">Importar respaldo</string>
     <string name="home_config_export_hint">Configuración, tarifas, alertas, historial CSV y logs opcionales en un JSON (como MakiX).</string>
+    <string name="config_refresh_guard_title">Contador de clics Refresh</string>
+    <string name="config_refresh_guard_hint">Cuenta cada clic en Refresh. Cuando Flex muestra «demasiados toques», guarda a cuántos clics y en cuánto tiempo salió, y usa esa memoria para avisar o pausar antes de volver a llegar.</string>
+    <string name="config_refresh_guard_warn">Aviso al acercarse al límite</string>
+    <string name="config_refresh_guard_pause">Pausa preventiva antes del límite</string>
+    <string name="config_refresh_guard_warn_pct">Aviso al %</string>
+    <string name="config_refresh_guard_pause_pct">Pausa al %</string>
+    <string name="config_refresh_guard_update">Actualizar datos</string>
+    <string name="config_refresh_guard_clear">Borrar memoria</string>
+    <string name="config_refresh_guard_cleared">Memoria de clics borrada</string>
     <string name="config_section_backup">Respaldo completo</string>
     <string name="config_backup_hint">Exporta o restaura configuración, tarifas, alertas, historial de ofertas y logs a archivo en un solo JSON.</string>
     <string name="config_backup_export">Exportar todo</string>

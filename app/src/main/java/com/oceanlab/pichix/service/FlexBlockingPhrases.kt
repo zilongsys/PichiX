@@ -24,15 +24,44 @@ object FlexBlockingPhrases {
         "demasiado tiempo",
     )
 
+    /** Ventana de protección anti-bot (captcha / «¿eres un robot?»). */
+    val CAPTCHA_PHRASES = listOf(
+        "captcha",
+        "are you a robot",
+        "are you a bot",
+        "not a robot",
+        "robot check",
+        "verify you're human",
+        "verify you are human",
+        "verify that you are human",
+        "verify you're not a robot",
+        "verify you are not a robot",
+        "human verification",
+        "confirm you're human",
+        "confirm you are human",
+        "security check",
+        "solve this puzzle",
+        "solve the puzzle",
+        "eres un robot",
+        "eres un bot",
+        "no soy un robot",
+        "verifica que eres",
+        "verificación de seguridad",
+        "verificacion de seguridad",
+    )
+
     val OTHER_BLOCK_PHRASES = listOf(
         "verification required",
         "verify you're",
         "verify you are",
-        "captcha",
-        "robot check",
-        "not a robot",
         "puzzle",
-    )
+    ) + CAPTCHA_PHRASES
+
+    fun findCaptchaNeedle(text: String): String? {
+        if (text.isBlank()) return null
+        val hay = text.lowercase()
+        return CAPTCHA_PHRASES.firstOrNull { hay.contains(it) }
+    }
 
     fun findFlexThrottleNeedle(text: String, ignoreCase: Boolean = true): String? {
         if (text.isBlank()) return null

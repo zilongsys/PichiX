@@ -8,6 +8,20 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.35 (Octubre 2026)
+
+### Añadido
+- **Contador de clics Refresh** (Config → Pausa): cuenta cada Refresh; en la primera detección del banner «demasiados toques» guarda a cuántos clics salió, el tiempo que pasó y el ritmo (clics/min). Con esa memoria (mediana de las últimas 5 detenciones) avisa al acercarse (80 % por defecto) y hace una **pausa preventiva** (92 %) antes de llegar. Datos visibles en Config y en el respaldo completo.
+- **Captcha / «¿eres un bot?» durante la toma**: si aparece al abrir la oferta o tras Schedule, la oferta intentada queda en el historial como PERDIDA («Verificación anti-bot») y el bot se pausa **sin reanudación automática**.
+
+### Corregido
+- Ofertas intentadas que no aparecían en el historial: se registran aunque el bot se apague a mitad de la toma, aunque empiece otra toma mientras se esperaba la confirmación, y sin que el filtro de duplicados las oculte.
+- **Sonó y no llamó**: si Flex confirma «scheduled» después de que la toma se marcara sin confirmación (hasta 5 min), se reclasifica ACEPTADA y se hace la llamada.
+- **Llamó y no sonó**: el sonido previo a la llamada usa el canal de alarma (se oye con el móvil en silencio) y, si el tono elegido no se puede abrir, usa el tono por defecto en vez de saltarse el sonido.
+- La pausa por captcha en la lista ya no depende de tener activada la «pausa por texto»; usa el ajuste «Pausar si aparece captcha».
+
+---
+
 ## v0.2.34 (Octubre 2026)
 
 ### Añadido

@@ -39,6 +39,7 @@ import com.oceanlab.pichix.data.PichixFullBackup
 import com.oceanlab.pichix.service.OverlayService
 import com.oceanlab.pichix.service.PauseByOverClicksController
 import com.oceanlab.pichix.service.PichixAccessibilityService
+import com.oceanlab.pichix.service.RefreshClickGuard
 import com.oceanlab.pichix.util.OverlayPermissionHelper
 import com.oceanlab.pichix.util.CallOnBlockHelper
 import com.oceanlab.pichix.util.AlertManager
@@ -389,6 +390,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         swPauseIgnore.isChecked = settings.pauseByOverClicksIgnoreCase
         bindCallOnBlockFields(view)
         bindPeakHoursFields(view)
+        bindRefreshGuardFields(view)
         refreshSoundLabels(view)
         refreshOfferClickSoundLabel(view)
         refreshMismatchSoundLabel(view)
@@ -510,6 +512,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         }
         setupCallOnBlockControls(view, markDirty)
         setupPeakHoursControls(view, markDirty)
+        setupRefreshGuardControls(view)
         swPauseOver.setOnCheckedChangeRetainingFocus(view) { markDirty() }
         swForeground.setOnCheckedChangeRetainingFocus(view) { markDirty() }
         swDebug.setOnCheckedChangeRetainingFocus(view) { checked ->
@@ -1108,6 +1111,54 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             PeakHoursScheduler.reschedule(requireContext())
             refreshPeakHoursStatus(view)
         })
+    }
+
+    private fun bindRefreshGuardFields(view: View) {
+        view.findViewById<SwitchMaterial>(R.id.switchRefreshGuardWarn).isChecked =
+            settings.refreshGuardWarnEnabled
+        view.findViewById<SwitchMaterial>(R.id.switchRefreshGuardPause).isChecked =
+            settings.refreshGuardPauseEnabled
+        view.findViewById<TextInputEditText>(R.id.etRefreshGuardWarnPct)
+            .setText(settings.refreshGuardWarnPercent.toString())
+        view.findViewById<TextInputEditText>(R.id.etRefreshGuardPausePct)
+            .setText(settings.refreshGuardPausePercent.toString())
+        refreshRefreshGuardStats(view)
+    }
+
+    /** Se guardan al instante: el motor los lee en cada clic Refresh. */
+    private fun setupRefreshGuardControls(view: View) {
+        val etWarn = view.findViewById<TextInputEditText>(R.id.etRefreshGuardWarnPct)
+        val etPause = view.findViewById<TextInputEditText>(R.id.etRefreshGuardPausePct)
+        view.findViewById<SwitchMaterial>(R.id.switchRefreshGuardWarn)
+            .setOnCheckedChangeRetainingFocus(view) { checked -> settings.refreshGuardWarnEnabled = checked }
+        view.findViewById<SwitchMaterial>(R.id.switchRefreshGuardPause)
+            .setOnCheckedChangeRetainingFocus(view) { checked -> settings.refreshGuardPauseEnabled = checked }
+        etWarn.onUserTextChanged(onDirty = {
+            etWarn.text?.toString()?.toIntOrNull()?.let { settings.refreshGuardWarnPercent = it }
+        })
+        etPause.onUserTextChanged(onDirty = {
+            etPause.text?.toString()?.toIntOrNull()?.let { settings.refreshGuardPausePercent = it }
+        })
+        view.findViewById<MaterialButton>(R.id.btnRefreshGuardRefreshStats).setOnClickListener {
+            refreshRefreshGuardStats(view)
+        }
+        view.findViewById<MaterialButton>(R.id.btnRefreshGuardClear).setOnClickListener {
+            androidx.appcompat.app.AlertDialog.Builder(requireContext(), R.style.SparkAlertDialogTheme)
+                .setTitle(R.string.config_refresh_guard_clear)
+                .setMessage(R.string.config_refresh_guard_hint)
+                .setPositiveButton(R.string.config_refresh_guard_clear) { _, _ ->
+                    RefreshClickGuard.clearMemory(requireContext())
+                    refreshRefreshGuardStats(view)
+                    Toast.makeText(requireContext(), R.string.config_refresh_guard_cleared, Toast.LENGTH_SHORT).show()
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        }
+    }
+
+    private fun refreshRefreshGuardStats(view: View) {
+        view.findViewById<TextView>(R.id.tvRefreshGuardStats)?.text =
+            RefreshClickGuard.summaryText(requireContext())
     }
 
     private fun persistPeakHoursFromView(view: View) {
@@ -1824,6 +1875,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
                 settings.pauseByOverClicksIgnoreCase
             bindCallOnBlockFields(view)
         bindPeakHoursFields(view)
+        bindRefreshGuardFields(view)
             returnTriggers = FlexReturnTriggersStore.load(settings).toMutableList()
             returnTriggersAdapter?.submit(returnTriggers.toList())
             refreshSoundLabels(view)

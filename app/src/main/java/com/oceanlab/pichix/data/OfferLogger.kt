@@ -56,11 +56,12 @@ class OfferLogger(private val context: Context) {
         }
     }
 
-    fun log(entry: OfferLogEntry) {
+    /** @param bypassDedup true para intentos de toma que siempre deben quedar en el historial. */
+    fun log(entry: OfferLogEntry, bypassDedup: Boolean = false) {
         val sig = signature(entry)
         val now = entry.timestamp
         val tracedEntry = entry.withTraceFirstSeen(sig, now)
-        if (shouldDedupStatus(tracedEntry.status)) {
+        if (!bypassDedup && shouldDedupStatus(tracedEntry.status)) {
             val key = dedupKey(tracedEntry)
             if (hasDedupWithinWindow(key, now)) {
                 Log.d(TAG, "Dedup ${tracedEntry.status}: $sig")

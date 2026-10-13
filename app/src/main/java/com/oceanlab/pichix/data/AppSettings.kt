@@ -535,6 +535,26 @@ class AppSettings(context: Context) {
         get() = prefs.getInt(KEY_PEAK_HOURS_MIN_OFFERS, 5).coerceIn(1, 500)
         set(value) = prefs.edit().putInt(KEY_PEAK_HOURS_MIN_OFFERS, value.coerceIn(1, 500)).apply()
 
+    /** Aviso al acercarse al nº de clics Refresh aprendido de banners «demasiados toques». */
+    var refreshGuardWarnEnabled: Boolean
+        get() = prefs.getBoolean(KEY_REFRESH_GUARD_WARN, true)
+        set(value) = prefs.edit().putBoolean(KEY_REFRESH_GUARD_WARN, value).apply()
+
+    /** Pausa preventiva antes de llegar al límite aprendido. */
+    var refreshGuardPauseEnabled: Boolean
+        get() = prefs.getBoolean(KEY_REFRESH_GUARD_PAUSE, true)
+        set(value) = prefs.edit().putBoolean(KEY_REFRESH_GUARD_PAUSE, value).apply()
+
+    /** % del límite aprendido al que suena el aviso (50–99). */
+    var refreshGuardWarnPercent: Int
+        get() = prefs.getInt(KEY_REFRESH_GUARD_WARN_PCT, 80).coerceIn(50, 99)
+        set(value) = prefs.edit().putInt(KEY_REFRESH_GUARD_WARN_PCT, value.coerceIn(50, 99)).apply()
+
+    /** % del límite aprendido al que se pausa (50–100). */
+    var refreshGuardPausePercent: Int
+        get() = prefs.getInt(KEY_REFRESH_GUARD_PAUSE_PCT, 92).coerceIn(50, 100)
+        set(value) = prefs.edit().putInt(KEY_REFRESH_GUARD_PAUSE_PCT, value.coerceIn(50, 100)).apply()
+
     fun usesFlexDetailedTariff(): Boolean = flexTariffMode == TARIFF_MODE_DETAILED
 
     fun usesDetailMismatchAutoCancel(): Boolean =
@@ -630,6 +650,10 @@ class AppSettings(context: Context) {
         KEY_PEAK_HOURS_NOTIFY to peakHoursNotifyEnabled,
         KEY_PEAK_HOURS_LEAD_MIN to peakHoursLeadMinutes,
         KEY_PEAK_HOURS_MIN_OFFERS to peakHoursMinOffers,
+        KEY_REFRESH_GUARD_WARN to refreshGuardWarnEnabled,
+        KEY_REFRESH_GUARD_PAUSE to refreshGuardPauseEnabled,
+        KEY_REFRESH_GUARD_WARN_PCT to refreshGuardWarnPercent,
+        KEY_REFRESH_GUARD_PAUSE_PCT to refreshGuardPausePercent,
     )
 
     /** Restaura ajustes desde respaldo JSON (un solo commit). Omite claves inválidas y conserva el valor local previo. */
@@ -867,6 +891,10 @@ class AppSettings(context: Context) {
             KEY_PEAK_HOURS_NOTIFY -> editor.putBoolean(key, asBool(value))
             KEY_PEAK_HOURS_LEAD_MIN -> editor.putInt(key, asInt(value).coerceIn(0, 59))
             KEY_PEAK_HOURS_MIN_OFFERS -> editor.putInt(key, asInt(value).coerceIn(1, 500))
+            KEY_REFRESH_GUARD_WARN -> editor.putBoolean(key, asBool(value))
+            KEY_REFRESH_GUARD_PAUSE -> editor.putBoolean(key, asBool(value))
+            KEY_REFRESH_GUARD_WARN_PCT -> editor.putInt(key, asInt(value).coerceIn(50, 99))
+            KEY_REFRESH_GUARD_PAUSE_PCT -> editor.putInt(key, asInt(value).coerceIn(50, 100))
             else -> writeUnknownBackupEntry(editor, key, value)
         }
     }
@@ -1039,6 +1067,10 @@ class AppSettings(context: Context) {
         private const val KEY_PEAK_HOURS_NOTIFY = "peak_hours_notify_enabled"
         private const val KEY_PEAK_HOURS_LEAD_MIN = "peak_hours_lead_minutes"
         private const val KEY_PEAK_HOURS_MIN_OFFERS = "peak_hours_min_offers"
+        private const val KEY_REFRESH_GUARD_WARN = "refresh_guard_warn"
+        private const val KEY_REFRESH_GUARD_PAUSE = "refresh_guard_pause"
+        private const val KEY_REFRESH_GUARD_WARN_PCT = "refresh_guard_warn_pct"
+        private const val KEY_REFRESH_GUARD_PAUSE_PCT = "refresh_guard_pause_pct"
 
         /** No se borran al importar (estado en vivo + flags de migración). */
         val PRESERVE_ON_IMPORT: Set<String> = setOf(

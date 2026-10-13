@@ -31,7 +31,14 @@ object PauseByOverClicksController {
         if (PichixAccessibilityService.pausedAfterAccept) return true
 
         FlexBlockingPhrases.findFlexThrottleNeedle(screenText)?.let { needle ->
+            recordThrottleEpisode(context)
             return triggerPause(context, settings, needle, "banner Flex")
+        }
+
+        if (settings.autoPauseOnCaptcha) {
+            FlexBlockingPhrases.findCaptchaNeedle(screenText)?.let { needle ->
+                return triggerCaptchaPause(context, needle)
+            }
         }
 
         if (!settings.pauseByOverClicksEnabled) return false
@@ -45,6 +52,7 @@ object PauseByOverClicksController {
         val settings = AppSettings(context)
         if (!settings.isBotEnabled) return false
         if (FlexBlockingPhrases.isFlexThrottleBanner(screenText)) return true
+        if (settings.autoPauseOnCaptcha && FlexBlockingPhrases.findCaptchaNeedle(screenText) != null) return true
         if (!settings.pauseByOverClicksEnabled) return false
         return findMatchingNeedle(screenText, settings) != null
     }
@@ -54,6 +62,39 @@ object PauseByOverClicksController {
         if (!settings.isBotEnabled || !settings.pauseByOverClicksEnabled) return
         val needle = findMatchingNeedle(notificationText, settings) ?: return
         triggerPause(context, settings, needle, "notificación")
+    }
+
+    /**
+     * Pausa por ventana anti-bot. Sin reanudación automática: hay que resolver la
+     * verificación en Flex y reanudar a mano.
+     */
+    fun triggerCaptchaPause(context: Context, needle: String): Boolean {
+        val settings = AppSettings(context)
+        if (!settings.isBotEnabled) return false
+        if (PichixAccessibilityService.pausedAfterAccept) return true
+        return triggerPause(context, settings, needle, "verificación anti-bot", autoResume = false)
+    }
+
+    /** Pausa antes de llegar al límite de clics Refresh aprendido. */
+    fun triggerPreventivePause(context: Context, reason: String): Boolean {
+        val settings = AppSettings(context)
+        if (!settings.isBotEnabled) return false
+        if (PichixAccessibilityService.pausedAfterAccept) return true
+        return triggerPause(context, settings, reason, "pausa preventiva")
+    }
+
+    private fun recordThrottleEpisode(context: Context) {
+        val episode = RefreshClickGuard.onThrottleDetected(
+            context,
+            burst = PichixAccessibilityService.isBurstActivePublic(),
+        ) ?: return
+        val limit = RefreshClickGuard.status(context).learnedLimit
+        BotEventLog.log(
+            context,
+            BotEventLog.CAT_PAUSE,
+            "Banner demasiados toques tras ${RefreshClickGuard.describeEpisode(episode)}" +
+                (limit?.let { " · límite aprendido ~$it clics" } ?: ""),
+        )
     }
 
     fun cancelScheduledResume() {
@@ -93,9 +134,10 @@ object PauseByOverClicksController {
         settings: AppSettings,
         needle: String,
         source: String,
+        autoResume: Boolean = true,
     ): Boolean {
         if (PichixAccessibilityService.pausedAfterAccept) {
-            rescheduleResume(context, settings)
+            if (autoResume) rescheduleResume(context, settings) else cancelScheduledResume()
             return true
         }
 
@@ -108,7 +150,12 @@ object PauseByOverClicksController {
         AlertManager(context).playSoundOnce(settings.pauseByOverClicksPauseSoundUri)
         BotEventLog.log(context, BotEventLog.CAT_PAUSE, "Pausado ($source): «$needle»")
         Log.i(TAG, "Bot pausado por $source: contiene \"$needle\"")
-        rescheduleResume(context, settings)
+        if (autoResume) {
+            rescheduleResume(context, settings)
+        } else {
+            cancelScheduledResume()
+            BotEventLog.log(context, BotEventLog.CAT_PAUSE, "Sin reanudación automática: resuelve la verificación y reanuda")
+        }
         return true
     }
 

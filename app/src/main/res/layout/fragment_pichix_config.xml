@@ -2449,6 +2449,129 @@
             </LinearLayout>
         </LinearLayout>
 
+        <LinearLayout style="@style/Card">
+
+            <TextView
+                style="@style/RowLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginTop="10dp"
+                android:text="@string/config_refresh_guard_title" />
+
+            <TextView
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="6dp"
+                android:text="@string/config_refresh_guard_hint" />
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_refresh_guard_warn" />
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchRefreshGuardWarn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <LinearLayout style="@style/Row">
+                <TextView
+                    style="@style/RowLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_refresh_guard_pause" />
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchRefreshGuardPause"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <LinearLayout
+                style="@style/ConfigTimeRow"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:text="@string/config_refresh_guard_warn_pct"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="10sp" />
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etRefreshGuardWarnPct"
+                    style="@style/TimeInputCompact"
+                    android:layout_marginEnd="12dp"
+                    android:inputType="number"
+                    android:hint="80" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:text="@string/config_refresh_guard_pause_pct"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="10sp" />
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etRefreshGuardPausePct"
+                    style="@style/TimeInputCompact"
+                    android:inputType="number"
+                    android:hint="92" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvRefreshGuardStats"
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginTop="6dp"
+                android:textIsSelectable="true" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="12dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnRefreshGuardRefreshStats"
+                    style="@style/SparkButtonSecondary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    android:text="@string/config_refresh_guard_update"
+                    android:textSize="11sp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnRefreshGuardClear"
+                    style="@style/SparkButtonSecondary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:text="@string/config_refresh_guard_clear"
+                    android:textSize="11sp"/>
+            </LinearLayout>
+        </LinearLayout>
+
         </LinearLayout>
 
         <TextView
