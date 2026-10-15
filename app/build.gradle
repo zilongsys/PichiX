@@ -80,27 +80,37 @@ android {
         buildConfig true
     }
 
-    // Firma estable opcional (CI): si PICHIX_KEYSTORE_FILE está definida se usa para debug y release,
-    // así los APK de GitHub Actions se instalan como actualización sobre el anterior.
-    // Sin la variable (builds locales) se mantiene la firma debug por defecto.
-    def ciKeystorePath = System.getenv('PICHIX_KEYSTORE_FILE')
-    if (ciKeystorePath) {
+    // Firma estable: la misma clave en Android Studio (keystore.properties) y en GitHub Actions
+    // (secretos PICHIX_*). El APK de CI se instala como actualización sobre el compilado en el PC.
+    def signingPropsFile = rootProject.file('keystore.properties')
+    def signingProps = new Properties()
+    if (signingPropsFile.exists()) {
+        signingPropsFile.withInputStream { signingProps.load(it) }
+    }
+    def pichixStoreFile = System.getenv('PICHIX_KEYSTORE_FILE') ?: signingProps.getProperty('storeFile')
+    def pichixStorePassword = System.getenv('PICHIX_KEYSTORE_PASSWORD') ?: signingProps.getProperty('storePassword')
+    def pichixKeyAlias = System.getenv('PICHIX_KEY_ALIAS') ?: signingProps.getProperty('keyAlias')
+    def pichixKeyPassword = System.getenv('PICHIX_KEY_PASSWORD') ?: signingProps.getProperty('keyPassword')
+    def pichixStore = pichixStoreFile ? rootProject.file(pichixStoreFile) : null
+    def hasPichixSigning = pichixStore != null && pichixStore.exists() &&
+            pichixStorePassword && pichixKeyAlias && pichixKeyPassword
+    if (hasPichixSigning) {
         signingConfigs {
-            ci {
-                storeFile file(ciKeystorePath)
-                storePassword System.getenv('PICHIX_KEYSTORE_PASSWORD')
-                keyAlias System.getenv('PICHIX_KEY_ALIAS')
-                keyPassword System.getenv('PICHIX_KEY_PASSWORD')
+            pichix {
+                storeFile pichixStore
+                storePassword pichixStorePassword
+                keyAlias pichixKeyAlias
+                keyPassword pichixKeyPassword
             }
         }
     }
 
     buildTypes {
         debug {
-            if (ciKeystorePath) signingConfig signingConfigs.ci
+            if (hasPichixSigning) signingConfig signingConfigs.pichix
         }
         release {
-            if (ciKeystorePath) signingConfig signingConfigs.ci
+            if (hasPichixSigning) signingConfig signingConfigs.pichix
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'

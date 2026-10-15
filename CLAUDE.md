@@ -13,8 +13,9 @@ Las reglas originales viven en `.cursor/rules/*.mdc` (Cursor). Este archivo las 
 - **El APK oficial lo compila GitHub Actions** (`.github/workflows/android.yml`), no el móvil ni la nube:
   - push a `main` → build + **GitHub Release `vX.Y.Z`** con `PichiX-vX.Y.Z.apk` (notas = sección del CHANGELOG).
   - push a otra rama / PR → build + artefacto descargable (sin Release).
-  - Firma estable opcional con secretos `PICHIX_KEYSTORE_BASE64`, `PICHIX_KEYSTORE_PASSWORD`, `PICHIX_KEY_ALIAS`,
-    `PICHIX_KEY_PASSWORD`. Sin ellos la clave debug es efímera y el APK no actualiza sobre otro firmado distinto.
+ - Firma estable: `keystore.properties` + `keystore/pichix.jks` en el PC (gitignored); en GitHub los secretos
+ `PICHIX_KEYSTORE_BASE64`, `PICHIX_KEYSTORE_PASSWORD`, `PICHIX_KEY_ALIAS`, `PICHIX_KEY_PASSWORD`. Guía: `docs/FIRMA.md`.
+ Subir secretos: `scripts/upload-signing-secrets.ps1`. Sin ellos la clave debug es efímera y el APK no actualiza.
 - Si el entorno no tiene JDK/SDK (típico en móvil/nube), **no intentes compilar**: revisa el código con cuidado
   (el historial tiene fallos de compilación como `$` sin escapar en strings Kotlin) y confía en el CI; revisa su
   resultado con `gh run list` / `gh run watch` si hay `gh`.

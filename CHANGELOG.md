@@ -15,6 +15,7 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ### Actualizado
 - El contador ya no borra la racha al pausar o apagar el bot: el ciclo sigue hasta el próximo banner. Se guardan hasta 80 ciclos (entran en el respaldo completo).
+- **Firma estable** PC (Android Studio) y GitHub Actions con la misma clave. Guía: `docs/FIRMA.md`. El APK de CI ya se instala encima del compilado en el PC.
 
 ---
 

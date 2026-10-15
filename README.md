@@ -17,7 +17,7 @@ Valores en `app/version.properties`; no editar `versionName` en `build.gradle`.
 
 Cada push a `main` dispara `.github/workflows/android.yml`, que compila y publica el APK en
 [Releases](https://github.com/zilongsys/PichiX/releases) (`PichiX-vX.Y.Z.apk`). Ramas y PR dejan el APK como artefacto del workflow.
-Para firma estable entre builds, definir los secretos `PICHIX_KEYSTORE_BASE64`, `PICHIX_KEYSTORE_PASSWORD`, `PICHIX_KEY_ALIAS`, `PICHIX_KEY_PASSWORD`.
+PC y GitHub deben firmar con la **misma clave** (`keystore.properties` + secretos). Guía: `docs/FIRMA.md`.
 
 Guía para Claude Code: `CLAUDE.md`. Reglas de Cursor: `.cursor/rules/`.
 
