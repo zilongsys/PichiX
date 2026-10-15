@@ -413,7 +413,7 @@ class PichixAccessibilityService : AccessibilityService() {
             settings.flexRefreshButtonMatchMode,
             settings.flexRefreshButtonIgnoreCase,
         )
-        if (clicked) onRefreshClickCounted()
+        if (clicked) onRefreshClickCounted(burstMode)
         if (!clicked) {
             if (!burstMode) postObserver("Clic: no se encontró «${settings.flexRefreshButtonText}»")
         } else if (burstMode && settings.debugLogEnabled) {
@@ -431,8 +431,8 @@ class PichixAccessibilityService : AccessibilityService() {
         return clicked
     }
 
-    private fun onRefreshClickCounted() {
-        when (RefreshClickGuard.onRefreshClick(this, settings)) {
+    private fun onRefreshClickCounted(burst: Boolean) {
+        when (RefreshClickGuard.onRefreshClick(this, settings, burst)) {
             RefreshClickGuard.Decision.NONE -> Unit
             RefreshClickGuard.Decision.WARN -> {
                 val st = RefreshClickGuard.status(this)

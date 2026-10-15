@@ -1139,6 +1139,9 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         etPause.onUserTextChanged(onDirty = {
             etPause.text?.toString()?.toIntOrNull()?.let { settings.refreshGuardPausePercent = it }
         })
+        view.findViewById<MaterialButton>(R.id.btnRefreshGuardOpenCycles).setOnClickListener {
+            startActivity(Intent(requireContext(), RefreshCyclesActivity::class.java))
+        }
         view.findViewById<MaterialButton>(R.id.btnRefreshGuardRefreshStats).setOnClickListener {
             refreshRefreshGuardStats(view)
         }
@@ -1924,6 +1927,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             val status = com.oceanlab.pichix.dashboardcontrol.DashboardLink.info().status.label
             btn.text = "Conexión con PC · $status"
         }
+        configRootView?.let { refreshRefreshGuardStats(it) }
         if (!AppSettings.isPendingConfigUiReload()) {
             suppressAutoPersist = false
         }

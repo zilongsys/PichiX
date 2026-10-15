@@ -53,6 +53,12 @@
             android:label="Log del día"
             android:parentActivityName=".ui.MainActivity" />
 
+        <activity
+            android:name=".ui.RefreshCyclesActivity"
+            android:exported="false"
+            android:label="@string/refresh_cycles_title"
+            android:parentActivityName=".ui.MainActivity" />
+
         <service
             android:name=".service.PichixAccessibilityService"
             android:exported="true"

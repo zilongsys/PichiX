@@ -8,6 +8,16 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.36 (Octubre 2026)
+
+### Añadido
+- **Ventana Ciclos Refresh** (Config → Pausa → Ver ciclos): cada ciclo va desde un banner «demasiados toques» hasta el siguiente. Muestra tiempo total, espera hasta el primer clic, tiempo dando clic, cantidad de clics (ráfaga/normales), ritmo, intervalos, huecos de más de 10 min, y si hubo aviso o pausa preventiva. El ciclo en curso se ve en vivo.
+
+### Actualizado
+- El contador ya no borra la racha al pausar o apagar el bot: el ciclo sigue hasta el próximo banner. Se guardan hasta 80 ciclos (entran en el respaldo completo).
+
+---
+
 ## v0.2.35 (Octubre 2026)
 
 ### Añadido
