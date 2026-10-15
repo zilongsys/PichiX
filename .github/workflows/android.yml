@@ -53,7 +53,11 @@ jobs:
           KEYSTORE_B64: ${{ secrets.PICHIX_KEYSTORE_BASE64 }}
         run: |
           if [ -n "$KEYSTORE_B64" ]; then
-            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/pichix.jks"
+            printf '%s' "$KEYSTORE_B64" | tr -d '\r\n ' | base64 -d > "$RUNNER_TEMP/pichix.jks"
+            if [ ! -s "$RUNNER_TEMP/pichix.jks" ]; then
+              echo "::error::PICHIX_KEYSTORE_BASE64 no se pudo decodificar (¿UTF-16 o recorte?). Vuelve a subir el secreto con scripts/upload-signing-secrets.ps1"
+              exit 1
+            fi
             echo "PICHIX_KEYSTORE_FILE=$RUNNER_TEMP/pichix.jks" >> "$GITHUB_ENV"
             echo "PICHIX_KEYSTORE_PASSWORD=${{ secrets.PICHIX_KEYSTORE_PASSWORD }}" >> "$GITHUB_ENV"
             echo "PICHIX_KEY_ALIAS=${{ secrets.PICHIX_KEY_ALIAS }}" >> "$GITHUB_ENV"

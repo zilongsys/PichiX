@@ -26,10 +26,13 @@ if (-not (Test-Path $storePath)) {
 }
 
 $b64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes($storePath))
-$b64 | gh secret set PICHIX_KEYSTORE_BASE64
-$props['storePassword'] | gh secret set PICHIX_KEYSTORE_PASSWORD
-$props['keyAlias'] | gh secret set PICHIX_KEY_ALIAS
-$props['keyPassword'] | gh secret set PICHIX_KEY_PASSWORD
+$b64File = Join-Path $env:TEMP "pichix-keystore.b64"
+[System.IO.File]::WriteAllText($b64File, $b64, [System.Text.ASCIIEncoding]::new())
+cmd /c "gh secret set PICHIX_KEYSTORE_BASE64 < `"$b64File`""
+if ($LASTEXITCODE -ne 0) { throw "No se pudo subir PICHIX_KEYSTORE_BASE64" }
+gh secret set PICHIX_KEYSTORE_PASSWORD --body $props['storePassword']
+gh secret set PICHIX_KEY_ALIAS --body $props['keyAlias']
+gh secret set PICHIX_KEY_PASSWORD --body $props['keyPassword']
 
 Write-Host "Secretos subidos a GitHub. El próximo APK de Actions usará la misma clave que Android Studio."
 Write-Host "Guarda una copia de $storePath y de keystore.properties fuera del PC (USB / gestor de contraseñas)."
