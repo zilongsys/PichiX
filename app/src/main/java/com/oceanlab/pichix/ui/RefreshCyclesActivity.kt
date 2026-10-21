@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MenuItem
@@ -21,6 +20,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.oceanlab.pichix.R
 import com.oceanlab.pichix.service.RefreshClickGuard
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /** Ventana de ciclos Refresh: de un banner «demasiados toques» al siguiente. */
 class RefreshCyclesActivity : AppCompatActivity() {
@@ -28,8 +30,10 @@ class RefreshCyclesActivity : AppCompatActivity() {
     private lateinit var tvSummary: TextView
     private lateinit var tvProgress: TextView
     private lateinit var bar: ProgressBar
+    private lateinit var header: View
     private lateinit var rv: RecyclerView
     private val adapter = CycleAdapter()
+    private val timeFmt = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
     private val changedReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action == RefreshClickGuard.ACTION_CHANGED) bind()
@@ -46,6 +50,7 @@ class RefreshCyclesActivity : AppCompatActivity() {
         tvSummary = findViewById(R.id.tvRefreshCyclesSummary)
         tvProgress = findViewById(R.id.tvRefreshCyclesProgress)
         bar = findViewById(R.id.barRefreshCyclesProgress)
+        header = findViewById(R.id.rowRefreshCyclesHeader)
         rv = findViewById(R.id.rvRefreshCycles)
         rv.adapter = adapter
 
@@ -129,11 +134,83 @@ class RefreshCyclesActivity : AppCompatActivity() {
         closed.forEachIndexed { i, ep ->
             rows.add(CycleRow(ep, closed.size - i, live = false))
         }
+        header.visibility = if (rows.isEmpty()) View.GONE else View.VISIBLE
         adapter.submit(this, rows)
         if (rows.isEmpty()) {
             tvProgress.append("\n${getString(R.string.refresh_cycles_empty)}")
         }
     }
+
+    private fun formatTime(ms: Long): String {
+        if (ms <= 0L) return "—"
+        return timeFmt.format(Date(ms))
+    }
+
+    private fun paceText(e: RefreshClickGuard.Episode): String {
+        return if (e.clicksPerMin > 0.0) {
+            "≈%.1f".format(Locale.US, e.clicksPerMin)
+        } else {
+            "—"
+        }
+    }
+
+    private fun prevText(e: RefreshClickGuard.Episode): String = when {
+        e.pausedPreventively -> getString(R.string.refresh_cycles_prev_pause)
+        e.warned -> getString(R.string.refresh_cycles_prev_warn)
+        else -> getString(R.string.refresh_cycles_prev_none)
+    }
+
+    private fun extraSpan(e: RefreshClickGuard.Episode, live: Boolean): String {
+        val start = if (e.firstClickAtMs > 0L) formatTime(e.firstClickAtMs) else "—"
+        val end = when {
+            e.lastClickAtMs > 0L -> formatTime(e.lastClickAtMs)
+            live -> getString(R.string.refresh_cycles_until_now)
+            else -> "—"
+        }
+        val burst = getString(R.string.refresh_cycles_burst_n, e.burstClicks)
+        val normal = getString(R.string.refresh_cycles_normal_n, e.normalClicks)
+        return "$start → $end\n$burst · $normal"
+    }
+
+    private fun extraWait(e: RefreshClickGuard.Episode, live: Boolean): String {
+        val wait = when {
+            e.waitAfterPreviousMs > 0L -> getString(
+                R.string.refresh_cycles_extra_wait,
+                RefreshClickGuard.formatDuration(e.waitAfterPreviousMs),
+            )
+            !live && e.previousBannerAtMs <= 0L -> getString(R.string.refresh_cycles_first_short)
+            else -> null
+        }
+        val until = if (!live) {
+            getString(
+                R.string.refresh_cycles_extra_banner,
+                RefreshClickGuard.formatDuration(e.elapsedMs),
+            )
+        } else {
+            null
+        }
+        return listOfNotNull(wait, until).joinToString("\n").ifEmpty { "—" }
+    }
+
+    private fun extraGaps(e: RefreshClickGuard.Episode): String {
+        if (e.clicks < 2) {
+            return if (e.idleGaps > 0) getString(R.string.refresh_cycles_extra_idle, e.idleGaps) else "—"
+        }
+        val gaps = getString(
+            R.string.refresh_cycles_extra_int,
+            RefreshClickGuard.formatDuration(e.minGapMs),
+            RefreshClickGuard.formatDuration(e.avgGapMs),
+            RefreshClickGuard.formatDuration(e.maxGapMs),
+        )
+        return if (e.idleGaps > 0) {
+            "$gaps · ${getString(R.string.refresh_cycles_extra_idle, e.idleGaps)}"
+        } else {
+            gaps
+        }
+    }
+
+    private fun extraLast(e: RefreshClickGuard.Episode): String =
+        getString(R.string.refresh_cycles_extra_last, e.clicksLast60s, e.clicksLast5min)
 
     private data class CycleRow(
         val episode: RefreshClickGuard.Episode,
@@ -165,120 +242,58 @@ class RefreshCyclesActivity : AppCompatActivity() {
         override fun getItemCount(): Int = rows.size
 
         class Holder(view: View) : RecyclerView.ViewHolder(view) {
-            private val title = view.findViewById<TextView>(R.id.tvCycleTitle)
-            private val body = view.findViewById<TextView>(R.id.tvCycleBody)
+            private val colIndex = view.findViewById<TextView>(R.id.tvColIndex)
+            private val colClicks = view.findViewById<TextView>(R.id.tvColClicks)
+            private val colPace = view.findViewById<TextView>(R.id.tvColPace)
+            private val colActive = view.findViewById<TextView>(R.id.tvColActive)
+            private val colBanner = view.findViewById<TextView>(R.id.tvColBanner)
+            private val colPrev = view.findViewById<TextView>(R.id.tvColPrev)
+            private val extraSpan = view.findViewById<TextView>(R.id.tvExtraSpan)
+            private val extraWait = view.findViewById<TextView>(R.id.tvExtraWait)
+            private val extraGaps = view.findViewById<TextView>(R.id.tvExtraGaps)
+            private val extraLast = view.findViewById<TextView>(R.id.tvExtraLast)
 
             fun bind(host: RefreshCyclesActivity, row: CycleRow) {
                 val e = row.episode
                 val ctx = host
-                title.text = if (row.live) {
-                    ctx.getString(R.string.refresh_cycles_live_title, row.index)
+                colIndex.text = if (row.live) "${row.index}*" else row.index.toString()
+                colClicks.text = e.clicks.toString()
+                colPace.text = host.paceText(e)
+                val activeMs = if (e.activeClickingMs > 0L) e.activeClickingMs else e.clickingMs
+                colActive.text = if (activeMs > 0L) RefreshClickGuard.formatDuration(activeMs) else "—"
+                colBanner.text = if (row.live) {
+                    ctx.getString(R.string.refresh_cycles_live_short)
                 } else {
-                    ctx.getString(R.string.refresh_cycles_closed_title, row.index)
+                    host.formatTime(e.atMs)
                 }
-                title.setTextColor(
-                    ContextCompat.getColor(
-                        ctx,
-                        if (row.live) R.color.badge_amber_text else R.color.text_primary,
-                    ),
+                colPrev.text = host.prevText(e)
+                extraSpan.text = host.extraSpan(e, row.live)
+                extraWait.text = host.extraWait(e, row.live)
+                extraGaps.text = host.extraGaps(e)
+                extraLast.text = host.extraLast(e)
+
+                val titleColor = ContextCompat.getColor(
+                    ctx,
+                    if (row.live) R.color.badge_amber_text else R.color.text_primary,
                 )
-                (itemView.background as? GradientDrawable)?.apply {
-                    cornerRadius = host.dp(12).toFloat()
-                    setColor(ContextCompat.getColor(ctx, if (row.live) R.color.amber_bg else R.color.bg_card))
-                    setStroke(
-                        host.dp(1),
-                        ContextCompat.getColor(ctx, if (row.live) R.color.amber_400 else R.color.border_subtle),
-                    )
-                } ?: run {
-                    itemView.background = GradientDrawable().apply {
-                        shape = GradientDrawable.RECTANGLE
-                        cornerRadius = host.dp(12).toFloat()
-                        setColor(ContextCompat.getColor(ctx, if (row.live) R.color.amber_bg else R.color.bg_card))
-                        setStroke(
-                            host.dp(1),
-                            ContextCompat.getColor(ctx, if (row.live) R.color.amber_400 else R.color.border_subtle),
-                        )
-                    }
-                }
-                body.text = host.formatBody(e, row.live)
+                val extraColor = ContextCompat.getColor(
+                    ctx,
+                    if (row.live) R.color.badge_amber_text else R.color.text_secondary,
+                )
+                colIndex.setTextColor(titleColor)
+                colClicks.setTextColor(titleColor)
+                colPace.setTextColor(titleColor)
+                colActive.setTextColor(titleColor)
+                colBanner.setTextColor(titleColor)
+                colPrev.setTextColor(titleColor)
+                extraSpan.setTextColor(extraColor)
+                extraWait.setTextColor(extraColor)
+                extraGaps.setTextColor(extraColor)
+                extraLast.setTextColor(extraColor)
+                itemView.setBackgroundColor(
+                    ContextCompat.getColor(ctx, if (row.live) R.color.amber_bg else R.color.bg_card),
+                )
             }
         }
     }
-
-    private fun formatBody(e: RefreshClickGuard.Episode, live: Boolean): String {
-        val from = when {
-            e.previousBannerAtMs > 0L -> RefreshClickGuard.formatClock(e.previousBannerAtMs)
-            e.firstClickAtMs > 0L -> RefreshClickGuard.formatClock(e.firstClickAtMs)
-            else -> "—"
-        }
-        val to = when {
-            live && e.lastClickAtMs > 0L -> RefreshClickGuard.formatClock(e.lastClickAtMs)
-            live -> getString(R.string.refresh_cycles_until_now)
-            else -> RefreshClickGuard.formatClock(e.atMs)
-        }
-        val clickSpan = if (e.firstClickAtMs > 0L && e.lastClickAtMs >= e.firstClickAtMs) {
-            "${RefreshClickGuard.formatClock(e.firstClickAtMs)}  →  ${RefreshClickGuard.formatClock(e.lastClickAtMs)}"
-        } else {
-            "—"
-        }
-        return buildString {
-            append(getString(R.string.refresh_cycles_span)).append(": ").append(from).append("  →  ").append(to).append('\n')
-            if (e.previousBannerAtMs > 0L) {
-                append(getString(R.string.refresh_cycles_from_prev_banner)).append(": ")
-                    .append(RefreshClickGuard.formatDuration(e.cycleMs)).append('\n')
-                if (e.waitAfterPreviousMs > 0L) {
-                    append(getString(R.string.refresh_cycles_wait_first)).append(": ")
-                        .append(RefreshClickGuard.formatDuration(e.waitAfterPreviousMs)).append('\n')
-                }
-            } else if (!live) {
-                append(getString(R.string.refresh_cycles_from_prev_banner)).append(": ")
-                    .append(getString(R.string.refresh_cycles_first)).append('\n')
-            }
-            val active = if (e.activeClickingMs > 0L) e.activeClickingMs else e.clickingMs
-            append(getString(R.string.refresh_cycles_clicking)).append(": ")
-                .append(RefreshClickGuard.formatDuration(active)).append('\n')
-            append(getString(R.string.refresh_cycles_click_span)).append(": ").append(clickSpan).append('\n')
-            if (!live) {
-                append(getString(R.string.refresh_cycles_until_banner)).append(": ")
-                    .append(RefreshClickGuard.formatDuration(e.elapsedMs)).append('\n')
-            }
-            append(getString(R.string.refresh_cycles_clicks)).append(": ").append(e.clicks)
-                .append("  (").append(getString(R.string.refresh_cycles_burst_n, e.burstClicks))
-                .append(" · ").append(getString(R.string.refresh_cycles_normal_n, e.normalClicks))
-                .append(")\n")
-            append(getString(R.string.refresh_cycles_pace)).append(": ")
-            if (e.clicksPerMin > 0.0) {
-                append("≈").append("%.1f".format(java.util.Locale.US, e.clicksPerMin)).append("/min")
-            } else {
-                append("—")
-            }
-            append("  ·  ")
-                .append(getString(R.string.refresh_cycles_last_min, e.clicksLast60s)).append("  ·  ")
-                .append(getString(R.string.refresh_cycles_last_5min, e.clicksLast5min)).append('\n')
-            if (e.clicks >= 2) {
-                append(getString(R.string.refresh_cycles_gaps)).append(": ")
-                    .append(
-                        getString(
-                            R.string.refresh_cycles_gaps_values,
-                            RefreshClickGuard.formatDuration(e.minGapMs),
-                            RefreshClickGuard.formatDuration(e.avgGapMs),
-                            RefreshClickGuard.formatDuration(e.maxGapMs),
-                        ),
-                    ).append('\n')
-            }
-            if (e.idleGaps > 0) {
-                append(getString(R.string.refresh_cycles_idle)).append(": ").append(e.idleGaps).append('\n')
-            }
-            append(getString(R.string.refresh_cycles_preventive)).append(": ")
-            append(if (e.warned) getString(R.string.refresh_cycles_warned_yes) else getString(R.string.refresh_cycles_warned_no))
-            append("  ·  ")
-            append(if (e.pausedPreventively) getString(R.string.refresh_cycles_paused_yes) else getString(R.string.refresh_cycles_paused_no))
-            if (!live) {
-                append('\n').append(getString(R.string.refresh_cycles_banner_at)).append(": ")
-                    .append(RefreshClickGuard.formatClock(e.atMs))
-            }
-        }
-    }
-
-    fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 }

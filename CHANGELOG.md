@@ -8,6 +8,13 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.39 (Octubre 2026)
+
+### Actualizado
+- **Ciclos Refresh**: la ventana pasa a tabla. Primera fila: nº, clics, ritmo, tiempo activo, hora del banner y aviso/pausa. Segunda fila: el resto (rango, espera, intervalos, ráfaga, último min).
+
+---
+
 ## v0.2.38 (Octubre 2026)
 
 ### Corregido

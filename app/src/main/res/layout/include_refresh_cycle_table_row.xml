@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical">
+
+    <TextView
+        android:id="@+id/tvColIndex"
+        style="@style/RefreshCycleCol"
+        android:layout_weight="0.7"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvColClicks"
+        style="@style/RefreshCycleCol"
+        android:layout_weight="0.85"
+        android:gravity="end" />
+
+    <TextView
+        android:id="@+id/tvColPace"
+        style="@style/RefreshCycleCol"
+        android:layout_weight="1.1"
+        android:gravity="end" />
+
+    <TextView
+        android:id="@+id/tvColActive"
+        style="@style/RefreshCycleCol"
+        android:layout_weight="1.0"
+        android:gravity="end" />
+
+    <TextView
+        android:id="@+id/tvColBanner"
+        style="@style/RefreshCycleCol"
+        android:layout_weight="1.35"
+        android:paddingStart="6dp"
+        android:paddingEnd="4dp" />
+
+    <TextView
+        android:id="@+id/tvColPrev"
+        style="@style/RefreshCycleCol"
+        android:layout_weight="1.0" />
+</LinearLayout>
