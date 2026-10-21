@@ -547,13 +547,30 @@ class AppSettings(context: Context) {
 
     /** % del límite aprendido al que suena el aviso (50–99). */
     var refreshGuardWarnPercent: Int
-        get() = prefs.getInt(KEY_REFRESH_GUARD_WARN_PCT, 80).coerceIn(50, 99)
-        set(value) = prefs.edit().putInt(KEY_REFRESH_GUARD_WARN_PCT, value.coerceIn(50, 99)).apply()
+        get() = com.oceanlab.pichix.service.RefreshClickMath.orderedPercents(
+            prefs.getInt(KEY_REFRESH_GUARD_WARN_PCT, 80),
+            prefs.getInt(KEY_REFRESH_GUARD_PAUSE_PCT, 92),
+        ).first
+        set(value) {
+            val pause = prefs.getInt(KEY_REFRESH_GUARD_PAUSE_PCT, 92)
+            val (warn, _) = com.oceanlab.pichix.service.RefreshClickMath.orderedPercents(value, pause)
+            prefs.edit().putInt(KEY_REFRESH_GUARD_WARN_PCT, warn).apply()
+        }
 
     /** % del límite aprendido al que se pausa (50–100). */
     var refreshGuardPausePercent: Int
-        get() = prefs.getInt(KEY_REFRESH_GUARD_PAUSE_PCT, 92).coerceIn(50, 100)
-        set(value) = prefs.edit().putInt(KEY_REFRESH_GUARD_PAUSE_PCT, value.coerceIn(50, 100)).apply()
+        get() = com.oceanlab.pichix.service.RefreshClickMath.orderedPercents(
+            prefs.getInt(KEY_REFRESH_GUARD_WARN_PCT, 80),
+            prefs.getInt(KEY_REFRESH_GUARD_PAUSE_PCT, 92),
+        ).second
+        set(value) {
+            val warnNow = prefs.getInt(KEY_REFRESH_GUARD_WARN_PCT, 80)
+            val (warn, pause) = com.oceanlab.pichix.service.RefreshClickMath.orderedPercents(warnNow, value)
+            prefs.edit()
+                .putInt(KEY_REFRESH_GUARD_PAUSE_PCT, pause)
+                .putInt(KEY_REFRESH_GUARD_WARN_PCT, warn)
+                .apply()
+        }
 
     fun usesFlexDetailedTariff(): Boolean = flexTariffMode == TARIFF_MODE_DETAILED
 

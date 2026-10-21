@@ -401,6 +401,7 @@ class PichixAccessibilityService : AccessibilityService() {
             return false
         }
         if (!screenOk && settings.flexClickScreenText.isBlank()) return false
+        if (PauseByOverClicksController.wouldBlockClicks(this, screenText)) return false
         val target = MonitorPackages.primaryTarget(this)
         val logUi = settings.debugLogEnabled || settings.fileLogEnabled
         if (logUi) {

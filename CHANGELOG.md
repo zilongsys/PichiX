@@ -8,6 +8,20 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.37 (Octubre 2026)
+
+### Corregido
+- **Contador Refresh**: el ciclo en curso (clics, avisos, pausa) se guarda en disco; ya no se pierde al cerrar la app o matar el proceso.
+- El respaldo completo restaura los ciclos Refresh como sección propia (antes solo si se importaba configuración).
+- Si el % de aviso es mayor o igual que el de pausa, se ajusta para que el aviso suene antes.
+- No se pulsa Refresh si ya hay banner de bloqueo o captcha en pantalla.
+- La ventana de ciclos usa lista reciclada, se actualiza sola cada 2 s y muestra el avance hacia el límite.
+
+### Añadido
+- Pruebas JVM de las reglas del contador (`RefreshClickMathTest`: umbrales, mediana, ciclos, dedup, ritmo).
+
+---
+
 ## v0.2.36 (Octubre 2026)
 
 ### Añadido

@@ -221,6 +221,8 @@
     <string name="refresh_cycles_paused_yes">pausa sí</string>
     <string name="refresh_cycles_paused_no">pausa no</string>
     <string name="refresh_cycles_banner_at">Banner «demasiados toques»</string>
+    <string name="refresh_cycles_progress">Ventana: %1$d / ~%2$d clics (%3$d%%) · aviso %4$d · pausa %5$d</string>
+    <string name="refresh_cycles_progress_none">Aún no hay límite aprendido. El primer banner cerrará el ciclo y servirá de referencia.</string>
     <string name="config_section_backup">Respaldo completo</string>
     <string name="config_backup_hint">Exporta o restaura configuración, tarifas, alertas, historial de ofertas y logs a archivo en un solo JSON.</string>
     <string name="config_backup_export">Exportar todo</string>

@@ -63,7 +63,7 @@ object PichixBackupImportDialog {
                 if (!options.restoreSettings && !options.restoreTariffRules &&
                     !options.restoreAlertRules && !options.restoreOfferLog &&
                     !options.restoreAppliedSuggestions && !options.restoreDashboard &&
-                    !options.restoreFileLogs
+                    !options.restoreFileLogs && !options.restoreRefreshGuard
                 ) {
                     Toast.makeText(ctx, R.string.config_backup_import_nothing_selected, Toast.LENGTH_SHORT).show()
                     return@setPositiveButton

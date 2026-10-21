@@ -1,18 +1,25 @@
 package com.oceanlab.pichix.ui
 
-import android.graphics.Typeface
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.view.Gravity
+import android.os.Handler
+import android.os.Looper
+import android.view.LayoutInflater
 import android.view.MenuItem
+import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
-import android.widget.ScrollView
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.oceanlab.pichix.R
 import com.oceanlab.pichix.service.RefreshClickGuard
@@ -21,67 +28,58 @@ import com.oceanlab.pichix.service.RefreshClickGuard
 class RefreshCyclesActivity : AppCompatActivity() {
 
     private lateinit var tvSummary: TextView
-    private lateinit var list: LinearLayout
+    private lateinit var tvProgress: TextView
+    private lateinit var bar: ProgressBar
+    private lateinit var rv: RecyclerView
+    private val adapter = CycleAdapter()
+    private val handler = Handler(Looper.getMainLooper())
+    private val liveTick = object : Runnable {
+        override fun run() {
+            bind(fromTick = true)
+            handler.postDelayed(this, 2_000L)
+        }
+    }
+
+    private val changedReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == RefreshClickGuard.ACTION_CHANGED) bind()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeHelper.applyFromSettings(this)
         super.onCreate(savedInstanceState)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         title = getString(R.string.refresh_cycles_title)
+        setContentView(R.layout.activity_refresh_cycles)
 
-        val root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setBackgroundColor(color(R.color.bg_page))
-        }
+        tvSummary = findViewById(R.id.tvRefreshCyclesSummary)
+        tvProgress = findViewById(R.id.tvRefreshCyclesProgress)
+        bar = findViewById(R.id.barRefreshCyclesProgress)
+        rv = findViewById(R.id.rvRefreshCycles)
+        rv.adapter = adapter
 
-        tvSummary = TextView(this).apply {
-            textSize = 13f
-            setTextColor(color(R.color.text_primary))
-            setPadding(dp(16), dp(12), dp(16), dp(8))
-        }
-        root.addView(tvSummary)
-
-        val actions = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            setPadding(dp(12), 0, dp(12), dp(8))
-        }
-        actions.addView(
-            MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
-                text = getString(R.string.config_refresh_guard_update)
-                textSize = 12f
-                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-                    marginEnd = dp(6)
-                }
-                setOnClickListener { bind() }
-            },
-        )
-        actions.addView(
-            MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
-                text = getString(R.string.config_refresh_guard_clear)
-                textSize = 12f
-                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-                    marginStart = dp(6)
-                }
-                setOnClickListener { confirmClear() }
-            },
-        )
-        root.addView(actions)
-
-        list = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(12), 0, dp(12), dp(16))
-        }
-        val scroll = ScrollView(this).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                0,
-                1f,
-            )
-            addView(list)
-        }
-        root.addView(scroll)
-        setContentView(root)
+        findViewById<MaterialButton>(R.id.btnRefreshCyclesReload).setOnClickListener { bind() }
+        findViewById<MaterialButton>(R.id.btnRefreshCyclesClear).setOnClickListener { confirmClear() }
         bind()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            changedReceiver,
+            IntentFilter(RefreshClickGuard.ACTION_CHANGED),
+        )
+        handler.postDelayed(liveTick, 2_000L)
+    }
+
+    override fun onStop() {
+        handler.removeCallbacks(liveTick)
+        try {
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(changedReceiver)
+        } catch (_: Exception) {
+        }
+        super.onStop()
     }
 
     override fun onResume() {
@@ -115,168 +113,174 @@ class RefreshCyclesActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun bind() {
+    private fun bind(fromTick: Boolean = false) {
         val st = RefreshClickGuard.status(this)
         tvSummary.text = buildString {
             append(RefreshClickGuard.summaryText(this@RefreshCyclesActivity))
             append("\n\n")
             append(getString(R.string.refresh_cycles_intro))
         }
-        list.removeAllViews()
+        if (st.learnedLimit != null) {
+            tvProgress.text = getString(
+                R.string.refresh_cycles_progress,
+                st.windowClicks,
+                st.learnedLimit,
+                st.progressPercent,
+                st.warnAt ?: 0,
+                st.pauseAt ?: 0,
+            )
+            bar.visibility = View.VISIBLE
+            bar.progress = st.progressPercent
+        } else {
+            tvProgress.text = getString(R.string.refresh_cycles_progress_none)
+            bar.visibility = View.GONE
+        }
+        val rows = mutableListOf<CycleRow>()
         val closed = st.episodes.asReversed()
-        if (st.live == null && closed.isEmpty()) {
-            list.addView(hint(getString(R.string.refresh_cycles_empty)))
-            return
-        }
-        st.live?.let { live ->
-            list.addView(cycleCard(live, index = closed.size + 1, live = true))
-        }
+        st.live?.let { rows.add(CycleRow(it, closed.size + 1, live = true)) }
         closed.forEachIndexed { i, ep ->
-            list.addView(cycleCard(ep, index = closed.size - i, live = false))
+            rows.add(CycleRow(ep, closed.size - i, live = false))
+        }
+        adapter.submit(this, rows)
+        if (!fromTick && rows.isEmpty()) {
+            tvProgress.append("\n${getString(R.string.refresh_cycles_empty)}")
         }
     }
 
-    private fun cycleCard(e: RefreshClickGuard.Episode, index: Int, live: Boolean): LinearLayout {
-        val card = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-                cornerRadius = dp(12).toFloat()
-                setColor(color(if (live) R.color.amber_bg else R.color.bg_card))
-                setStroke(dp(1), color(if (live) R.color.amber_400 else R.color.border_subtle))
+    private data class CycleRow(
+        val episode: RefreshClickGuard.Episode,
+        val index: Int,
+        val live: Boolean,
+    )
+
+    private class CycleAdapter : RecyclerView.Adapter<CycleAdapter.Holder>() {
+        private var rows: List<CycleRow> = emptyList()
+        private var activity: RefreshCyclesActivity? = null
+
+        fun submit(host: RefreshCyclesActivity, next: List<CycleRow>) {
+            activity = host
+            rows = next
+            notifyDataSetChanged()
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
+            val view = LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_refresh_cycle, parent, false)
+            return Holder(view)
+        }
+
+        override fun onBindViewHolder(holder: Holder, position: Int) {
+            val host = activity ?: return
+            holder.bind(host, rows[position])
+        }
+
+        override fun getItemCount(): Int = rows.size
+
+        class Holder(view: View) : RecyclerView.ViewHolder(view) {
+            private val title = view.findViewById<TextView>(R.id.tvCycleTitle)
+            private val body = view.findViewById<TextView>(R.id.tvCycleBody)
+
+            fun bind(host: RefreshCyclesActivity, row: CycleRow) {
+                val e = row.episode
+                val ctx = host
+                title.text = if (row.live) {
+                    ctx.getString(R.string.refresh_cycles_live_title, row.index)
+                } else {
+                    ctx.getString(R.string.refresh_cycles_closed_title, row.index)
+                }
+                title.setTextColor(
+                    ContextCompat.getColor(
+                        ctx,
+                        if (row.live) R.color.badge_amber_text else R.color.text_primary,
+                    ),
+                )
+                (itemView.background as? GradientDrawable)?.apply {
+                    cornerRadius = host.dp(12).toFloat()
+                    setColor(ContextCompat.getColor(ctx, if (row.live) R.color.amber_bg else R.color.bg_card))
+                    setStroke(
+                        host.dp(1),
+                        ContextCompat.getColor(ctx, if (row.live) R.color.amber_400 else R.color.border_subtle),
+                    )
+                } ?: run {
+                    itemView.background = GradientDrawable().apply {
+                        shape = GradientDrawable.RECTANGLE
+                        cornerRadius = host.dp(12).toFloat()
+                        setColor(ContextCompat.getColor(ctx, if (row.live) R.color.amber_bg else R.color.bg_card))
+                        setStroke(
+                            host.dp(1),
+                            ContextCompat.getColor(ctx, if (row.live) R.color.amber_400 else R.color.border_subtle),
+                        )
+                    }
+                }
+                body.text = host.formatBody(e, row.live)
             }
-            setPadding(dp(14), dp(12), dp(14), dp(12))
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { bottomMargin = dp(10) }
         }
+    }
 
-        val title = if (live) {
-            getString(R.string.refresh_cycles_live_title, index)
-        } else {
-            getString(R.string.refresh_cycles_closed_title, index)
-        }
-        card.addView(label(title, 15f, true, if (live) R.color.badge_amber_text else R.color.text_primary))
-
+    private fun formatBody(e: RefreshClickGuard.Episode, live: Boolean): String {
         val from = when {
             e.previousBannerAtMs > 0L -> RefreshClickGuard.formatClock(e.previousBannerAtMs)
             e.firstClickAtMs > 0L -> RefreshClickGuard.formatClock(e.firstClickAtMs)
             else -> "—"
         }
-        val to = if (live) {
-            getString(R.string.refresh_cycles_until_now)
-        } else {
-            RefreshClickGuard.formatClock(e.atMs)
-        }
-        card.addView(row(getString(R.string.refresh_cycles_span), "$from  →  $to"))
-        if (e.previousBannerAtMs > 0L) {
-            card.addView(
-                row(
-                    getString(R.string.refresh_cycles_from_prev_banner),
-                    RefreshClickGuard.formatDuration(e.cycleMs.coerceAtLeast(0L)),
-                ),
-            )
-            if (e.waitAfterPreviousMs > 0L) {
-                card.addView(
-                    row(
-                        getString(R.string.refresh_cycles_wait_first),
-                        RefreshClickGuard.formatDuration(e.waitAfterPreviousMs),
-                    ),
-                )
-            }
-        } else if (!live) {
-            card.addView(row(getString(R.string.refresh_cycles_from_prev_banner), getString(R.string.refresh_cycles_first)))
-        }
-
+        val to = if (live) getString(R.string.refresh_cycles_until_now) else RefreshClickGuard.formatClock(e.atMs)
         val clickSpan = if (e.firstClickAtMs > 0L && e.lastClickAtMs >= e.firstClickAtMs) {
             "${RefreshClickGuard.formatClock(e.firstClickAtMs)}  →  ${RefreshClickGuard.formatClock(e.lastClickAtMs)}"
         } else {
             "—"
         }
-        card.addView(row(getString(R.string.refresh_cycles_clicking), RefreshClickGuard.formatDuration(e.clickingMs)))
-        card.addView(row(getString(R.string.refresh_cycles_click_span), clickSpan))
-        if (!live) {
-            card.addView(
-                row(
-                    getString(R.string.refresh_cycles_until_banner),
-                    RefreshClickGuard.formatDuration(e.elapsedMs),
-                ),
-            )
+        return buildString {
+            append(getString(R.string.refresh_cycles_span)).append(": ").append(from).append("  →  ").append(to).append('\n')
+            if (e.previousBannerAtMs > 0L) {
+                append(getString(R.string.refresh_cycles_from_prev_banner)).append(": ")
+                    .append(RefreshClickGuard.formatDuration(e.cycleMs)).append('\n')
+                if (e.waitAfterPreviousMs > 0L) {
+                    append(getString(R.string.refresh_cycles_wait_first)).append(": ")
+                        .append(RefreshClickGuard.formatDuration(e.waitAfterPreviousMs)).append('\n')
+                }
+            } else if (!live) {
+                append(getString(R.string.refresh_cycles_from_prev_banner)).append(": ")
+                    .append(getString(R.string.refresh_cycles_first)).append('\n')
+            }
+            append(getString(R.string.refresh_cycles_clicking)).append(": ")
+                .append(RefreshClickGuard.formatDuration(e.clickingMs)).append('\n')
+            append(getString(R.string.refresh_cycles_click_span)).append(": ").append(clickSpan).append('\n')
+            if (!live) {
+                append(getString(R.string.refresh_cycles_until_banner)).append(": ")
+                    .append(RefreshClickGuard.formatDuration(e.elapsedMs)).append('\n')
+            }
+            append(getString(R.string.refresh_cycles_clicks)).append(": ").append(e.clicks)
+                .append("  (").append(getString(R.string.refresh_cycles_burst_n, e.burstClicks))
+                .append(" · ").append(getString(R.string.refresh_cycles_normal_n, e.normalClicks))
+                .append(")\n")
+            append(getString(R.string.refresh_cycles_pace)).append(": ≈")
+                .append("%.1f".format(java.util.Locale.US, e.clicksPerMin)).append("/min  ·  ")
+                .append(getString(R.string.refresh_cycles_last_min, e.clicksLast60s)).append("  ·  ")
+                .append(getString(R.string.refresh_cycles_last_5min, e.clicksLast5min)).append('\n')
+            if (e.clicks >= 2) {
+                append(getString(R.string.refresh_cycles_gaps)).append(": ")
+                    .append(
+                        getString(
+                            R.string.refresh_cycles_gaps_values,
+                            RefreshClickGuard.formatDuration(e.minGapMs),
+                            RefreshClickGuard.formatDuration(e.avgGapMs),
+                            RefreshClickGuard.formatDuration(e.maxGapMs),
+                        ),
+                    ).append('\n')
+            }
+            if (e.idleGaps > 0) {
+                append(getString(R.string.refresh_cycles_idle)).append(": ").append(e.idleGaps).append('\n')
+            }
+            append(getString(R.string.refresh_cycles_preventive)).append(": ")
+            append(if (e.warned) getString(R.string.refresh_cycles_warned_yes) else getString(R.string.refresh_cycles_warned_no))
+            append("  ·  ")
+            append(if (e.pausedPreventively) getString(R.string.refresh_cycles_paused_yes) else getString(R.string.refresh_cycles_paused_no))
+            if (!live) {
+                append('\n').append(getString(R.string.refresh_cycles_banner_at)).append(": ")
+                    .append(RefreshClickGuard.formatClock(e.atMs))
+            }
         }
-
-        card.addView(
-            row(
-                getString(R.string.refresh_cycles_clicks),
-                "${e.clicks}  (${getString(R.string.refresh_cycles_burst_n, e.burstClicks)} · " +
-                    "${getString(R.string.refresh_cycles_normal_n, e.normalClicks)})",
-            ),
-        )
-        card.addView(
-            row(
-                getString(R.string.refresh_cycles_pace),
-                "≈${"%.1f".format(java.util.Locale.US, e.clicksPerMin)}/min  ·  " +
-                    getString(R.string.refresh_cycles_last_min, e.clicksLast60s) + "  ·  " +
-                    getString(R.string.refresh_cycles_last_5min, e.clicksLast5min),
-            ),
-        )
-        if (e.clicks >= 2) {
-            card.addView(
-                row(
-                    getString(R.string.refresh_cycles_gaps),
-                    getString(
-                        R.string.refresh_cycles_gaps_values,
-                        RefreshClickGuard.formatDuration(e.minGapMs),
-                        RefreshClickGuard.formatDuration(e.avgGapMs),
-                        RefreshClickGuard.formatDuration(e.maxGapMs),
-                    ),
-                ),
-            )
-        }
-        if (e.idleGaps > 0) {
-            card.addView(row(getString(R.string.refresh_cycles_idle), e.idleGaps.toString()))
-        }
-        card.addView(
-            row(
-                getString(R.string.refresh_cycles_preventive),
-                buildString {
-                    append(if (e.warned) getString(R.string.refresh_cycles_warned_yes) else getString(R.string.refresh_cycles_warned_no))
-                    append("  ·  ")
-                    append(if (e.pausedPreventively) getString(R.string.refresh_cycles_paused_yes) else getString(R.string.refresh_cycles_paused_no))
-                },
-            ),
-        )
-        if (!live) {
-            card.addView(row(getString(R.string.refresh_cycles_banner_at), RefreshClickGuard.formatClock(e.atMs)))
-        }
-        return card
     }
 
-    private fun row(k: String, v: String): LinearLayout =
-        LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(0, dp(4), 0, dp(2))
-            addView(label(k, 11f, false, R.color.text_hint))
-            addView(label(v, 13f, false, R.color.text_primary))
-        }
-
-    private fun label(text: String, size: Float, bold: Boolean, colorRes: Int): TextView =
-        TextView(this).apply {
-            this.text = text
-            textSize = size
-            setTextColor(color(colorRes))
-            if (bold) setTypeface(typeface, Typeface.BOLD)
-        }
-
-    private fun hint(text: String): TextView =
-        TextView(this).apply {
-            this.text = text
-            textSize = 13f
-            setTextColor(color(R.color.text_secondary))
-            gravity = Gravity.CENTER
-            setPadding(dp(8), dp(24), dp(8), dp(24))
-        }
-
-    private fun color(id: Int) = ContextCompat.getColor(this, id)
-    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
+    fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 }

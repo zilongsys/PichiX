@@ -1148,7 +1148,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         view.findViewById<MaterialButton>(R.id.btnRefreshGuardClear).setOnClickListener {
             androidx.appcompat.app.AlertDialog.Builder(requireContext(), R.style.SparkAlertDialogTheme)
                 .setTitle(R.string.config_refresh_guard_clear)
-                .setMessage(R.string.config_refresh_guard_hint)
+                .setMessage(R.string.refresh_cycles_clear_confirm)
                 .setPositiveButton(R.string.config_refresh_guard_clear) { _, _ ->
                     RefreshClickGuard.clearMemory(requireContext())
                     refreshRefreshGuardStats(view)
@@ -1162,6 +1162,17 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
     private fun refreshRefreshGuardStats(view: View) {
         view.findViewById<TextView>(R.id.tvRefreshGuardStats)?.text =
             RefreshClickGuard.summaryText(requireContext())
+    }
+
+    private fun persistRefreshGuardFromView(view: View) {
+        settings.refreshGuardWarnEnabled =
+            view.findViewById<SwitchMaterial>(R.id.switchRefreshGuardWarn).isChecked
+        settings.refreshGuardPauseEnabled =
+            view.findViewById<SwitchMaterial>(R.id.switchRefreshGuardPause).isChecked
+        view.findViewById<TextInputEditText>(R.id.etRefreshGuardWarnPct).text
+            ?.toString()?.toIntOrNull()?.let { settings.refreshGuardWarnPercent = it }
+        view.findViewById<TextInputEditText>(R.id.etRefreshGuardPausePct).text
+            ?.toString()?.toIntOrNull()?.let { settings.refreshGuardPausePercent = it }
     }
 
     private fun persistPeakHoursFromView(view: View) {
@@ -1366,6 +1377,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         configRootView?.let {
             persistCallOnBlockFromView(it)
             persistPeakHoursFromView(it)
+            persistRefreshGuardFromView(it)
         }
         settings.pauseByOverClicksEnabled = swPauseOver.isChecked
         settings.flexOnlyWhenForeground = swForeground.isChecked

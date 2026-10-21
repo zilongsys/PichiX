@@ -1,6 +1,8 @@
 package com.oceanlab.pichix.service
 
 import android.content.Context
+import android.content.Intent
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.oceanlab.pichix.data.AppSettings
 import org.json.JSONArray
 import org.json.JSONObject
@@ -15,11 +17,13 @@ import java.util.Locale
  */
 object RefreshClickGuard {
 
+    const val ACTION_CHANGED = "com.oceanlab.pichix.REFRESH_GUARD_CHANGED"
+
     enum class Decision { NONE, WARN, PAUSE }
 
     /**
-     * Ciclo cerrado: del banner anterior (o del primer clic, si es el primero)
-     * hasta el banner «demasiados toques» que lo cierra.
+     * Ciclo: del banner anterior (o del primer clic) hasta el banner que lo cierra.
+     * [atMs] = 0 → ciclo en curso.
      */
     data class Episode(
         val atMs: Long,
@@ -61,27 +65,32 @@ object RefreshClickGuard {
         val episodes: List<Episode>,
         val live: Episode? = null,
         val lastBannerAtMs: Long = 0L,
-    )
+        val warnAt: Int? = null,
+        val pauseAt: Int? = null,
+    ) {
+        val progressPercent: Int
+            get() {
+                val limit = learnedLimit ?: return 0
+                if (limit <= 0) return 0
+                return ((windowClicks * 100.0) / limit).toInt().coerceIn(0, 100)
+            }
+    }
 
     private const val PREFS = "pichix_refresh_guard"
     private const val KEY_EPISODES = "episodes"
     private const val KEY_LAST_BANNER = "last_banner_at"
-    private const val MAX_EPISODES = 80
-    private const val LEARN_FROM_LAST = 5
-    private const val MAX_TIMESTAMPS = 8000
-    /** Sin clics durante este tiempo = Flex ya «olvidó» la racha preventiva. El ciclo sigue. */
-    private const val IDLE_RESET_MS = 10 * 60_000L
-    private const val MIN_WINDOW_MS = 60_000L
-    private const val MAX_WINDOW_MS = 3 * 60 * 60_000L
-    private const val EPISODE_DEDUP_MS = 60_000L
+    private const val KEY_LIVE = "live_clicks"
+    private const val KEY_WINDOW_START = "live_window_start"
+    private const val KEY_WARNED = "live_warned"
+    private const val KEY_PAUSED = "live_paused"
 
-    private data class Click(val atMs: Long, val burst: Boolean)
-
-    private val clicks = ArrayDeque<Click>()
+    private val clicks = ArrayDeque<RefreshClickMath.Click>()
     private var lastBannerAtMs = 0L
     private var windowStartMs = 0L
     private var warnedThisWindow = false
     private var pausedThisWindow = false
+    private var persistDirty = 0
+    private var lastPersistMs = 0L
 
     @Volatile private var cachedEpisodes: List<Episode>? = null
     private var cachedLimit: Int? = null
@@ -92,58 +101,64 @@ object RefreshClickGuard {
         val now = System.currentTimeMillis()
         ensureLearned(context)
         val last = clicks.lastOrNull()?.atMs
-        if (last != null && now - last > IDLE_RESET_MS) {
+        if (last != null && now - last > RefreshClickMath.IDLE_RESET_MS) {
             windowStartMs = now
             warnedThisWindow = false
             pausedThisWindow = false
         }
-        if (clicks.isEmpty()) {
-            windowStartMs = now
-        }
-        clicks.addLast(Click(now, burst))
-        while (clicks.size > MAX_TIMESTAMPS) clicks.removeFirst()
+        if (clicks.isEmpty()) windowStartMs = now
+        clicks.addLast(RefreshClickMath.Click(now, burst))
+        while (clicks.size > RefreshClickMath.MAX_TIMESTAMPS) clicks.removeFirst()
+        persistDirty++
+        maybePersistLive(context, now)
 
         val limit = cachedLimit ?: return Decision.NONE
         val windowMs = cachedWindowMs ?: return Decision.NONE
         val from = maxOf(windowStartMs, now - windowMs)
-        val current = countSince(from)
-
-        if (settings.refreshGuardPauseEnabled && !pausedThisWindow &&
-            current >= threshold(limit, settings.refreshGuardPausePercent)
-        ) {
-            pausedThisWindow = true
-            return Decision.PAUSE
+        val current = RefreshClickMath.countSince(clicks.toList(), from)
+        val math = RefreshClickMath.decide(
+            current = current,
+            limit = limit,
+            warnPct = settings.refreshGuardWarnPercent,
+            pausePct = settings.refreshGuardPausePercent,
+            warnEnabled = settings.refreshGuardWarnEnabled,
+            pauseEnabled = settings.refreshGuardPauseEnabled,
+            alreadyWarned = warnedThisWindow,
+            alreadyPaused = pausedThisWindow,
+        )
+        val decision = when (math) {
+            RefreshClickMath.Decision.PAUSE -> {
+                pausedThisWindow = true
+                persistLiveNow(context)
+                Decision.PAUSE
+            }
+            RefreshClickMath.Decision.WARN -> {
+                warnedThisWindow = true
+                persistLiveNow(context)
+                Decision.WARN
+            }
+            RefreshClickMath.Decision.NONE -> Decision.NONE
         }
-        if (settings.refreshGuardWarnEnabled && !warnedThisWindow &&
-            current >= threshold(limit, settings.refreshGuardWarnPercent)
-        ) {
-            warnedThisWindow = true
-            return Decision.WARN
-        }
-        return Decision.NONE
+        return decision
     }
 
-    /** Cierra el ciclo al detectar el banner y empieza el siguiente. */
     @Synchronized
     fun onThrottleDetected(context: Context, burst: Boolean): Episode? {
         val now = System.currentTimeMillis()
-        if (clicks.isEmpty()) return null
         ensureLearned(context)
+        if (clicks.isEmpty()) return null
         val prev = cachedEpisodes.orEmpty().lastOrNull()
-        if (prev != null && now - prev.atMs < EPISODE_DEDUP_MS) return null
-        val episode = buildEpisode(
-            endedAtMs = now,
-            live = false,
-            fallbackBurst = burst,
-        ) ?: return null
-        saveEpisodes(context, (cachedEpisodes.orEmpty() + episode).takeLast(MAX_EPISODES))
-        persistLastBanner(context, now)
+        if (RefreshClickMath.shouldDedupBanner(prev?.atMs ?: 0L, now)) return null
+        val episode = buildEpisode(endedAtMs = now, live = false, fallbackBurst = burst) ?: return null
+        saveEpisodes(context, (cachedEpisodes.orEmpty() + episode).takeLast(RefreshClickMath.MAX_EPISODES))
         lastBannerAtMs = now
+        persistLastBanner(context, now)
         resetCycleLocked()
+        persistLiveNow(context)
+        notifyChanged(context)
         return episode
     }
 
-    /** Solo flags preventivos; no borra el ciclo en curso (banner → banner). */
     @Synchronized
     fun resetSession() {
         warnedThisWindow = false
@@ -154,12 +169,21 @@ object RefreshClickGuard {
     @Synchronized
     fun clearMemory(context: Context) {
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .edit().remove(KEY_EPISODES).remove(KEY_LAST_BANNER).apply()
+            .edit()
+            .remove(KEY_EPISODES)
+            .remove(KEY_LAST_BANNER)
+            .remove(KEY_LIVE)
+            .remove(KEY_WINDOW_START)
+            .remove(KEY_WARNED)
+            .remove(KEY_PAUSED)
+            .apply()
         cachedEpisodes = emptyList()
         cachedLimit = null
         cachedWindowMs = null
         lastBannerAtMs = 0L
         resetCycleLocked()
+        persistDirty = 0
+        notifyChanged(context)
     }
 
     @Synchronized
@@ -168,18 +192,25 @@ object RefreshClickGuard {
         val now = System.currentTimeMillis()
         val windowMs = cachedWindowMs
         val windowClicks = if (windowMs != null && clicks.isNotEmpty()) {
-            countSince(maxOf(windowStartMs, now - windowMs))
+            RefreshClickMath.countSince(clicks.toList(), maxOf(windowStartMs, now - windowMs))
         } else {
             clicks.size
         }
+        val limit = cachedLimit
+        val (warnPct, pausePct) = RefreshClickMath.orderedPercents(
+            AppSettings(context).refreshGuardWarnPercent,
+            AppSettings(context).refreshGuardPausePercent,
+        )
         return Status(
             sessionClicks = clicks.size,
             windowClicks = windowClicks,
-            learnedLimit = cachedLimit,
+            learnedLimit = limit,
             windowMs = windowMs,
             episodes = cachedEpisodes.orEmpty(),
             live = buildEpisode(endedAtMs = 0L, live = true, fallbackBurst = false),
             lastBannerAtMs = lastBannerAtMs,
+            warnAt = limit?.let { RefreshClickMath.threshold(it, warnPct) },
+            pauseAt = limit?.let { RefreshClickMath.threshold(it, pausePct) },
         )
     }
 
@@ -198,6 +229,12 @@ object RefreshClickGuard {
             append("Límite aprendido: ~").append(s.learnedLimit ?: "?").append(" clics")
             s.windowMs?.let { append(" en ").append(formatDuration(it)) }
             append(" · ").append(s.episodes.size).append(" ciclos cerrados")
+            if (s.warnAt != null && s.pauseAt != null) {
+                append('\n').append("Aviso ~").append(s.warnAt)
+                    .append(" · pausa ~").append(s.pauseAt)
+                    .append(" · ventana ").append(s.windowClicks)
+                    .append(" (").append(s.progressPercent).append("%)")
+            }
             s.live?.let { live ->
                 append('\n').append("Ciclo en curso: ").append(live.clicks).append(" clics")
                 if (live.firstClickAtMs > 0L) {
@@ -207,93 +244,85 @@ object RefreshClickGuard {
         }
     }
 
+    @Synchronized
     fun exportJson(context: Context): String {
         ensureLearned(context)
+        persistLiveNow(context)
         return JSONObject()
             .put("episodes", episodesToArray(cachedEpisodes.orEmpty()))
             .put("lastBannerAt", lastBannerAtMs)
+            .put("live_clicks", liveClicksToArray())
+            .put("liveWindowStart", windowStartMs)
+            .put("liveWarned", warnedThisWindow)
+            .put("livePaused", pausedThisWindow)
             .toString()
     }
 
     @Synchronized
     fun importJson(context: Context, json: String) {
         val trimmed = json.trim()
-        val (episodes, bannerRaw) = parseBackup(trimmed)
-        saveEpisodes(context, episodes.takeLast(MAX_EPISODES))
-        lastBannerAtMs = if (bannerRaw > 0L) bannerRaw else episodes.lastOrNull()?.atMs ?: 0L
+        val parsed = parseBackup(trimmed)
+        saveEpisodes(context, parsed.episodes.takeLast(RefreshClickMath.MAX_EPISODES))
+        lastBannerAtMs = if (parsed.lastBannerAt > 0L) {
+            parsed.lastBannerAt
+        } else {
+            parsed.episodes.lastOrNull()?.atMs ?: 0L
+        }
         persistLastBanner(context, lastBannerAtMs)
+        clicks.clear()
+        parsed.live.forEach { clicks.addLast(it) }
+        while (clicks.size > RefreshClickMath.MAX_TIMESTAMPS) clicks.removeFirst()
+        windowStartMs = parsed.windowStart
+        warnedThisWindow = parsed.warned
+        pausedThisWindow = parsed.paused
+        persistLiveNow(context)
+        notifyChanged(context)
     }
 
-    fun formatDuration(ms: Long): String {
-        val totalSec = (ms / 1000L).coerceAtLeast(0L)
-        val h = totalSec / 3600
-        val m = (totalSec % 3600) / 60
-        val s = totalSec % 60
-        return when {
-            h > 0 -> "${h}h ${m}m"
-            m > 0 -> "${m}m ${s}s"
-            else -> "${s}s"
-        }
-    }
+    fun formatDuration(ms: Long): String = RefreshClickMath.formatDuration(ms)
 
     fun formatClock(ms: Long): String {
         if (ms <= 0L) return "—"
         return SimpleDateFormat("dd/MM HH:mm:ss", Locale.getDefault()).format(Date(ms))
     }
 
-    private fun threshold(limit: Int, percent: Int): Int =
-        (limit * percent / 100.0).toInt().coerceAtLeast(1)
+    private fun buildEpisode(endedAtMs: Long, live: Boolean, fallbackBurst: Boolean): Episode? {
+        val snap = RefreshClickMath.snapshot(
+            clicks = clicks.toList(),
+            nowMs = System.currentTimeMillis(),
+            lastBannerAtMs = lastBannerAtMs,
+            live = live,
+            endedAtMs = endedAtMs,
+            fallbackBurst = fallbackBurst,
+        ) ?: return null
+        return Episode(
+            atMs = if (live) 0L else endedAtMs,
+            clicks = snap.clicks,
+            elapsedMs = snap.elapsedMs,
+            clicksLast60s = snap.clicksLast60s,
+            burst = snap.burst,
+            previousBannerAtMs = lastBannerAtMs,
+            firstClickAtMs = snap.firstClickAtMs,
+            lastClickAtMs = snap.lastClickAtMs,
+            burstClicks = snap.burstClicks,
+            clicksLast5min = snap.clicksLast5min,
+            minGapMs = snap.minGapMs,
+            maxGapMs = snap.maxGapMs,
+            avgGapMs = snap.avgGapMs,
+            idleGaps = snap.idleGaps,
+            warned = warnedThisWindow,
+            pausedPreventively = pausedThisWindow,
+            waitAfterPreviousMs = snap.waitAfterPreviousMs,
+            cycleMs = snap.cycleMs,
+        )
+    }
 
     private fun resetCycleLocked() {
         clicks.clear()
         windowStartMs = 0L
         warnedThisWindow = false
         pausedThisWindow = false
-    }
-
-    private fun countSince(fromMs: Long): Int {
-        var n = 0
-        for (c in clicks.asReversed()) {
-            if (c.atMs < fromMs) break
-            n++
-        }
-        return n
-    }
-
-    private fun buildEpisode(endedAtMs: Long, live: Boolean, fallbackBurst: Boolean): Episode? {
-        if (clicks.isEmpty()) return null
-        val first = clicks.first()
-        val last = clicks.last()
-        val times = clicks.map { it.atMs }
-        val gaps = times.zipWithNext { a, b -> b - a }
-        val burstClicks = clicks.count { it.burst }
-        val endRef = if (live) last.atMs else endedAtMs.coerceAtLeast(last.atMs)
-        val prev = lastBannerAtMs
-        val wait = if (prev > 0L && first.atMs >= prev) first.atMs - prev else 0L
-        val cycleStart = if (prev > 0L) prev else first.atMs
-        val elapsed = (endRef - first.atMs).coerceAtLeast(0L)
-        val last60From = (if (live) System.currentTimeMillis() else endRef) - 60_000L
-        val last5From = (if (live) System.currentTimeMillis() else endRef) - 5 * 60_000L
-        return Episode(
-            atMs = if (live) 0L else endedAtMs,
-            clicks = clicks.size,
-            elapsedMs = elapsed,
-            clicksLast60s = times.count { it >= last60From },
-            burst = burstClicks > 0 || fallbackBurst,
-            previousBannerAtMs = prev,
-            firstClickAtMs = first.atMs,
-            lastClickAtMs = last.atMs,
-            burstClicks = burstClicks,
-            clicksLast5min = times.count { it >= last5From },
-            minGapMs = gaps.minOrNull() ?: 0L,
-            maxGapMs = gaps.maxOrNull() ?: 0L,
-            avgGapMs = if (gaps.isEmpty()) 0L else gaps.sum() / gaps.size,
-            idleGaps = gaps.count { it >= IDLE_RESET_MS },
-            warned = warnedThisWindow,
-            pausedPreventively = pausedThisWindow,
-            waitAfterPreviousMs = wait,
-            cycleMs = (endRef - cycleStart).coerceAtLeast(0L),
-        )
+        persistDirty = 0
     }
 
     private fun ensureLearned(context: Context) {
@@ -303,25 +332,44 @@ object RefreshClickGuard {
         val parsed = parseEpisodes(raw)
         lastBannerAtMs = prefs.getLong(KEY_LAST_BANNER, parsed.lastOrNull()?.atMs ?: 0L)
         recompute(parsed)
+        restoreLive(prefs)
+    }
+
+    private fun restoreLive(prefs: android.content.SharedPreferences) {
+        clicks.clear()
+        parseClickArray(prefs.getString(KEY_LIVE, "[]") ?: "[]").forEach { clicks.addLast(it) }
+        while (clicks.size > RefreshClickMath.MAX_TIMESTAMPS) clicks.removeFirst()
+        windowStartMs = prefs.getLong(KEY_WINDOW_START, clicks.firstOrNull()?.atMs ?: 0L)
+        warnedThisWindow = prefs.getBoolean(KEY_WARNED, false)
+        pausedThisWindow = prefs.getBoolean(KEY_PAUSED, false)
     }
 
     private fun recompute(episodes: List<Episode>) {
         cachedEpisodes = episodes
-        val recent = episodes.takeLast(LEARN_FROM_LAST)
-        if (recent.isEmpty()) {
-            cachedLimit = null
-            cachedWindowMs = null
-            return
-        }
-        cachedLimit = median(recent.map { it.clicks.toLong() }).toInt().coerceAtLeast(1)
-        cachedWindowMs = (median(recent.map { it.elapsedMs.coerceAtLeast(1L) }) * 5 / 4)
-            .coerceIn(MIN_WINDOW_MS, MAX_WINDOW_MS)
+        cachedLimit = RefreshClickMath.learnedLimit(episodes.map { it.clicks })
+        cachedWindowMs = RefreshClickMath.learnedWindowMs(episodes.map { it.elapsedMs })
     }
 
-    private fun median(values: List<Long>): Long {
-        val sorted = values.sorted()
-        val mid = sorted.size / 2
-        return if (sorted.size % 2 == 1) sorted[mid] else (sorted[mid - 1] + sorted[mid]) / 2
+    private fun maybePersistLive(context: Context, now: Long) {
+        if (persistDirty < RefreshClickMath.PERSIST_EVERY_CLICKS &&
+            now - lastPersistMs < RefreshClickMath.PERSIST_EVERY_MS
+        ) {
+            return
+        }
+        persistLiveNow(context)
+    }
+
+    private fun persistLiveNow(context: Context) {
+        lastPersistMs = System.currentTimeMillis()
+        persistDirty = 0
+        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putString(KEY_LIVE, liveClicksToArray().toString())
+            .putLong(KEY_WINDOW_START, windowStartMs)
+            .putBoolean(KEY_WARNED, warnedThisWindow)
+            .putBoolean(KEY_PAUSED, pausedThisWindow)
+            .apply()
+        notifyChanged(context)
     }
 
     private fun persistLastBanner(context: Context, atMs: Long) {
@@ -333,6 +381,22 @@ object RefreshClickGuard {
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit().putString(KEY_EPISODES, episodesToArray(episodes).toString()).apply()
         recompute(episodes)
+    }
+
+    private fun liveClicksToArray(): JSONArray {
+        val arr = JSONArray()
+        clicks.forEach { c ->
+            arr.put(JSONObject().put("t", c.atMs).put("b", c.burst))
+        }
+        return arr
+    }
+
+    private fun notifyChanged(context: Context) {
+        try {
+            LocalBroadcastManager.getInstance(context.applicationContext)
+                .sendBroadcast(Intent(ACTION_CHANGED))
+        } catch (_: Exception) {
+        }
     }
 
     private fun episodesToArray(episodes: List<Episode>): JSONArray {
@@ -363,22 +427,61 @@ object RefreshClickGuard {
         return arr
     }
 
-    private fun parseBackup(json: String): Pair<List<Episode>, Long> = try {
+    private data class BackupParse(
+        val episodes: List<Episode>,
+        val lastBannerAt: Long,
+        val live: List<RefreshClickMath.Click>,
+        val windowStart: Long,
+        val warned: Boolean,
+        val paused: Boolean,
+    )
+
+    private fun parseBackup(json: String): BackupParse = try {
         val trimmed = json.trim().removePrefix("\uFEFF")
         when {
             trimmed.startsWith("{") -> {
                 val root = JSONObject(trimmed)
                 val arr = root.optJSONArray("episodes") ?: JSONArray()
-                parseEpisodeArray(arr) to root.optLong("lastBannerAt", 0L)
+                BackupParse(
+                    episodes = parseEpisodeArray(arr),
+                    lastBannerAt = root.optLong("lastBannerAt", 0L),
+                    live = parseClickArrayObj(root.optJSONArray("live_clicks")),
+                    windowStart = root.optLong("liveWindowStart", 0L),
+                    warned = root.optBoolean("liveWarned", false),
+                    paused = root.optBoolean("livePaused", false),
+                )
             }
-            trimmed.startsWith("[") -> parseEpisodeArray(JSONArray(trimmed)) to 0L
-            else -> emptyList<Episode>() to 0L
+            trimmed.startsWith("[") -> BackupParse(
+                episodes = parseEpisodeArray(JSONArray(trimmed)),
+                lastBannerAt = 0L,
+                live = emptyList(),
+                windowStart = 0L,
+                warned = false,
+                paused = false,
+            )
+            else -> BackupParse(emptyList(), 0L, emptyList(), 0L, false, false)
         }
     } catch (_: Exception) {
-        emptyList<Episode>() to 0L
+        BackupParse(emptyList(), 0L, emptyList(), 0L, false, false)
     }
 
-    private fun parseEpisodes(json: String): List<Episode> = parseBackup(json).first
+    private fun parseEpisodes(json: String): List<Episode> = parseBackup(json).episodes
+
+    private fun parseClickArray(json: String): List<RefreshClickMath.Click> = try {
+        parseClickArrayObj(JSONArray(json))
+    } catch (_: Exception) {
+        emptyList()
+    }
+
+    private fun parseClickArrayObj(arr: JSONArray?): List<RefreshClickMath.Click> {
+        if (arr == null) return emptyList()
+        return (0 until arr.length()).mapNotNull { i ->
+            val o = arr.optJSONObject(i) ?: return@mapNotNull null
+            val t = o.optLong("t", 0L)
+            if (t <= 0L) return@mapNotNull null
+            RefreshClickMath.Click(t, o.optBoolean("b", false))
+        }
+    }
 
     private fun parseEpisodeArray(arr: JSONArray): List<Episode> =
         (0 until arr.length()).mapNotNull { i ->
@@ -387,8 +490,6 @@ object RefreshClickGuard {
             if (clickCount <= 0) return@mapNotNull null
             val at = o.optLong("at", 0L)
             val elapsed = o.optLong("elapsedMs", 0L)
-            val first = o.optLong("firstClick", 0L)
-            val last = o.optLong("lastClick", 0L)
             Episode(
                 atMs = at,
                 clicks = clickCount,
@@ -396,8 +497,8 @@ object RefreshClickGuard {
                 clicksLast60s = o.optInt("last60s", 0),
                 burst = o.optBoolean("burst", false),
                 previousBannerAtMs = o.optLong("prevBanner", 0L),
-                firstClickAtMs = first,
-                lastClickAtMs = last,
+                firstClickAtMs = o.optLong("firstClick", 0L),
+                lastClickAtMs = o.optLong("lastClick", 0L),
                 burstClicks = o.optInt("burstClicks", if (o.optBoolean("burst", false)) clickCount else 0),
                 clicksLast5min = o.optInt("last5min", 0),
                 minGapMs = o.optLong("minGap", 0L),

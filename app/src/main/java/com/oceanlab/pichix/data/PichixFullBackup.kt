@@ -38,6 +38,7 @@ object PichixFullBackup {
         val fileLogs: Int = 0,
         val hasAppliedSuggestions: Boolean = false,
         val hasDashboard: Boolean = false,
+        val hasRefreshGuard: Boolean = false,
     )
 
     data class ImportOptions(
@@ -48,6 +49,7 @@ object PichixFullBackup {
         val restoreAppliedSuggestions: Boolean = true,
         val restoreDashboard: Boolean = true,
         val restoreFileLogs: Boolean = false,
+        val restoreRefreshGuard: Boolean = true,
         val replaceLogs: Boolean = true,
     )
 
@@ -113,6 +115,9 @@ object PichixFullBackup {
             hasAppliedSuggestions = root.has("applied_suggestions_json") &&
                 root.optString("applied_suggestions_json").isNotBlank(),
             hasDashboard = root.has("dashboard_settings") && !root.isNull("dashboard_settings"),
+            hasRefreshGuard = root.has("refresh_guard_json") &&
+                root.optString("refresh_guard_json").isNotBlank() &&
+                root.optString("refresh_guard_json") != "[]",
         )
     }
 
@@ -188,6 +193,15 @@ object PichixFullBackup {
                 ),
             )
         }
+        if (counts.hasRefreshGuard) {
+            sections.add(
+                ImportSection(
+                    "refresh_guard",
+                    "Ciclos Refresh (contador preventivo)",
+                    selected = !legacy && !configOnly,
+                ),
+            )
+        }
         return sections
     }
 
@@ -201,6 +215,7 @@ object PichixFullBackup {
             restoreAppliedSuggestions = on("applied_suggestions"),
             restoreDashboard = on("dashboard"),
             restoreFileLogs = on("file_logs"),
+            restoreRefreshGuard = on("refresh_guard"),
             replaceLogs = replaceLogs,
         )
     }
@@ -250,12 +265,13 @@ object PichixFullBackup {
                 if (imp.keysImported > 0) {
                     parts.add("configuración")
                 }
-                if (root.has("refresh_guard_json")) {
-                    com.oceanlab.pichix.service.RefreshClickGuard.importJson(
-                        context,
-                        root.optString("refresh_guard_json", "[]"),
-                    )
-                }
+            }
+            if (options.restoreRefreshGuard && root.has("refresh_guard_json")) {
+                com.oceanlab.pichix.service.RefreshClickGuard.importJson(
+                    context,
+                    root.optString("refresh_guard_json", "[]"),
+                )
+                parts.add("ciclos Refresh")
             }
             if (parts.isEmpty()) {
                 ImportResult(false, "Marca al menos una opción para restaurar")
