@@ -6,8 +6,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
@@ -32,14 +30,6 @@ class RefreshCyclesActivity : AppCompatActivity() {
     private lateinit var bar: ProgressBar
     private lateinit var rv: RecyclerView
     private val adapter = CycleAdapter()
-    private val handler = Handler(Looper.getMainLooper())
-    private val liveTick = object : Runnable {
-        override fun run() {
-            bind(fromTick = true)
-            handler.postDelayed(this, 2_000L)
-        }
-    }
-
     private val changedReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action == RefreshClickGuard.ACTION_CHANGED) bind()
@@ -70,11 +60,9 @@ class RefreshCyclesActivity : AppCompatActivity() {
             changedReceiver,
             IntentFilter(RefreshClickGuard.ACTION_CHANGED),
         )
-        handler.postDelayed(liveTick, 2_000L)
     }
 
     override fun onStop() {
-        handler.removeCallbacks(liveTick)
         try {
             LocalBroadcastManager.getInstance(this).unregisterReceiver(changedReceiver)
         } catch (_: Exception) {
@@ -113,7 +101,7 @@ class RefreshCyclesActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun bind(fromTick: Boolean = false) {
+    private fun bind() {
         val st = RefreshClickGuard.status(this)
         tvSummary.text = buildString {
             append(RefreshClickGuard.summaryText(this@RefreshCyclesActivity))
@@ -142,7 +130,7 @@ class RefreshCyclesActivity : AppCompatActivity() {
             rows.add(CycleRow(ep, closed.size - i, live = false))
         }
         adapter.submit(this, rows)
-        if (!fromTick && rows.isEmpty()) {
+        if (rows.isEmpty()) {
             tvProgress.append("\n${getString(R.string.refresh_cycles_empty)}")
         }
     }
@@ -223,7 +211,11 @@ class RefreshCyclesActivity : AppCompatActivity() {
             e.firstClickAtMs > 0L -> RefreshClickGuard.formatClock(e.firstClickAtMs)
             else -> "—"
         }
-        val to = if (live) getString(R.string.refresh_cycles_until_now) else RefreshClickGuard.formatClock(e.atMs)
+        val to = when {
+            live && e.lastClickAtMs > 0L -> RefreshClickGuard.formatClock(e.lastClickAtMs)
+            live -> getString(R.string.refresh_cycles_until_now)
+            else -> RefreshClickGuard.formatClock(e.atMs)
+        }
         val clickSpan = if (e.firstClickAtMs > 0L && e.lastClickAtMs >= e.firstClickAtMs) {
             "${RefreshClickGuard.formatClock(e.firstClickAtMs)}  →  ${RefreshClickGuard.formatClock(e.lastClickAtMs)}"
         } else {
@@ -242,8 +234,9 @@ class RefreshCyclesActivity : AppCompatActivity() {
                 append(getString(R.string.refresh_cycles_from_prev_banner)).append(": ")
                     .append(getString(R.string.refresh_cycles_first)).append('\n')
             }
+            val active = if (e.activeClickingMs > 0L) e.activeClickingMs else e.clickingMs
             append(getString(R.string.refresh_cycles_clicking)).append(": ")
-                .append(RefreshClickGuard.formatDuration(e.clickingMs)).append('\n')
+                .append(RefreshClickGuard.formatDuration(active)).append('\n')
             append(getString(R.string.refresh_cycles_click_span)).append(": ").append(clickSpan).append('\n')
             if (!live) {
                 append(getString(R.string.refresh_cycles_until_banner)).append(": ")
@@ -253,8 +246,13 @@ class RefreshCyclesActivity : AppCompatActivity() {
                 .append("  (").append(getString(R.string.refresh_cycles_burst_n, e.burstClicks))
                 .append(" · ").append(getString(R.string.refresh_cycles_normal_n, e.normalClicks))
                 .append(")\n")
-            append(getString(R.string.refresh_cycles_pace)).append(": ≈")
-                .append("%.1f".format(java.util.Locale.US, e.clicksPerMin)).append("/min  ·  ")
+            append(getString(R.string.refresh_cycles_pace)).append(": ")
+            if (e.clicksPerMin > 0.0) {
+                append("≈").append("%.1f".format(java.util.Locale.US, e.clicksPerMin)).append("/min")
+            } else {
+                append("—")
+            }
+            append("  ·  ")
                 .append(getString(R.string.refresh_cycles_last_min, e.clicksLast60s)).append("  ·  ")
                 .append(getString(R.string.refresh_cycles_last_5min, e.clicksLast5min)).append('\n')
             if (e.clicks >= 2) {

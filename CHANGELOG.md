@@ -8,6 +8,13 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.38 (Octubre 2026)
+
+### Corregido
+- **Ritmo de clics Refresh**: ya no baja con el reloj al abrir «Ver ciclos». Se calcula solo con el tiempo entre clics reales (sin pausas largas ni el rato mirando la pantalla). La lista se actualiza cuando hay un clic nuevo, no cada 2 s.
+
+---
+
 ## v0.2.37 (Octubre 2026)
 
 ### Corregido

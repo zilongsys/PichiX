@@ -22,6 +22,7 @@ object RefreshClickMath {
         val clicks: Int,
         val elapsedMs: Long,
         val clickingMs: Long,
+        val activeClickingMs: Long,
         val cycleMs: Long,
         val waitAfterPreviousMs: Long,
         val firstClickAtMs: Long,
@@ -36,7 +37,7 @@ object RefreshClickMath {
         val burst: Boolean,
     ) {
         val clicksPerMin: Double
-            get() = if (elapsedMs > 0L) clicks * 60_000.0 / elapsedMs else 0.0
+            get() = pacePerMin(clicks, activeClickingMs)
         val normalClicks: Int get() = (clicks - burstClicks).coerceAtLeast(0)
     }
 
@@ -104,16 +105,21 @@ object RefreshClickMath {
         val times = clicks.map { it.atMs }
         val gaps = times.zipWithNext { a, b -> b - a }
         val burstClicks = clicks.count { it.burst }
-        val endRef = if (live) nowMs.coerceAtLeast(last.atMs) else endedAtMs.coerceAtLeast(last.atMs)
+        // Ritmo y «último min» se anclan al último clic, no al reloj de la pantalla.
+        val clickEnd = last.atMs
+        val endRef = if (live) clickEnd else endedAtMs.coerceAtLeast(clickEnd)
         val prev = lastBannerAtMs
         val wait = if (prev > 0L && first.atMs >= prev) first.atMs - prev else 0L
         val cycleStart = if (prev > 0L) prev else first.atMs
-        val last60From = endRef - 60_000L
-        val last5From = endRef - 5 * 60_000L
+        val last60From = clickEnd - 60_000L
+        val last5From = clickEnd - 5 * 60_000L
+        val clickingMs = (clickEnd - first.atMs).coerceAtLeast(0L)
+        val activeClickingMs = gaps.filter { it in 1 until IDLE_RESET_MS }.sum()
         return Snapshot(
             clicks = clicks.size,
             elapsedMs = (endRef - first.atMs).coerceAtLeast(0L),
-            clickingMs = (last.atMs - first.atMs).coerceAtLeast(0L),
+            clickingMs = clickingMs,
+            activeClickingMs = activeClickingMs,
             cycleMs = (endRef - cycleStart).coerceAtLeast(0L),
             waitAfterPreviousMs = wait,
             firstClickAtMs = first.atMs,
@@ -128,6 +134,10 @@ object RefreshClickMath {
             burst = burstClicks > 0 || fallbackBurst,
         )
     }
+
+    /** Clics/min solo con el tiempo entre clics (sin pausas ni tiempo mirando la pantalla). */
+    fun pacePerMin(clicks: Int, activeClickingMs: Long): Double =
+        if (clicks >= 2 && activeClickingMs > 0L) clicks * 60_000.0 / activeClickingMs else 0.0
 
     fun formatDuration(ms: Long): String {
         val totalSec = (ms / 1000L).coerceAtLeast(0L)

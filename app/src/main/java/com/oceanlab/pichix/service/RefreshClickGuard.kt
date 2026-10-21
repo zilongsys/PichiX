@@ -44,14 +44,22 @@ object RefreshClickGuard {
         val pausedPreventively: Boolean = false,
         val waitAfterPreviousMs: Long = 0L,
         val cycleMs: Long = 0L,
+        val activeClickingMs: Long = 0L,
     ) {
-        val clicksPerMin: Double
-            get() = if (elapsedMs > 0) clicks * 60_000.0 / elapsedMs else 0.0
         val clickingMs: Long
             get() = if (firstClickAtMs > 0L && lastClickAtMs >= firstClickAtMs) {
                 lastClickAtMs - firstClickAtMs
             } else {
                 elapsedMs
+            }
+        val clicksPerMin: Double
+            get() {
+                val denom = when {
+                    activeClickingMs > 0L -> activeClickingMs
+                    idleGaps == 0 -> clickingMs
+                    else -> 0L
+                }
+                return RefreshClickMath.pacePerMin(clicks, denom)
             }
         val normalClicks: Int get() = (clicks - burstClicks).coerceAtLeast(0)
         val isLive: Boolean get() = atMs <= 0L
@@ -139,6 +147,7 @@ object RefreshClickGuard {
             }
             RefreshClickMath.Decision.NONE -> Decision.NONE
         }
+        notifyChanged(context)
         return decision
     }
 
@@ -237,8 +246,11 @@ object RefreshClickGuard {
             }
             s.live?.let { live ->
                 append('\n').append("Ciclo en curso: ").append(live.clicks).append(" clics")
-                if (live.firstClickAtMs > 0L) {
-                    append(" · ").append(formatDuration(System.currentTimeMillis() - live.firstClickAtMs))
+                val active = if (live.activeClickingMs > 0L) live.activeClickingMs else live.clickingMs
+                if (active > 0L) {
+                    append(" · ").append(formatDuration(active))
+                    append(" dando clic · ≈")
+                    append("%.1f".format(Locale.US, live.clicksPerMin)).append("/min")
                 }
             }
         }
@@ -314,6 +326,7 @@ object RefreshClickGuard {
             pausedPreventively = pausedThisWindow,
             waitAfterPreviousMs = snap.waitAfterPreviousMs,
             cycleMs = snap.cycleMs,
+            activeClickingMs = snap.activeClickingMs,
         )
     }
 
@@ -421,7 +434,8 @@ object RefreshClickGuard {
                     .put("warned", e.warned)
                     .put("paused", e.pausedPreventively)
                     .put("waitPrev", e.waitAfterPreviousMs)
-                    .put("cycleMs", e.cycleMs),
+                    .put("cycleMs", e.cycleMs)
+                    .put("activeMs", e.activeClickingMs),
             )
         }
         return arr
@@ -508,6 +522,7 @@ object RefreshClickGuard {
                 warned = o.optBoolean("warned", false),
                 pausedPreventively = o.optBoolean("paused", false),
                 waitAfterPreviousMs = o.optLong("waitPrev", 0L),
+                activeClickingMs = o.optLong("activeMs", 0L),
                 cycleMs = o.optLong(
                     "cycleMs",
                     if (o.optLong("prevBanner", 0L) > 0L && at > 0L) {

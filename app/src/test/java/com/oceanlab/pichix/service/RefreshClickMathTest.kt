@@ -99,6 +99,8 @@ class RefreshClickMathTest {
         assertEquals(2, snap.normalClicks)
         assertEquals(12_000L, snap.elapsedMs)
         assertEquals(12_000L, snap.clickingMs)
+        assertEquals(12_000L, snap.activeClickingMs)
+        assertEquals(15.0, snap.clicksPerMin, 0.01)
         assertEquals(1_000L, snap.minGapMs)
         assertEquals(11_000L, snap.maxGapMs)
         assertEquals(6_000L, snap.avgGapMs)
@@ -107,12 +109,28 @@ class RefreshClickMathTest {
     }
 
     @Test
-    fun snapshot_liveUsesNowForElapsed() {
+    fun snapshot_liveFreezesAtLastClick() {
         val clicks = listOf(RefreshClickMath.Click(1_000L, false))
         val snap = RefreshClickMath.snapshot(clicks, nowMs = 61_000L, lastBannerAtMs = 0L, live = true, endedAtMs = 0L, fallbackBurst = false)!!
-        assertEquals(60_000L, snap.elapsedMs)
+        assertEquals(0L, snap.elapsedMs)
         assertEquals(0L, snap.clickingMs)
+        assertEquals(0.0, snap.clicksPerMin, 0.0)
         assertEquals(1, snap.clicksLast60s)
+    }
+
+    @Test
+    fun pace_ignoresIdleGapsAndWallClock() {
+        val clicks = listOf(
+            RefreshClickMath.Click(1_000L, false),
+            RefreshClickMath.Click(2_000L, false),
+            RefreshClickMath.Click(1_000L + RefreshClickMath.IDLE_RESET_MS + 5_000L, false),
+            RefreshClickMath.Click(1_000L + RefreshClickMath.IDLE_RESET_MS + 6_000L, false),
+        )
+        val later = clicks.last().atMs + 120_000L
+        val snap = RefreshClickMath.snapshot(clicks, nowMs = later, lastBannerAtMs = 0L, live = true, endedAtMs = 0L, fallbackBurst = false)!!
+        assertEquals(2_000L, snap.activeClickingMs)
+        assertEquals(4 * 60_000.0 / 2_000.0, snap.clicksPerMin, 0.01)
+        assertEquals(1, snap.idleGaps)
     }
 
     @Test
