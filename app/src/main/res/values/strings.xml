@@ -165,10 +165,10 @@
     <string name="config_burst_click_interval_label">Intervalo entre clics durante la ráfaga (ms)</string>
     <string name="config_burst_duration_label">Duración de cada ráfaga (seg, mín – máx, aleatorio; hasta 3600 = 1 h)</string>
     <string name="config_pause_over_clicks_title">Pausar por bloqueo (pantalla / notificación)</string>
-    <string name="config_pause_over_clicks_hint">Pausa el bot si Flex muestra un banner in-app (demasiados toques, captcha, slow down…) o si una notificación contiene el texto indicado. El aviso «tapped too many times…» se detecta siempre con el bot activo, aunque este interruptor esté apagado. Reanuda tras el tiempo configurado.</string>
+    <string name="config_pause_over_clicks_hint">Pausa el bot si Flex muestra un banner in-app (demasiados toques, captcha, slow down…) o si una notificación contiene el texto indicado. El aviso «tapped too many times…» se detecta siempre con el bot activo, aunque este interruptor esté apagado. Reanuda tras estos minutos, o más si hay un ciclo Refresh aprendido (para que el siguiente cartel no salga antes).</string>
     <string name="config_pause_over_clicks_match_label">Texto a detectar (opcional)</string>
     <string name="config_pause_over_clicks_match_hint">Vacío = frases por defecto. Varios textos separados por coma.</string>
-    <string name="config_pause_over_clicks_minutes_label">Minutos hasta reanudar</string>
+    <string name="config_pause_over_clicks_minutes_label">Mínimo de minutos hasta reanudar</string>
     <string name="config_pause_sound_pause_label">Sonido al pausar</string>
     <string name="config_pause_sound_resume_label">Sonido al reanudar</string>
     <string name="config_btn_pick_pause_sound">Elegir tono (al pausar)</string>
@@ -183,7 +183,7 @@
     <string name="home_config_import">Importar respaldo</string>
     <string name="home_config_export_hint">Configuración, tarifas, alertas, historial CSV y logs opcionales en un JSON (como MakiX).</string>
     <string name="config_refresh_guard_title">Contador de clics Refresh</string>
-    <string name="config_refresh_guard_hint">Cuenta cada clic en Refresh. Cada ciclo va desde un banner «demasiados toques» hasta el siguiente. Abre la ventana de ciclos para ver clics, tiempos y ritmo de cada uno.</string>
+    <string name="config_refresh_guard_hint">Cuenta cada clic en Refresh. Desde el primer banner ya avisa y puede pausar (no espera 5 ciclos; las últimas 5 detenciones largas afinan el límite). Tras «demasiados toques» la pausa se alarga al tiempo del ciclo normal para que Flex se restablezca. Abre la ventana de ciclos para ver cada uno.</string>
     <string name="config_refresh_guard_warn">Aviso al acercarse al límite</string>
     <string name="config_refresh_guard_pause">Pausa preventiva antes del límite</string>
     <string name="config_refresh_guard_warn_pct">Aviso al %</string>

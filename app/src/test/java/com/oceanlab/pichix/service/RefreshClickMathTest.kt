@@ -37,6 +37,53 @@ class RefreshClickMathTest {
     }
 
     @Test
+    fun learn_startsFromFirstCycle() {
+        val one = RefreshClickMath.learn(
+            listOf(RefreshClickMath.CycleStats(clicks = 80, clickingMs = 12 * 60_000L)),
+        )
+        assertEquals(80, one.limit)
+        assertEquals(12 * 60_000L, one.cooldownMs)
+        assertTrue(one.windowMs != null && one.windowMs!! >= 12 * 60_000L)
+    }
+
+    @Test
+    fun learn_ignoresHotShortCycles() {
+        val learned = RefreshClickMath.learn(
+            listOf(
+                RefreshClickMath.CycleStats(80, 12 * 60_000L),
+                RefreshClickMath.CycleStats(22, 2 * 60_000L),
+                RefreshClickMath.CycleStats(18, 90_000L),
+            ),
+        )
+        assertEquals(80, learned.limit)
+        assertEquals(12 * 60_000L, learned.cooldownMs)
+    }
+
+    @Test
+    fun resumeDelay_afterBannerUsesFullCooldown() {
+        val now = 1_000_000L
+        val delay = RefreshClickMath.resumeDelayMs(
+            userMinutes = 5,
+            cooldownMs = 12 * 60_000L,
+            lastBannerAtMs = now,
+            nowMs = now,
+        )
+        assertEquals(12 * 60_000L, delay)
+    }
+
+    @Test
+    fun resumeDelay_keepsUserMinimumWhenCooldownAlreadyElapsed() {
+        val now = 1_000_000L
+        val delay = RefreshClickMath.resumeDelayMs(
+            userMinutes = 5,
+            cooldownMs = 12 * 60_000L,
+            lastBannerAtMs = now - 12 * 60_000L,
+            nowMs = now,
+        )
+        assertEquals(5 * 60_000L, delay)
+    }
+
+    @Test
     fun decide_pauseBeatsWarnWhenBothCrossed() {
         val d = RefreshClickMath.decide(
             current = 10,

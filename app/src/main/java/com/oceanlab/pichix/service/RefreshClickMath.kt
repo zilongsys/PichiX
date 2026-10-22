@@ -75,6 +75,48 @@ object RefreshClickMath {
             .coerceIn(MIN_WINDOW_MS, MAX_WINDOW_MS)
     }
 
+    data class CycleStats(val clicks: Int, val clickingMs: Long)
+
+    data class Learned(
+        val limit: Int?,
+        val windowMs: Long?,
+        val cooldownMs: Long?,
+    )
+
+    /**
+     * Aviso/pausa desde el primer ciclo cerrado. Las últimas 5 detenciones afinan;
+     * los ciclos cortos (Flex aún caliente) no bajan el límite si hubo uno largo.
+     */
+    fun learn(stats: List<CycleStats>): Learned {
+        if (stats.isEmpty()) return Learned(null, null, null)
+        val maxT = stats.maxOf { it.clickingMs.coerceAtLeast(1L) }
+        val healthy = stats.filter { it.clickingMs >= maxT / 2 }
+        val pool = if (healthy.isEmpty()) stats else healthy
+        val recent = pool.takeLast(LEARN_FROM_LAST)
+        return Learned(
+            limit = learnedLimit(recent.map { it.clicks }),
+            windowMs = learnedWindowMs(recent.map { it.clickingMs.coerceAtLeast(1L) }),
+            cooldownMs = maxT.coerceIn(MIN_WINDOW_MS, MAX_WINDOW_MS),
+        )
+    }
+
+    /**
+     * Tras un banner, espera al menos el ciclo normal (menos lo ya transcurrido
+     * desde ese banner), sin bajar del mínimo que configuró el usuario.
+     */
+    fun resumeDelayMs(
+        userMinutes: Int,
+        cooldownMs: Long?,
+        lastBannerAtMs: Long,
+        nowMs: Long,
+    ): Long {
+        val userMs = userMinutes.coerceIn(1, 24 * 60) * 60_000L
+        if (cooldownMs == null || cooldownMs <= 0L) return userMs
+        val sinceBanner = if (lastBannerAtMs > 0L) (nowMs - lastBannerAtMs).coerceAtLeast(0L) else 0L
+        val remaining = (cooldownMs - sinceBanner).coerceAtLeast(0L)
+        return maxOf(userMs, remaining).coerceAtMost(MAX_WINDOW_MS)
+    }
+
     fun decide(
         current: Int,
         limit: Int,

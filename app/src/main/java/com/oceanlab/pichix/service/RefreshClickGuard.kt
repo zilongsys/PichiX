@@ -63,6 +63,12 @@ object RefreshClickGuard {
             }
         val normalClicks: Int get() = (clicks - burstClicks).coerceAtLeast(0)
         val isLive: Boolean get() = atMs <= 0L
+        val effectiveClickingMs: Long
+            get() = when {
+                activeClickingMs > 0L -> activeClickingMs
+                clickingMs > 0L -> clickingMs
+                else -> elapsedMs
+            }
     }
 
     data class Status(
@@ -75,6 +81,7 @@ object RefreshClickGuard {
         val lastBannerAtMs: Long = 0L,
         val warnAt: Int? = null,
         val pauseAt: Int? = null,
+        val cooldownMs: Long? = null,
     ) {
         val progressPercent: Int
             get() {
@@ -103,6 +110,7 @@ object RefreshClickGuard {
     @Volatile private var cachedEpisodes: List<Episode>? = null
     private var cachedLimit: Int? = null
     private var cachedWindowMs: Long? = null
+    private var cachedCooldownMs: Long? = null
 
     @Synchronized
     fun onRefreshClick(context: Context, settings: AppSettings, burst: Boolean = false): Decision {
@@ -189,6 +197,7 @@ object RefreshClickGuard {
         cachedEpisodes = emptyList()
         cachedLimit = null
         cachedWindowMs = null
+        cachedCooldownMs = null
         lastBannerAtMs = 0L
         resetCycleLocked()
         persistDirty = 0
@@ -220,6 +229,18 @@ object RefreshClickGuard {
             lastBannerAtMs = lastBannerAtMs,
             warnAt = limit?.let { RefreshClickMath.threshold(it, warnPct) },
             pauseAt = limit?.let { RefreshClickMath.threshold(it, pausePct) },
+            cooldownMs = cachedCooldownMs,
+        )
+    }
+
+    @Synchronized
+    fun resumeDelayMs(context: Context, userMinutes: Int): Long {
+        ensureLearned(context)
+        return RefreshClickMath.resumeDelayMs(
+            userMinutes = userMinutes,
+            cooldownMs = cachedCooldownMs,
+            lastBannerAtMs = lastBannerAtMs,
+            nowMs = System.currentTimeMillis(),
         )
     }
 
@@ -243,6 +264,10 @@ object RefreshClickGuard {
                     .append(" · pausa ~").append(s.pauseAt)
                     .append(" · ventana ").append(s.windowClicks)
                     .append(" (").append(s.progressPercent).append("%)")
+            }
+            s.cooldownMs?.let {
+                append('\n').append("Espera tras banner ~").append(formatDuration(it))
+                    .append(" para restablecer el ciclo (desde el 1.er banner)")
             }
             s.live?.let { live ->
                 append('\n').append("Ciclo en curso: ").append(live.clicks).append(" clics")
@@ -359,8 +384,12 @@ object RefreshClickGuard {
 
     private fun recompute(episodes: List<Episode>) {
         cachedEpisodes = episodes
-        cachedLimit = RefreshClickMath.learnedLimit(episodes.map { it.clicks })
-        cachedWindowMs = RefreshClickMath.learnedWindowMs(episodes.map { it.elapsedMs })
+        val learned = RefreshClickMath.learn(
+            episodes.map { RefreshClickMath.CycleStats(it.clicks, it.effectiveClickingMs) },
+        )
+        cachedLimit = learned.limit
+        cachedWindowMs = learned.windowMs
+        cachedCooldownMs = learned.cooldownMs
     }
 
     private fun maybePersistLive(context: Context, now: Long) {

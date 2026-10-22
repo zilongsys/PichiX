@@ -8,6 +8,14 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.40 (Octubre 2026)
+
+### Actualizado
+- **Aviso/pausa Refresh**: actúa desde el primer banner (no espera 5 ciclos; las últimas 5 detenciones largas solo afinan). Los ciclos cortos de después, cuando Flex sigue «caliente», ya no bajan el límite.
+- Tras «demasiados toques» la pausa dura al menos el tiempo del ciclo normal (o el mínimo de Config, el que sea mayor), para que el siguiente cartel no salga antes.
+
+---
+
 ## v0.2.39 (Octubre 2026)
 
 ### Actualizado

@@ -161,18 +161,22 @@ object PauseByOverClicksController {
 
     private fun rescheduleResume(context: Context, settings: AppSettings) {
         cancelScheduledResume()
-        val minutes = settings.pauseByOverClicksResumeMinutes.coerceIn(1, 24 * 60)
-        val delayMs = minutes * 60_000L
+        val delayMs = RefreshClickGuard.resumeDelayMs(
+            context,
+            settings.pauseByOverClicksResumeMinutes,
+        )
+        val waitLabel = RefreshClickMath.formatDuration(delayMs)
         val runnable = Runnable {
             resumeRunnable = null
             if (!PichixAccessibilityService.pausedAfterAccept) return@Runnable
             AlertManager(context).playSoundOnce(settings.pauseByOverClicksResumeSoundUri)
             PichixAccessibilityService.resumeFromPause(context)
-            BotEventLog.log(context, BotEventLog.CAT_PAUSE, "Reanudado tras $minutes min (auto)")
-            Log.i(TAG, "Bot reanudado tras $minutes min")
+            BotEventLog.log(context, BotEventLog.CAT_PAUSE, "Reanudado tras $waitLabel (auto)")
+            Log.i(TAG, "Bot reanudado tras $waitLabel")
         }
         resumeRunnable = runnable
         handler.postDelayed(runnable, delayMs)
-        Log.d(TAG, "Reanudación programada en $minutes min")
+        BotEventLog.log(context, BotEventLog.CAT_PAUSE, "Reanudación programada en $waitLabel")
+        Log.d(TAG, "Reanudación programada en $waitLabel")
     }
 }
