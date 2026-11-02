@@ -192,6 +192,10 @@
     <string name="config_refresh_guard_clear">Borrar memoria</string>
     <string name="config_refresh_guard_cleared">Memoria de clics borrada</string>
     <string name="config_refresh_guard_open_cycles">Ver ciclos</string>
+    <string name="refresh_cycles_export">Exportar ciclos</string>
+    <string name="refresh_cycles_export_ok">Elige app para enviar el JSON de ciclos</string>
+    <string name="refresh_cycles_export_fail">No se pudo exportar: %1$s</string>
+    <string name="refresh_cycles_export_share">Enviar ciclos Refresh</string>
     <string name="refresh_cycles_title">Ciclos Refresh</string>
     <string name="refresh_cycles_intro">Un ciclo cierra cuando Flex muestra «demasiados toques». El siguiente empieza en ese instante y acumula todos los clics hasta el próximo aviso.</string>
     <string name="refresh_cycles_empty">Todavía no hay ciclos. Deja el bot clicando Refresh; al salir el primer banner se guardará el ciclo completo.</string>

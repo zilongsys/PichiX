@@ -1142,6 +1142,9 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         view.findViewById<MaterialButton>(R.id.btnRefreshGuardOpenCycles).setOnClickListener {
             startActivity(Intent(requireContext(), RefreshCyclesActivity::class.java))
         }
+        view.findViewById<MaterialButton>(R.id.btnRefreshGuardExportCycles).setOnClickListener {
+            RefreshCyclesActivity.shareExport(requireContext())
+        }
         view.findViewById<MaterialButton>(R.id.btnRefreshGuardRefreshStats).setOnClickListener {
             refreshRefreshGuardStats(view)
         }

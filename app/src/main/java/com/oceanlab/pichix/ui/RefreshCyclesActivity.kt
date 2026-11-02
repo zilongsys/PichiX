@@ -15,11 +15,14 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
+import com.oceanlab.pichix.BuildConfig
 import com.oceanlab.pichix.R
 import com.oceanlab.pichix.service.RefreshClickGuard
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -56,7 +59,42 @@ class RefreshCyclesActivity : AppCompatActivity() {
 
         findViewById<MaterialButton>(R.id.btnRefreshCyclesReload).setOnClickListener { bind() }
         findViewById<MaterialButton>(R.id.btnRefreshCyclesClear).setOnClickListener { confirmClear() }
+        findViewById<MaterialButton>(R.id.btnRefreshCyclesExport).setOnClickListener { shareExport(this) }
         bind()
+    }
+
+    companion object {
+        fun shareExport(context: Context) {
+            try {
+                val json = RefreshClickGuard.exportAnalysisJson(context)
+                val file = File(
+                    context.applicationContext.filesDir,
+                    "PichiX-ciclos-v${BuildConfig.VERSION_NAME}.json",
+                )
+                file.writeText(json)
+                val uri = FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    file,
+                )
+                val send = Intent(Intent.ACTION_SEND).apply {
+                    type = "application/json"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.refresh_cycles_export_share))
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                context.startActivity(
+                    Intent.createChooser(send, context.getString(R.string.refresh_cycles_export_share)),
+                )
+                Toast.makeText(context, R.string.refresh_cycles_export_ok, Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.refresh_cycles_export_fail, e.message ?: "error"),
+                    Toast.LENGTH_LONG,
+                ).show()
+            }
+        }
     }
 
     override fun onStart() {

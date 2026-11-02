@@ -8,6 +8,13 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.41 (Noviembre 2026)
+
+### Añadido
+- **Exportar ciclos Refresh** (Config y Ver ciclos): genera un JSON solo con ciclos, límite aprendido, avisos/pausas y clics en curso, para enviarlo y analizar el proceso.
+
+---
+
 ## v0.2.40 (Octubre 2026)
 
 ### Actualizado

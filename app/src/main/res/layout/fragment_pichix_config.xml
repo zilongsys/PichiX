@@ -2551,6 +2551,17 @@
                 android:text="@string/config_refresh_guard_open_cycles"
                 android:textSize="12sp"/>
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRefreshGuardExportCycles"
+                style="@style/SparkButtonSecondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginTop="6dp"
+                android:text="@string/refresh_cycles_export"
+                android:textSize="12sp"/>
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

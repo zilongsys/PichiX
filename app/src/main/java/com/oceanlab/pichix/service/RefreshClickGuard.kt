@@ -3,6 +3,7 @@ package com.oceanlab.pichix.service
 import android.content.Context
 import android.content.Intent
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.oceanlab.pichix.BuildConfig
 import com.oceanlab.pichix.data.AppSettings
 import org.json.JSONArray
 import org.json.JSONObject
@@ -293,6 +294,96 @@ object RefreshClickGuard {
             .put("liveWarned", warnedThisWindow)
             .put("livePaused", pausedThisWindow)
             .toString()
+    }
+
+    /**
+     * JSON solo de ciclos Refresh (ajustes, límite aprendido, episodios y clics en curso)
+     * para enviarlo y analizar el proceso.
+     */
+    @Synchronized
+    fun exportAnalysisJson(context: Context): String {
+        ensureLearned(context)
+        persistLiveNow(context)
+        val s = status(context)
+        val settings = AppSettings(context)
+        val iso = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        val now = System.currentTimeMillis()
+        val learned = JSONObject()
+            .put("limit", s.learnedLimit ?: JSONObject.NULL)
+            .put("windowMs", s.windowMs ?: JSONObject.NULL)
+            .put("window", s.windowMs?.let { formatDuration(it) } ?: JSONObject.NULL)
+            .put("cooldownMs", s.cooldownMs ?: JSONObject.NULL)
+            .put("cooldown", s.cooldownMs?.let { formatDuration(it) } ?: JSONObject.NULL)
+            .put("warnAt", s.warnAt ?: JSONObject.NULL)
+            .put("pauseAt", s.pauseAt ?: JSONObject.NULL)
+            .put("windowClicksNow", s.windowClicks)
+            .put("progressPercent", s.progressPercent)
+            .put("closedCycles", s.episodes.size)
+            .put("liveClicks", s.live?.clicks ?: 0)
+        val cfg = JSONObject()
+            .put("warnEnabled", settings.refreshGuardWarnEnabled)
+            .put("pauseEnabled", settings.refreshGuardPauseEnabled)
+            .put("warnPercent", settings.refreshGuardWarnPercent)
+            .put("pausePercent", settings.refreshGuardPausePercent)
+            .put("resumeMinutesMin", settings.pauseByOverClicksResumeMinutes)
+            .put("pauseByOverClicksEnabled", settings.pauseByOverClicksEnabled)
+        val closed = JSONArray()
+        s.episodes.forEach { closed.put(episodeToAnalysis(it, live = false)) }
+        return JSONObject()
+            .put("kind", "pichix-refresh-cycles")
+            .put("note", "Export solo de ciclos Refresh. Enviar este archivo para analizar avisos, pausas y ritmos.")
+            .put("appVersionName", BuildConfig.VERSION_NAME)
+            .put("appVersionCode", BuildConfig.VERSION_CODE)
+            .put("exportedAt", iso.format(Date(now)))
+            .put("exportedAtMs", now)
+            .put("settings", cfg)
+            .put("learned", learned)
+            .put("lastBannerAtMs", lastBannerAtMs)
+            .put("lastBannerAt", if (lastBannerAtMs > 0L) formatClock(lastBannerAtMs) else JSONObject.NULL)
+            .put("summary", summaryText(context))
+            .put("episodes", closed)
+            .put("live", s.live?.let { episodeToAnalysis(it, live = true) } ?: JSONObject.NULL)
+            .put("liveClicks", liveClicksToArray())
+            .toString(2)
+    }
+
+    private fun episodeToAnalysis(e: Episode, live: Boolean): JSONObject {
+        val active = e.effectiveClickingMs
+        return JSONObject()
+            .put("live", live)
+            .put("atMs", e.atMs)
+            .put("at", if (live) "en curso" else formatClock(e.atMs))
+            .put("clicks", e.clicks)
+            .put("burstClicks", e.burstClicks)
+            .put("normalClicks", e.normalClicks)
+            .put("burst", e.burst)
+            .put("elapsedMs", e.elapsedMs)
+            .put("elapsed", formatDuration(e.elapsedMs))
+            .put("clickingMs", e.clickingMs)
+            .put("activeClickingMs", e.activeClickingMs)
+            .put("activeClicking", formatDuration(active))
+            .put("clicksPerMin", e.clicksPerMin)
+            .put("clicksLast60s", e.clicksLast60s)
+            .put("clicksLast5min", e.clicksLast5min)
+            .put("minGapMs", e.minGapMs)
+            .put("avgGapMs", e.avgGapMs)
+            .put("maxGapMs", e.maxGapMs)
+            .put("minGap", formatDuration(e.minGapMs))
+            .put("avgGap", formatDuration(e.avgGapMs))
+            .put("maxGap", formatDuration(e.maxGapMs))
+            .put("idleGaps", e.idleGaps)
+            .put("warned", e.warned)
+            .put("pausedPreventively", e.pausedPreventively)
+            .put("waitAfterPreviousMs", e.waitAfterPreviousMs)
+            .put("waitAfterPrevious", formatDuration(e.waitAfterPreviousMs))
+            .put("cycleMs", e.cycleMs)
+            .put("cycle", formatDuration(e.cycleMs))
+            .put("previousBannerAtMs", e.previousBannerAtMs)
+            .put("previousBannerAt", if (e.previousBannerAtMs > 0L) formatClock(e.previousBannerAtMs) else JSONObject.NULL)
+            .put("firstClickAtMs", e.firstClickAtMs)
+            .put("lastClickAtMs", e.lastClickAtMs)
+            .put("firstClickAt", if (e.firstClickAtMs > 0L) formatClock(e.firstClickAtMs) else JSONObject.NULL)
+            .put("lastClickAt", if (e.lastClickAtMs > 0L) formatClock(e.lastClickAtMs) else JSONObject.NULL)
     }
 
     @Synchronized

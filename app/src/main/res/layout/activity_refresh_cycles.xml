@@ -68,6 +68,17 @@
             android:textSize="12sp" />
     </LinearLayout>
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnRefreshCyclesExport"
+        style="@style/SparkButtonSecondary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="8dp"
+        android:text="@string/refresh_cycles_export"
+        android:textSize="12sp" />
+
     <LinearLayout
         android:id="@+id/boxRefreshCyclesTable"
         android:layout_width="match_parent"
