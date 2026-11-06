@@ -39,10 +39,12 @@ import com.oceanlab.pichix.data.PichixFullBackup
 import com.oceanlab.pichix.service.OverlayService
 import com.oceanlab.pichix.service.PauseByOverClicksController
 import com.oceanlab.pichix.service.PichixAccessibilityService
+import com.oceanlab.pichix.service.PichixForegroundService
 import com.oceanlab.pichix.service.RefreshClickGuard
 import com.oceanlab.pichix.util.OverlayPermissionHelper
 import com.oceanlab.pichix.util.CallOnBlockHelper
 import com.oceanlab.pichix.util.AlertManager
+import com.oceanlab.pichix.util.ClickHoursGate
 import com.oceanlab.pichix.util.PeakHoursScheduler
 import com.oceanlab.pichix.util.PermissionStatusHelper
 import com.oceanlab.pichix.util.SoundPickerHelper
@@ -390,6 +392,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         swPauseIgnore.isChecked = settings.pauseByOverClicksIgnoreCase
         bindCallOnBlockFields(view)
         bindPeakHoursFields(view)
+        bindClickGoodHoursFields(view)
         bindRefreshGuardFields(view)
         refreshSoundLabels(view)
         refreshOfferClickSoundLabel(view)
@@ -512,6 +515,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         }
         setupCallOnBlockControls(view, markDirty)
         setupPeakHoursControls(view, markDirty)
+        setupClickGoodHoursControls(view, markDirty)
         setupRefreshGuardControls(view)
         swPauseOver.setOnCheckedChangeRetainingFocus(view) { markDirty() }
         swForeground.setOnCheckedChangeRetainingFocus(view) { markDirty() }
@@ -1113,6 +1117,72 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         })
     }
 
+    private fun updateClickGoodHoursVisibility(view: View, enabled: Boolean) {
+        view.findViewById<View>(R.id.layoutClickGoodHoursOptions).visibility =
+            if (enabled) View.VISIBLE else View.GONE
+    }
+
+    private fun refreshClickGoodHoursStatus(view: View) {
+        val tv = view.findViewById<TextView>(R.id.tvClickGoodHoursStatus) ?: return
+        if (!settings.clickGoodHoursEnabled) {
+            tv.text = getString(R.string.config_click_hours_status_off)
+            return
+        }
+        ClickHoursGate.recompute(requireContext())
+        val text = ClickHoursGate.statusText()
+        tv.text = text.ifBlank { getString(R.string.config_click_hours_status_off) }
+    }
+
+    private fun bindClickGoodHoursFields(view: View) {
+        view.findViewById<SwitchMaterial>(R.id.switchClickGoodHours).isChecked =
+            settings.clickGoodHoursEnabled
+        view.findViewById<TextInputEditText>(R.id.etClickGoodHoursMargin)
+            .setText(settings.clickGoodHoursMarginMin.toString())
+        view.findViewById<TextInputEditText>(R.id.etClickGoodHoursPct)
+            .setText(settings.clickGoodHoursPct.toString())
+        view.findViewById<TextInputEditText>(R.id.etClickGoodHoursMin)
+            .setText(settings.clickGoodHoursMinAccepts.toString())
+        updateClickGoodHoursVisibility(view, settings.clickGoodHoursEnabled)
+        refreshClickGoodHoursStatus(view)
+    }
+
+    private fun setupClickGoodHoursControls(view: View, markDirty: () -> Unit) {
+        val sw = view.findViewById<SwitchMaterial>(R.id.switchClickGoodHours)
+        val etMargin = view.findViewById<TextInputEditText>(R.id.etClickGoodHoursMargin)
+        val etPct = view.findViewById<TextInputEditText>(R.id.etClickGoodHoursPct)
+        val etMin = view.findViewById<TextInputEditText>(R.id.etClickGoodHoursMin)
+        sw.setOnCheckedChangeRetainingFocus(view) { checked ->
+            settings.clickGoodHoursEnabled = checked
+            updateClickGoodHoursVisibility(view, checked)
+            ClickHoursGate.recompute(requireContext())
+            refreshClickGoodHoursStatus(view)
+            PichixAccessibilityService.syncEngine(requireContext())
+            PichixForegroundService.refreshNotification(requireContext())
+            markDirty()
+        }
+        etMargin.onUserTextChanged(onDirty = {
+            markDirty()
+            settings.clickGoodHoursMarginMin =
+                etMargin.text?.toString()?.toIntOrNull()?.coerceIn(0, 90) ?: 30
+            ClickHoursGate.recompute(requireContext())
+            refreshClickGoodHoursStatus(view)
+        })
+        etPct.onUserTextChanged(onDirty = {
+            markDirty()
+            settings.clickGoodHoursPct =
+                etPct.text?.toString()?.toIntOrNull()?.coerceIn(30, 90) ?: 50
+            ClickHoursGate.recompute(requireContext())
+            refreshClickGoodHoursStatus(view)
+        })
+        etMin.onUserTextChanged(onDirty = {
+            markDirty()
+            settings.clickGoodHoursMinAccepts =
+                etMin.text?.toString()?.toIntOrNull()?.coerceIn(3, 50) ?: 10
+            ClickHoursGate.recompute(requireContext())
+            refreshClickGoodHoursStatus(view)
+        })
+    }
+
     private fun bindRefreshGuardFields(view: View) {
         view.findViewById<SwitchMaterial>(R.id.switchRefreshGuardWarn).isChecked =
             settings.refreshGuardWarnEnabled
@@ -1188,6 +1258,23 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             view.findViewById<TextInputEditText>(R.id.etPeakHoursMinOffers).text
                 ?.toString()?.toIntOrNull()?.coerceIn(1, 500) ?: 5
         PeakHoursScheduler.reschedule(requireContext())
+    }
+
+    private fun persistClickGoodHoursFromView(view: View) {
+        settings.clickGoodHoursEnabled =
+            view.findViewById<SwitchMaterial>(R.id.switchClickGoodHours).isChecked
+        settings.clickGoodHoursMarginMin =
+            view.findViewById<TextInputEditText>(R.id.etClickGoodHoursMargin).text
+                ?.toString()?.toIntOrNull()?.coerceIn(0, 90) ?: 30
+        settings.clickGoodHoursPct =
+            view.findViewById<TextInputEditText>(R.id.etClickGoodHoursPct).text
+                ?.toString()?.toIntOrNull()?.coerceIn(30, 90) ?: 50
+        settings.clickGoodHoursMinAccepts =
+            view.findViewById<TextInputEditText>(R.id.etClickGoodHoursMin).text
+                ?.toString()?.toIntOrNull()?.coerceIn(3, 50) ?: 10
+        ClickHoursGate.recompute(requireContext())
+        PichixAccessibilityService.syncEngine(requireContext())
+        PichixForegroundService.refreshNotification(requireContext())
     }
 
     private fun persistReturnTimingSettings(
@@ -1380,6 +1467,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         configRootView?.let {
             persistCallOnBlockFromView(it)
             persistPeakHoursFromView(it)
+            persistClickGoodHoursFromView(it)
             persistRefreshGuardFromView(it)
         }
         settings.pauseByOverClicksEnabled = swPauseOver.isChecked
@@ -1892,8 +1980,9 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             view.findViewById<SwitchMaterial>(R.id.switchPauseIgnoreCase).isChecked =
                 settings.pauseByOverClicksIgnoreCase
             bindCallOnBlockFields(view)
-        bindPeakHoursFields(view)
-        bindRefreshGuardFields(view)
+            bindPeakHoursFields(view)
+            bindClickGoodHoursFields(view)
+            bindRefreshGuardFields(view)
             returnTriggers = FlexReturnTriggersStore.load(settings).toMutableList()
             returnTriggersAdapter?.submit(returnTriggers.toList())
             refreshSoundLabels(view)

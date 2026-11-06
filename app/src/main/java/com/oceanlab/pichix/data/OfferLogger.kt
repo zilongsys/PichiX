@@ -483,6 +483,14 @@ class OfferLogger(private val context: Context) {
     }
 
     private fun maybeRefreshPeakHours(entry: OfferLogEntry) {
+        if (entry.status == OfferStatus.ACCEPTED) {
+            Thread {
+                try {
+                    com.oceanlab.pichix.util.ClickHoursGate.recompute(context)
+                } catch (_: Exception) {
+                }
+            }.start()
+        }
         if (entry.status != OfferStatus.ACCEPTED &&
             entry.status != OfferStatus.REJECTED &&
             entry.status != OfferStatus.MISS

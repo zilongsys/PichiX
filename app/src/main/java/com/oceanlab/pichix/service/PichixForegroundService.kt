@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import com.oceanlab.pichix.R
 import com.oceanlab.pichix.data.AppSettings
 import com.oceanlab.pichix.ui.MainActivity
+import com.oceanlab.pichix.util.ClickHoursGate
 
 class PichixForegroundService : Service() {
 
@@ -57,9 +58,15 @@ class PichixForegroundService : Service() {
             Intent(this, MainActivity::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+        val wait = ClickHoursGate.waitLabel()
+        val text = if (AppSettings(this).clickGoodHoursEnabled && wait != null) {
+            getString(R.string.click_hours_notif_wait, wait)
+        } else {
+            "Asistente Flex activo"
+        }
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.app_name))
-            .setContentText("Asistente Flex activo")
+            .setContentText(text)
             // El adaptive icon del launcher no vale como smallIcon de notificación.
             .setSmallIcon(android.R.drawable.ic_media_play)
             .setContentIntent(open)

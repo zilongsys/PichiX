@@ -8,6 +8,7 @@ import android.os.Looper
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.oceanlab.pichix.R
 import com.oceanlab.pichix.analyzer.FlexOfferSelector
 import com.oceanlab.pichix.analyzer.FlexGrabResult
 import com.oceanlab.pichix.analyzer.FlexTakeOutcomeReader
@@ -33,6 +34,7 @@ import com.oceanlab.pichix.util.FlexAlertDispatcher
 import com.oceanlab.pichix.util.AlertManager
 import com.oceanlab.pichix.util.BlockDateFormatter
 import com.oceanlab.pichix.util.CallOnBlockHelper
+import com.oceanlab.pichix.util.ClickHoursGate
 import com.oceanlab.pichix.service.accessibility.FlexScreenReader
 import com.oceanlab.pichix.service.accessibility.FlexUiDumper
 import com.oceanlab.pichix.ui.MainActivity
@@ -157,6 +159,7 @@ class PichixAccessibilityService : AccessibilityService() {
     private var burstEndsAtMs = 0L
     private var lastScreenKind: String? = null
     private var lastLoggedBotRunning: Boolean? = null
+    private var lastLoggedGoodHoursWait: Boolean? = null
 
     private val grabLoopRunnable = Runnable { runGrabberTick() }
     private val timerRunnable = Runnable { runFlexTimerTick() }
@@ -510,8 +513,25 @@ class PichixAccessibilityService : AccessibilityService() {
         handler.removeCallbacks(timerRunnable)
         if (!settings.isBotEnabled) return
         logBotRunningState()
-        handler.postDelayed(grabLoopRunnable, nextGrabberDelayMs())
+        val idleMs = ClickHoursGate.idleDelayMs(this)
+        val grabDelay = if (idleMs > 0L) idleMs else nextGrabberDelayMs()
+        handler.postDelayed(grabLoopRunnable, grabDelay)
         handler.postDelayed(timerRunnable, FlexState.flexTimerSec * 1000L)
+    }
+
+    private fun noteGoodHoursIdle() {
+        if (lastLoggedGoodHoursWait == true) return
+        lastLoggedGoodHoursWait = true
+        val label = ClickHoursGate.waitLabel() ?: "--:--"
+        BotEventLog.log(this, BotEventLog.CAT_BOT, getString(R.string.click_hours_log_wait, label))
+        PichixForegroundService.refreshNotification(this)
+    }
+
+    private fun noteGoodHoursActive() {
+        if (lastLoggedGoodHoursWait != true) return
+        lastLoggedGoodHoursWait = false
+        BotEventLog.log(this, BotEventLog.CAT_BOT, getString(R.string.click_hours_log_active))
+        PichixForegroundService.refreshNotification(this)
     }
 
     private fun logBotRunningState(force: Boolean = false) {
@@ -658,6 +678,7 @@ class PichixAccessibilityService : AccessibilityService() {
         }
         settings = AppSettings(this)
         if (!settings.isBotEnabled || pausedAfterAccept || motorPausedForNavigation || returnInFlight) {
+            if (!settings.isBotEnabled) lastLoggedGoodHoursWait = null
             scheduleWork()
             return
         }
@@ -666,6 +687,12 @@ class PichixAccessibilityService : AccessibilityService() {
             scheduleWork()
             return
         }
+        if (ClickHoursGate.shouldWait(this)) {
+            noteGoodHoursIdle()
+            scheduleWork()
+            return
+        }
+        noteGoodHoursActive()
         updateBurstState()
         if (!isMotorForegroundAllowed()) {
             scheduleWork()

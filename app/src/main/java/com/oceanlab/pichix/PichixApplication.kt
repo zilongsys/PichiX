@@ -14,5 +14,11 @@ class PichixApplication : Application() {
             com.oceanlab.pichix.util.PeakHoursScheduler.reschedule(this)
         } catch (_: Exception) {
         }
+        Thread {
+            try {
+                com.oceanlab.pichix.util.ClickHoursGate.recompute(this)
+            } catch (_: Exception) {
+            }
+        }.start()
     }
 }

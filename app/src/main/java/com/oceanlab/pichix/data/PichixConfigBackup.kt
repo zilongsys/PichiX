@@ -338,5 +338,9 @@ object PichixConfigBackup {
         "call_on_block_enabled" to "Llamar al tomar bloque",
         "call_on_block_phone" to "Número llamada bloque",
         "call_on_block_sound_repeats_before_call" to "Repeticiones sonido antes de llamar",
+        "click_good_hours_enabled" to "Clic solo en horas buenas",
+        "click_good_hours_margin_min" to "Margen horas buenas (min)",
+        "click_good_hours_pct" to "% del mejor tramo (horas buenas)",
+        "click_good_hours_min_accepts" to "Mín. tomas para horario auto",
     )
 }

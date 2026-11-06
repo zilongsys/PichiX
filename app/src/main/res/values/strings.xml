@@ -24,6 +24,15 @@
     <string name="config_peak_hours_min_offers_title">Mín. ofertas para ser pico</string>
     <string name="config_peak_hours_status_none">Aún no hay franjas con suficientes ofertas.</string>
     <string name="config_peak_hours_status_hours">Próximas franjas avisadas: %1$s</string>
+    <string name="config_click_hours_title">Clic solo en horas buenas</string>
+    <string name="config_click_hours_hint">Con el bot encendido, no pulsa Refresh fuera de las horas en que más tomas ACEPTADA hay (historial ~30 días, por día de la semana). Si hay pocas tomas, clica siempre. Recalcula al arrancar y al tomar bloques.</string>
+    <string name="config_click_hours_margin_title">Margen (min) antes/después</string>
+    <string name="config_click_hours_pct_title">% del mejor tramo del día</string>
+    <string name="config_click_hours_min_title">Mín. tomas ACEPTADA (30 días)</string>
+    <string name="config_click_hours_status_off">Desactivado: se clica a cualquier hora.</string>
+    <string name="click_hours_notif_wait">Esperando %1$s (horario auto)</string>
+    <string name="click_hours_log_wait">Horario auto: esperando %1$s</string>
+    <string name="click_hours_log_active">Horario auto: en franja, clicando</string>
     <string name="peak_hours_channel_name">Franjas con ofertas</string>
     <string name="peak_hours_channel_desc">Recordatorios para encender el bot en horas pico</string>
     <string name="peak_hours_notif_title">Enciende el bot</string>

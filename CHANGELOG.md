@@ -8,6 +8,13 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.42 (Noviembre 2026)
+
+### Añadido
+- **Clic solo en horas buenas** (Config, desactivado por defecto): con el bot encendido no pulsa Refresh fuera de las franjas aprendidas del historial (~30 días, tomas ACEPTADA por día de la semana). Si hay pocas tomas, clica siempre. Recalcula al arrancar, al tomar bloques y cada ~12 h. En espera: notificación «Esperando HH:mm», overlay sigue en ON.
+
+---
+
 ## v0.2.41 (Noviembre 2026)
 
 ### Añadido

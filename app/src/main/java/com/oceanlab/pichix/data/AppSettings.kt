@@ -535,6 +535,26 @@ class AppSettings(context: Context) {
         get() = prefs.getInt(KEY_PEAK_HOURS_MIN_OFFERS, 5).coerceIn(1, 500)
         set(value) = prefs.edit().putInt(KEY_PEAK_HOURS_MIN_OFFERS, value.coerceIn(1, 500)).apply()
 
+    /** Si está on, no pulsa Refresh fuera de las franjas aprendidas (tomas ACEPTADA ~30 días). */
+    var clickGoodHoursEnabled: Boolean
+        get() = prefs.getBoolean(KEY_CLICK_GOOD_HOURS, false)
+        set(value) = prefs.edit().putBoolean(KEY_CLICK_GOOD_HOURS, value).apply()
+
+    /** Minutos antes/después de cada hora buena. */
+    var clickGoodHoursMarginMin: Int
+        get() = prefs.getInt(KEY_CLICK_GOOD_HOURS_MARGIN, 30).coerceIn(0, 90)
+        set(value) = prefs.edit().putInt(KEY_CLICK_GOOD_HOURS_MARGIN, value.coerceIn(0, 90)).apply()
+
+    /** % del mejor tramo del día para incluir una hora (30–90). */
+    var clickGoodHoursPct: Int
+        get() = prefs.getInt(KEY_CLICK_GOOD_HOURS_PCT, 50).coerceIn(30, 90)
+        set(value) = prefs.edit().putInt(KEY_CLICK_GOOD_HOURS_PCT, value.coerceIn(30, 90)).apply()
+
+    /** Tomas ACEPTADA mínimas en 30 días antes de recortar el horario. */
+    var clickGoodHoursMinAccepts: Int
+        get() = prefs.getInt(KEY_CLICK_GOOD_HOURS_MIN, 10).coerceIn(3, 50)
+        set(value) = prefs.edit().putInt(KEY_CLICK_GOOD_HOURS_MIN, value.coerceIn(3, 50)).apply()
+
     /** Aviso al acercarse al nº de clics Refresh aprendido de banners «demasiados toques». */
     var refreshGuardWarnEnabled: Boolean
         get() = prefs.getBoolean(KEY_REFRESH_GUARD_WARN, true)
@@ -667,6 +687,10 @@ class AppSettings(context: Context) {
         KEY_PEAK_HOURS_NOTIFY to peakHoursNotifyEnabled,
         KEY_PEAK_HOURS_LEAD_MIN to peakHoursLeadMinutes,
         KEY_PEAK_HOURS_MIN_OFFERS to peakHoursMinOffers,
+        KEY_CLICK_GOOD_HOURS to clickGoodHoursEnabled,
+        KEY_CLICK_GOOD_HOURS_MARGIN to clickGoodHoursMarginMin,
+        KEY_CLICK_GOOD_HOURS_PCT to clickGoodHoursPct,
+        KEY_CLICK_GOOD_HOURS_MIN to clickGoodHoursMinAccepts,
         KEY_REFRESH_GUARD_WARN to refreshGuardWarnEnabled,
         KEY_REFRESH_GUARD_PAUSE to refreshGuardPauseEnabled,
         KEY_REFRESH_GUARD_WARN_PCT to refreshGuardWarnPercent,
@@ -908,6 +932,10 @@ class AppSettings(context: Context) {
             KEY_PEAK_HOURS_NOTIFY -> editor.putBoolean(key, asBool(value))
             KEY_PEAK_HOURS_LEAD_MIN -> editor.putInt(key, asInt(value).coerceIn(0, 59))
             KEY_PEAK_HOURS_MIN_OFFERS -> editor.putInt(key, asInt(value).coerceIn(1, 500))
+            KEY_CLICK_GOOD_HOURS -> editor.putBoolean(key, asBool(value))
+            KEY_CLICK_GOOD_HOURS_MARGIN -> editor.putInt(key, asInt(value).coerceIn(0, 90))
+            KEY_CLICK_GOOD_HOURS_PCT -> editor.putInt(key, asInt(value).coerceIn(30, 90))
+            KEY_CLICK_GOOD_HOURS_MIN -> editor.putInt(key, asInt(value).coerceIn(3, 50))
             KEY_REFRESH_GUARD_WARN -> editor.putBoolean(key, asBool(value))
             KEY_REFRESH_GUARD_PAUSE -> editor.putBoolean(key, asBool(value))
             KEY_REFRESH_GUARD_WARN_PCT -> editor.putInt(key, asInt(value).coerceIn(50, 99))
@@ -1084,6 +1112,10 @@ class AppSettings(context: Context) {
         private const val KEY_PEAK_HOURS_NOTIFY = "peak_hours_notify_enabled"
         private const val KEY_PEAK_HOURS_LEAD_MIN = "peak_hours_lead_minutes"
         private const val KEY_PEAK_HOURS_MIN_OFFERS = "peak_hours_min_offers"
+        private const val KEY_CLICK_GOOD_HOURS = "click_good_hours_enabled"
+        private const val KEY_CLICK_GOOD_HOURS_MARGIN = "click_good_hours_margin_min"
+        private const val KEY_CLICK_GOOD_HOURS_PCT = "click_good_hours_pct"
+        private const val KEY_CLICK_GOOD_HOURS_MIN = "click_good_hours_min_accepts"
         private const val KEY_REFRESH_GUARD_WARN = "refresh_guard_warn"
         private const val KEY_REFRESH_GUARD_PAUSE = "refresh_guard_pause"
         private const val KEY_REFRESH_GUARD_WARN_PCT = "refresh_guard_warn_pct"

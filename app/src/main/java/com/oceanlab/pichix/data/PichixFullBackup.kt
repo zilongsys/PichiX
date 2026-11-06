@@ -290,6 +290,7 @@ object PichixFullBackup {
             PichiFileLog.setFileLogEnabled(AppSettings(app).fileLogEnabled)
             MonitorPackages.notifyReload(app)
             PeakHoursScheduler.reschedule(app)
+            com.oceanlab.pichix.util.ClickHoursGate.recompute(app)
             PichixAccessibilityService.syncEngine(app)
             OverlayService.sync(app)
             LocalBroadcastManager.getInstance(app).sendBroadcast(
