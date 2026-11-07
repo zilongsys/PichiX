@@ -42,7 +42,21 @@ object ClickHoursGate {
             waiting = false
             return disabled
         }
-        val since = now - ClickHoursPlanner.LOOKBACK_MS
+        val computed = computeFromLogs(app, settings, now)
+        plan = computed
+        settingsKey = key
+        computedAt = now
+        return computed
+    }
+
+    /** Plan según el historial, aunque el interruptor esté apagado (vista previa). */
+    fun computeFromLogs(
+        context: Context,
+        settings: AppSettings = AppSettings(context.applicationContext),
+        nowMs: Long = System.currentTimeMillis(),
+    ): ClickHoursPlanner.Plan {
+        val app = context.applicationContext
+        val since = nowMs - ClickHoursPlanner.LOOKBACK_MS
         val accepts = try {
             OfferLogger(app).getEntriesSince(since)
                 .filter { it.status == OfferStatus.ACCEPTED }
@@ -50,19 +64,41 @@ object ClickHoursGate {
         } catch (_: Exception) {
             emptyList()
         }
-        val computed = ClickHoursPlanner.compute(
+        return ClickHoursPlanner.compute(
             acceptAtMs = accepts,
-            nowMs = now,
+            nowMs = nowMs,
             params = ClickHoursPlanner.Params(
                 marginMin = settings.clickGoodHoursMarginMin,
                 ofBestPct = settings.clickGoodHoursPct,
                 minAccepts = settings.clickGoodHoursMinAccepts,
             ),
         )
-        plan = computed
-        settingsKey = key
-        computedAt = now
-        return computed
+    }
+
+    fun scheduleReport(context: Context, nowMs: Long = System.currentTimeMillis()): String {
+        val settings = AppSettings(context.applicationContext)
+        val plan = computeFromLogs(context, settings, nowMs)
+        val lines = mutableListOf<String>()
+        if (!settings.clickGoodHoursEnabled) {
+            lines += "Interruptor apagado: ahora clica a cualquier hora."
+            lines += "Así quedarían las franjas si lo activas:"
+            lines += ""
+        }
+        if (plan.alwaysClick) {
+            lines += "Pocas tomas ACEPTADA en 30 días (${plan.acceptCount} de ${settings.clickGoodHoursMinAccepts} mín.)."
+            lines += "El bot clica a cualquier hora hasta reunir más historial."
+            return lines.joinToString("\n").trim()
+        }
+        val state = when {
+            !settings.clickGoodHoursEnabled -> "vista previa (aún no recorta clics)"
+            plan.contains(nowMs) -> "ahora clicando"
+            else -> plan.nextStartLabel(nowMs)?.let { "esperando $it" } ?: "fuera de franja"
+        }
+        lines += "Estado: $state"
+        lines += "Tomas ACEPTADA (30 días): ${plan.acceptCount}"
+        lines += ""
+        lines += plan.weekScheduleText(nowMs)
+        return lines.joinToString("\n")
     }
 
     fun currentPlan(): ClickHoursPlanner.Plan? = plan

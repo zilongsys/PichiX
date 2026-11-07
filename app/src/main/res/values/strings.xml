@@ -30,6 +30,8 @@
     <string name="config_click_hours_pct_title">% del mejor tramo del día</string>
     <string name="config_click_hours_min_title">Mín. tomas ACEPTADA (30 días)</string>
     <string name="config_click_hours_status_off">Desactivado: se clica a cualquier hora.</string>
+    <string name="config_click_hours_view_schedule">Ver horarios de clic</string>
+    <string name="config_click_hours_schedule_title">Horarios de clic</string>
     <string name="click_hours_notif_wait">Esperando %1$s (horario auto)</string>
     <string name="click_hours_log_wait">Horario auto: esperando %1$s</string>
     <string name="click_hours_log_active">Horario auto: en franja, clicando</string>

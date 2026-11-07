@@ -15,6 +15,11 @@ object ClickHoursPlanner {
     const val IDLE_POLL_MIN_MS = 5_000L
     const val IDLE_POLL_MAX_MS = 30_000L
 
+    /** 0 = domingo (Calendar.DAY_OF_WEEK - 1). */
+    val WEEKDAY_SHORT = arrayOf("Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb")
+    /** Semana en orden habitual (lunes primero). */
+    val WEEKDAY_DISPLAY_ORDER = intArrayOf(1, 2, 3, 4, 5, 6, 0)
+
     data class Params(
         val marginMin: Int = 30,
         val ofBestPct: Int = 50,
@@ -82,6 +87,18 @@ object ClickHoursPlanner {
                 cal.get(Calendar.HOUR_OF_DAY),
                 cal.get(Calendar.MINUTE),
             )
+        }
+
+        fun weekScheduleText(nowMs: Long): String {
+            if (alwaysClick) return ""
+            val (todayWd, _) = weekdayAndMinute(nowMs)
+            return WEEKDAY_DISPLAY_ORDER.joinToString("\n") { wd ->
+                val name = WEEKDAY_SHORT.getOrElse(wd) { "?" }
+                val day = windowsByWeekday.getOrNull(wd).orEmpty()
+                val hours = if (day.isEmpty()) "sin franja" else day.joinToString(", ") { it.label() }
+                val mark = if (wd == todayWd) "  ← hoy" else ""
+                "$name  $hours$mark"
+            }
         }
     }
 

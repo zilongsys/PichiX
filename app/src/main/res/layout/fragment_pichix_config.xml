@@ -1756,6 +1756,17 @@
                 android:layout_marginBottom="6dp"
                 android:text="@string/config_click_hours_hint" />
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnClickGoodHoursView"
+                style="@style/SparkButtonSecondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/config_click_hours_view_schedule"
+                android:textSize="12sp" />
+
             <LinearLayout
                 android:id="@+id/layoutClickGoodHoursOptions"
                 android:layout_width="match_parent"
@@ -1823,6 +1834,19 @@
                     android:layout_marginRight="16dp"
                     android:layout_marginBottom="6dp"
                     android:text="" />
+
+                <TextView
+                    android:id="@+id/tvClickGoodHoursWeek"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:layout_marginBottom="8dp"
+                    android:fontFamily="monospace"
+                    android:lineSpacingExtra="2dp"
+                    android:textColor="@color/text_primary"
+                    android:textIsSelectable="true"
+                    android:textSize="13sp" />
             </LinearLayout>
 
             <View style="@style/DividerFull" />

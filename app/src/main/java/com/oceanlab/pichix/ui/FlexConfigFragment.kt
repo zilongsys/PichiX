@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
+import android.graphics.Typeface
 import android.os.Bundle
 import android.provider.Settings
 import android.text.Editable
@@ -1124,13 +1125,39 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
 
     private fun refreshClickGoodHoursStatus(view: View) {
         val tv = view.findViewById<TextView>(R.id.tvClickGoodHoursStatus) ?: return
+        val week = view.findViewById<TextView>(R.id.tvClickGoodHoursWeek)
         if (!settings.clickGoodHoursEnabled) {
             tv.text = getString(R.string.config_click_hours_status_off)
+            week?.text = ""
             return
         }
         ClickHoursGate.recompute(requireContext())
         val text = ClickHoursGate.statusText()
         tv.text = text.ifBlank { getString(R.string.config_click_hours_status_off) }
+        val plan = ClickHoursGate.currentPlan()
+        week?.text = when {
+            plan == null || plan.alwaysClick -> ""
+            else -> plan.weekScheduleText(System.currentTimeMillis())
+        }
+    }
+
+    private fun showClickGoodHoursSchedule() {
+        val report = ClickHoursGate.scheduleReport(requireContext())
+        val pad = (16 * resources.displayMetrics.density).toInt()
+        val tv = TextView(requireContext()).apply {
+            text = report
+            setTextIsSelectable(true)
+            setPadding(pad, pad / 2, pad, pad)
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary))
+            textSize = 14f
+            typeface = Typeface.MONOSPACE
+        }
+        val scroll = ScrollView(requireContext()).apply { addView(tv) }
+        androidx.appcompat.app.AlertDialog.Builder(requireContext(), R.style.SparkAlertDialogTheme)
+            .setTitle(R.string.config_click_hours_schedule_title)
+            .setView(scroll)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
     }
 
     private fun bindClickGoodHoursFields(view: View) {
@@ -1151,6 +1178,11 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         val etMargin = view.findViewById<TextInputEditText>(R.id.etClickGoodHoursMargin)
         val etPct = view.findViewById<TextInputEditText>(R.id.etClickGoodHoursPct)
         val etMin = view.findViewById<TextInputEditText>(R.id.etClickGoodHoursMin)
+        view.findViewById<MaterialButton>(R.id.btnClickGoodHoursView).setOnClickListener {
+            persistClickGoodHoursFromView(view)
+            refreshClickGoodHoursStatus(view)
+            showClickGoodHoursSchedule()
+        }
         sw.setOnCheckedChangeRetainingFocus(view) { checked ->
             settings.clickGoodHoursEnabled = checked
             updateClickGoodHoursVisibility(view, checked)

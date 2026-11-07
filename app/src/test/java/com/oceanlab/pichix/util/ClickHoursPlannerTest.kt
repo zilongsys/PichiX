@@ -66,6 +66,24 @@ class ClickHoursPlannerTest {
     }
 
     @Test
+    fun weekSchedule_mondayFirstAndMarksToday() {
+        val accepts = (1..12).map { day ->
+            ts(2026, Calendar.OCTOBER, day, 4, 15)
+        }
+        val now = ts(2026, Calendar.OCTOBER, 15, 4, 20)
+        val plan = ClickHoursPlanner.compute(
+            acceptAtMs = accepts,
+            nowMs = now,
+            params = ClickHoursPlanner.Params(marginMin = 30, ofBestPct = 50, minAccepts = 10),
+        )
+        val text = plan.weekScheduleText(now)
+        assertTrue(text.trim().startsWith("Lun"))
+        assertTrue(text.indexOf("Lun") < text.indexOf("Dom"))
+        assertTrue(text.contains("Jue") && text.contains("← hoy"))
+        assertTrue(text.contains("03:30–05:29"))
+    }
+
+    @Test
     fun idleDelay_caps() {
         assertEquals(0L, ClickHoursPlanner.idleDelayMs(0L))
         assertEquals(5_000L, ClickHoursPlanner.idleDelayMs(1_000L))

@@ -8,6 +8,13 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.43 (Noviembre 2026)
+
+### Añadido
+- **Ver horarios de clic** (Config): lista Lun–Dom con las franjas en las que el bot pulsa Refresh. Con la opción activa se ven debajo del ajuste; el botón abre el detalle (estado, tomas ACEPTADA y día de hoy). Sirve también con el interruptor apagado, como vista previa.
+
+---
+
 ## v0.2.42 (Noviembre 2026)
 
 ### Añadido
