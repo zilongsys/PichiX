@@ -79,7 +79,7 @@ jobs:
         with:
           name: PichiX-v${{ steps.ver.outputs.name }}-${{ github.run_number }}
           path: PichiX-v${{ steps.ver.outputs.name }}.apk
-          retention-days: 30
+          retention-days: 3
 
       - name: Publicar Release (solo main)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
