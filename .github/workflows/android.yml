@@ -96,9 +96,11 @@ jobs:
             p {print}
           ' CHANGELOG.md > notes.md
           [ -s notes.md ] || echo "Build automático de $tag" > notes.md
+          # SHA-256 para que la app verifique la descarga
+          sha256sum "$apk" > "$apk.sha256"
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "$apk" --clobber
+            gh release upload "$tag" "$apk" "$apk.sha256" --clobber
             gh release edit "$tag" --notes-file notes.md
           else
-            gh release create "$tag" "$apk" --target "${{ github.sha }}" --title "PichiX $tag" --notes-file notes.md --latest
+            gh release create "$tag" "$apk" "$apk.sha256" --target "${{ github.sha }}" --title "PichiX $tag" --notes-file notes.md --latest
           fi

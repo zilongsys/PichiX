@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto Backup (Android 6-11): el token de actualización y los APK descargados no se respaldan. -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="app_update.xml" />
+    <exclude domain="external" path="apk_history/" />
+</full-backup-content>

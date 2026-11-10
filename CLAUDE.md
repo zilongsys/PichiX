@@ -58,6 +58,7 @@ En móvil/nube **no** se generan (la entrega es el APK del Release). `dist/` est
 | `ui/` | Pestañas Home, Config, Tarifas, Alertas, Historial, Calendario, Estadísticas, Análisis, Log bot; `MainActivity` |
 | `util/` | `AlertManager`, `FlexAlertDispatcher`, `CallOnBlockHelper`, `PeakHoursScheduler`, matchers de texto, `DiagnosticPack` |
 | `dashboardcontrol/` | Enlace WebSocket propio con el «centro de control» de la PC (docs en `docs/dashboardcontrol/`) |
+| `update/` | Actualización desde GitHub Releases: `AppUpdater` (versiones, parseo, red, descarga; sin Android), `ApkHistory` (índice + ficheros en `apk_history/`), `UpdateStorage` (token en prefs `app_update`, instalador/FileProvider); UI en `ui/UpdateSection.kt` |
 
 ## Reglas de trabajo
 

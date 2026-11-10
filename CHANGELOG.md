@@ -8,6 +8,17 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.44 (Noviembre 2026)
+
+### Añadido
+- **Actualización desde GitHub Releases** (Config → «Actualización»): campo de token (oculto, con mostrar/ocultar), botón «Buscar actualización» (compara versiones numéricamente contra el último Release), diálogo con notas y tamaño, y «Descargar e instalar». Descarga a `.part`, valida tamaño y SHA-256 (asset `.sha256` o notas) y sigue las redirecciones a mano sin reenviar el token al host de destino.
+- **Historial de APKs**: cada APK se guarda como `PichiX-vX.Y.Z.apk` en `Android/data/com.oceanlab.pichix/files/apk_history/` con `index.json` (versión, versionCode, fecha, tamaño, SHA-256, notas). Por versión: Instalar, Compartir, Exportar (SAF) y Eliminar; «Borrar antiguas» conserva las N más recientes (N configurable, por defecto todas; nunca borra la instalada). Aviso explícito sobre instalar versiones con versionCode menor.
+- El Release de CI incluye ahora `PichiX-vX.Y.Z.apk.sha256`.
+- Permiso `REQUEST_INSTALL_PACKAGES`; reglas `backup_rules.xml` y `data_extraction_rules.xml` que excluyen el token (`app_update`) y `apk_history/` de los respaldos.
+- Tests unitarios: comparación de versiones, parseo del release e índice del historial.
+
+---
+
 ## v0.2.43 (Noviembre 2026)
 
 ### Añadido

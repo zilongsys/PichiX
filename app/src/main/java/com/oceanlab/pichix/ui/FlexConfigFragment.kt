@@ -57,6 +57,8 @@ import java.util.Locale
 
 class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener {
 
+    private val updateSection = UpdateSection(this)
+
     private lateinit var settings: AppSettings
     private var returnTriggers: MutableList<FlexReturnScreenTrigger> = mutableListOf()
     private var returnTriggersAdapter: FlexReturnTriggersAdapter? = null
@@ -466,6 +468,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         view.findViewById<MaterialButton>(R.id.btnShareDiagnosticPack)?.setOnClickListener {
             shareDiagnosticPack()
         }
+        updateSection.bind(view)
         view.findViewById<MaterialButton>(R.id.btnDashboardConnection)?.setOnClickListener {
             startActivity(
                 Intent(
@@ -738,6 +741,13 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             sectionKey = "dashboard",
             startExpanded = false,
         )
+        ConfigSectionBinder.bind(
+            view.findViewById(R.id.headerSectionUpdate),
+            view.findViewById(R.id.sectionUpdate),
+            scrollHost,
+            sectionKey = "update",
+            startExpanded = false,
+        )
     }
 
     private fun setupConfigSearch(view: View) {
@@ -755,6 +765,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             ConfigSearchFilter.Section("log", view.findViewById(R.id.headerSectionLog), view.findViewById(R.id.sectionLog), false),
             ConfigSearchFilter.Section("ui", view.findViewById(R.id.headerSectionUi), view.findViewById(R.id.sectionUi), false),
             ConfigSearchFilter.Section("dashboard", view.findViewById(R.id.headerSectionDashboard), view.findViewById(R.id.sectionDashboard), false),
+            ConfigSearchFilter.Section("update", view.findViewById(R.id.headerSectionUpdate), view.findViewById(R.id.sectionUpdate), false),
         )
         etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit

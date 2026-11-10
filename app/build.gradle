@@ -137,4 +137,5 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.fragment:fragment-ktx:1.6.2'
     testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20231013'  // org.json real para tests JVM (el de android.jar es un stub)
 }

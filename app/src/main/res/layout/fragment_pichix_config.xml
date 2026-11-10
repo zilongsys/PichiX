@@ -2962,6 +2962,108 @@
         </LinearLayout>
 
         <TextView
+            android:id="@+id/headerSectionUpdate"
+            style="@style/SectionLabel"
+            android:text="@string/update_section_title" />
+
+        <LinearLayout
+            android:id="@+id/sectionUpdate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+        <LinearLayout style="@style/Card">
+
+            <TextView
+                android:id="@+id/tvUpdateInstalled"
+                style="@style/RowLabel"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginRight="16dp" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/PichiXTextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginRight="16dp"
+                android:hint="@string/update_token_hint"
+                app:endIconMode="password_toggle">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etUpdateToken"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:importantForAutofill="no"
+                    android:inputType="textPassword"
+                    android:maxLines="1"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:text="@string/update_token_helper" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/PichiXTextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginRight="16dp"
+                android:hint="@string/update_keep_hint">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etUpdateKeepLatest"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:maxLength="3"
+                    android:maxLines="1"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:id="@+id/tvUpdateStatus"
+                style="@style/RowHint"
+                android:layout_width="match_parent"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginRight="16dp"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnUpdateCheck"
+                style="@style/SparkButtonPrimary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginRight="16dp"
+                android:text="@string/update_btn_check" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnUpdateHistory"
+                style="@style/SparkButtonSecondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="12dp"
+                android:text="@string/update_btn_history" />
+        </LinearLayout>
+
+        </LinearLayout>
+
+        <TextView
             android:id="@+id/headerSectionDashboard"
             style="@style/SectionLabel"
             android:text="Centro de control" />
