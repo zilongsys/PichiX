@@ -23,14 +23,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
 
       - name: Leer versión
         id: ver
@@ -79,7 +79,27 @@ jobs:
             cp app/build/outputs/apk/debug/app-debug.apk "PichiX-v${{ steps.ver.outputs.name }}.apk"
           fi
 
-      - uses: actions/upload-artifact@v4
+      # Lint informativo: no bloquea el build; deja el informe como artefacto y un resumen en la ejecución.
+      - name: Lint (informativo)
+        continue-on-error: true
+        run: |
+          ./gradlew :app:lintDebug --no-daemon || true
+          x=app/build/reports/lint-results-debug.xml
+          if [ -f "$x" ]; then
+            e=$(grep -c 'severity="Error"' "$x" || true)
+            w=$(grep -c 'severity="Warning"' "$x" || true)
+            echo "### Lint: ${e:-0} errores, ${w:-0} avisos" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: lint-report-${{ github.run_number }}
+          path: app/build/reports/lint-results-debug.html
+          if-no-files-found: ignore
+          retention-days: 3
+
+      - uses: actions/upload-artifact@v7
         with:
           name: PichiX-v${{ steps.ver.outputs.name }}-${{ github.run_number }}
           path: PichiX-v${{ steps.ver.outputs.name }}.apk

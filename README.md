@@ -40,6 +40,5 @@ Guía para Claude Code: `CLAUDE.md`. Reglas de Cursor: `.cursor/rules/`.
 | Estadísticas | Resumen del CSV de ofertas |
 | Análisis | Ofertas no tomadas y sugerencias de reglas |
 | Log bot | Eventos en tiempo real |
-| Simulador / Revisión | En desarrollo |
 
 La pestaña **Filtros** no aplica: filtros y exclusiones van en **Tarifas**.

@@ -8,6 +8,18 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.47 (Noviembre 2026)
+
+### Eliminado
+- **Pestañas «Simulador» y «Revisión»** (eran marcadores de posición sin función) del sidebar y de la navegación, junto con `StubTabFragment`.
+- **Recursos sin uso** (~2 800 líneas): 11 layouts huérfanos (entre ellos `fragment_config.xml`, `fragment_filtros.xml`, `fragment_simulador.xml`, `fragment_tarifas_classic.xml`), 36 drawables, 74 strings y el array `default_tab_entries`. Se calcularon por referencias reales (R/@ref) con cierre transitivo.
+
+### Actualizado
+- **CI**: `checkout` v7, `setup-java` v6, `setup-gradle` v6 y `upload-artifact` v7 (las anteriores usaban Node 20 deprecado).
+- **Lint informativo** en el CI (`lintDebug`): no bloquea el build; sube el informe HTML como artefacto y deja el recuento de errores/avisos en el resumen de la ejecución.
+
+---
+
 ## v0.2.46 (Noviembre 2026)
 
 ### Actualizado

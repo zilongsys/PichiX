@@ -51,24 +51,12 @@
     <string name="config_phase_note_title">¿Qué hace el motor Flex?</string>
     <string name="config_phase_note_show">Mostrar</string>
     <string name="config_phase_note_hide">Ocultar</string>
-    <string name="config_time_min_sec">Mín (s)</string>
-    <string name="config_time_max_sec">Máx (s)</string>
-    <string name="config_time_cooldown_sec">Cooldown (s)</string>
-    <string name="config_time_interval_sec">Intervalo (s)</string>
-    <string name="config_time_min_min">Mín (min)</string>
-    <string name="config_time_max_min">Máx (min)</string>
-    <string name="config_time_interval_ms">Intervalo (ms)</string>
-    <string name="config_time_resume_min">Reanudar (min)</string>
     <string name="config_perm_open_accessibility">Abrir ajustes de accesibilidad</string>
     <string name="config_perm_open_notifications">Abrir acceso a notificaciones</string>
     <string name="config_perm_open_overlay">Abrir permiso superponer apps</string>
     <string name="tarifas_flex_phase_note">Tarifa rápida = criterios globales. Modo Reglas = lista priorizada por estación (estilo Spark), con pago, $/h, tipo de bloque y horarios.</string>
     <string name="stub_common_note">Esta sección usará el mismo diseño que MakiX cuando se implemente la lógica para Flex.</string>
     <string name="config_monitor_not_configured">Configura el paquete de Amazon Flex en Config y guarda.</string>
-    <string name="tab_config">Config</string>
-    <string name="tab_tarifas">Tarifas</string>
-    <string name="tab_filtros">Filtros</string>
-    <string name="tab_historial">Historial</string>
 
     <string name="tariff_rule_action_duplicate">Duplicar regla</string>
     <string name="tariff_rule_action_edit">Editar</string>
@@ -76,13 +64,7 @@
     <string name="tariff_rule_action_delete">Eliminar</string>
     <string name="tariff_rule_duplicated">Regla duplicada: %1$s</string>
 
-    <string name="config_btn_resume">Reanudar MakiX si está pausado</string>
-    <string name="config_btn_pick_sound">Elegir sonido al aceptar</string>
-    <string name="config_btn_pick_reject_sound">Elegir sonido al rechazar</string>
     <string name="config_btn_stop_sound">Detener sonido ahora</string>
-    <string name="config_btn_accessibility">Abrir ajustes de accesibilidad</string>
-    <string name="config_btn_overlay">Configurar botón flotante</string>
-    <string name="config_btn_overlay_permission">Permiso «Mostrar sobre otras apps»</string>
     <string name="config_overlay_permission_title">Permiso superponer sobre otras apps</string>
     <string name="config_section_overlay">CONTROL DEL BOT</string>
     <string name="config_section_overlay_fabs">Botones flotantes</string>
@@ -139,7 +121,6 @@
     <string name="alert_service_hint">Cada regla elige su origen: notificación del sistema, mensaje flotante en Flex, o ambos. Requiere acceso a notificaciones y/o accesibilidad según el origen.</string>
     <string name="alert_match_section_label">Coincidencia de textos</string>
     <string name="alert_access_notification">Acceso notificaciones</string>
-    <string name="alert_access_accessibility">Accesibilidad (mensajes Flex)</string>
     <string name="alert_rule_texts_label">Textos detectados</string>
     <string name="alert_volume_label">Volumen de alerta</string>
     <string name="alert_volume_hint">0 = silencio, 100 = máximo. Aplica al sonido de cada regla.</string>
@@ -149,9 +130,7 @@
     <string name="alert_open_accessibility">Abrir accesibilidad</string>
     <string name="config_return_2_offers_title">Volver a ofertas (Return 2)</string>
     <string name="config_return_2_offers_hint">Automático ON: sin ids de oferta/detalle en pantalla (offer_pay, offer_details_station, etc.) y algún disparador coincide → Return 2. No actúa en lista ni en Offer Details (Schedule). Tras volver, pausa breve y reinicia el motor limpio.</string>
-    <string name="config_return_step_range_label">Espera aleatoria entre pasos Return 2 (seg, mín – máx)</string>
     <string name="config_return_step_range_short">Pausa (s)</string>
-    <string name="config_return_cooldown_label">Mínimo entre detecciones automáticas (seg)</string>
     <string name="config_return_time_legend_min">Mín. seg. entre pasos Return</string>
     <string name="config_return_time_legend_max">Máx. seg. entre pasos Return</string>
     <string name="config_return_time_legend_cooldown">Seg. mín. entre detecciones</string>
@@ -159,8 +138,6 @@
     <string name="config_return_triggers_label">Disparadores: si la pantalla contiene alguno (y no estás en ofertas) → Return 2. Varias líneas en un disparador = todas deben salir (AND). Usa textos que NO salgan en la lista de ofertas.</string>
     <string name="config_return_trigger_legend_add">Añadir disparador de pantalla</string>
     <string name="config_return_trigger_legend_reset">Restaurar disparadores default</string>
-    <string name="config_return_trigger_add">+ Añadir disparador</string>
-    <string name="config_return_trigger_reset_defaults">Restaurar disparadores del macro Return 2</string>
     <string name="config_return_trigger_add_title">Nuevo disparador</string>
     <string name="config_return_trigger_edit_title">Editar disparador</string>
     <string name="config_return_trigger_label_hint">Nombre (opcional)</string>
@@ -172,9 +149,6 @@
     <string name="config_return_trigger_phrases_required">Añade al menos una frase</string>
     <string name="config_burst_click_title">Ráfaga de clics</string>
     <string name="config_burst_click_hint">Cada X–Y min (aleatorio) activa una ráfaga: Refresh cada N ms (el intervalo normal de clic queda suspendido), evalúa ofertas visibles y acepta si cumplen criterio; sin scroll. Misma regla de pantalla que Clic Refresh.</string>
-    <string name="config_burst_interval_label">Intervalo entre ráfagas (min, mín – máx)</string>
-    <string name="config_burst_click_interval_label">Intervalo entre clics durante la ráfaga (ms)</string>
-    <string name="config_burst_duration_label">Duración de cada ráfaga (seg, mín – máx, aleatorio; hasta 3600 = 1 h)</string>
     <string name="config_pause_over_clicks_title">Pausar por bloqueo (pantalla / notificación)</string>
     <string name="config_pause_over_clicks_hint">Pausa el bot si Flex muestra un banner in-app (demasiados toques, captcha, slow down…) o si una notificación contiene el texto indicado. El aviso «tapped too many times…» se detecta siempre con el bot activo, aunque este interruptor esté apagado. Reanuda tras estos minutos, o más si hay un ciclo Refresh aprendido (para que el siguiente cartel no salga antes).</string>
     <string name="config_pause_over_clicks_match_label">Texto a detectar (opcional)</string>
@@ -211,8 +185,6 @@
     <string name="refresh_cycles_intro">Un ciclo cierra cuando Flex muestra «demasiados toques». El siguiente empieza en ese instante y acumula todos los clics hasta el próximo aviso.</string>
     <string name="refresh_cycles_empty">Todavía no hay ciclos. Deja el bot clicando Refresh; al salir el primer banner se guardará el ciclo completo.</string>
     <string name="refresh_cycles_clear_confirm">Se borran todos los ciclos aprendidos y el límite preventivo. El contador en curso también se reinicia.</string>
-    <string name="refresh_cycles_live_title">Ciclo %1$d · en curso</string>
-    <string name="refresh_cycles_closed_title">Ciclo %1$d · cerrado por banner</string>
     <string name="refresh_cycles_col_n">#</string>
     <string name="refresh_cycles_col_clicks">Clics</string>
     <string name="refresh_cycles_col_pace">Ritmo</string>
@@ -229,29 +201,9 @@
     <string name="refresh_cycles_extra_int">int %1$s/%2$s/%3$s</string>
     <string name="refresh_cycles_first_short">primer ciclo</string>
     <string name="refresh_cycles_extra_last">min %1$d · 5m %2$d</string>
-    <string name="refresh_cycles_span">Desde → hasta</string>
     <string name="refresh_cycles_until_now">ahora</string>
-    <string name="refresh_cycles_from_prev_banner">Tiempo desde el aviso anterior</string>
-    <string name="refresh_cycles_first">Primer ciclo (no había aviso previo)</string>
-    <string name="refresh_cycles_wait_first">Espera hasta el primer clic</string>
-    <string name="refresh_cycles_clicking">Tiempo dando clic</string>
-    <string name="refresh_cycles_click_span">Primer clic → último clic</string>
-    <string name="refresh_cycles_until_banner">Hasta el banner</string>
-    <string name="refresh_cycles_clicks">Clics Refresh</string>
     <string name="refresh_cycles_burst_n">ráfaga %1$d</string>
     <string name="refresh_cycles_normal_n">normales %1$d</string>
-    <string name="refresh_cycles_pace">Ritmo</string>
-    <string name="refresh_cycles_last_min">último min %1$d</string>
-    <string name="refresh_cycles_last_5min">últimos 5 min %1$d</string>
-    <string name="refresh_cycles_gaps">Intervalo entre clics</string>
-    <string name="refresh_cycles_gaps_values">mín %1$s · medio %2$s · máx %3$s</string>
-    <string name="refresh_cycles_idle">Huecos de más de 10 min</string>
-    <string name="refresh_cycles_preventive">Aviso / pausa preventiva</string>
-    <string name="refresh_cycles_warned_yes">aviso sí</string>
-    <string name="refresh_cycles_warned_no">aviso no</string>
-    <string name="refresh_cycles_paused_yes">pausa sí</string>
-    <string name="refresh_cycles_paused_no">pausa no</string>
-    <string name="refresh_cycles_banner_at">Banner «demasiados toques»</string>
     <string name="refresh_cycles_progress">Ventana: %1$d / ~%2$d clics (%3$d%%) · aviso %4$d · pausa %5$d</string>
     <string name="refresh_cycles_progress_none">Aún no hay límite aprendido. El primer banner cerrará el ciclo y servirá de referencia.</string>
     <string name="config_section_backup">Respaldo completo</string>
@@ -271,9 +223,6 @@
     <string name="home_config_export_ok_count">Respaldo exportado (%1$d ajustes + datos)</string>
     <string name="home_config_import_title">Importar respaldo</string>
     <string name="home_config_import_message">Restaura datos del archivo JSON. El bot no se encenderá automáticamente. Podrás elegir qué secciones importar.</string>
-    <string name="home_config_export_ok">Respaldo exportado</string>
-    <string name="home_config_import_ok">Configuración importada (%1$d ajustes)</string>
-    <string name="home_config_import_skipped"> · %1$d omitidos</string>
     <string name="home_config_import_result_title">Importación: %1$d ok · %2$d omitidos</string>
     <string name="home_config_import_applied">Configuración importada y guardada</string>
     <string name="home_config_error">Error: %1$s</string>
@@ -296,14 +245,11 @@
     <string name="historial_section_summary">Resumen de hoy</string>
     <string name="historial_section_offers">Ofertas recientes</string>
     <string name="historial_empty">Sin ofertas registradas. Activa el bot y trabaja en Flex para ver el historial aquí.</string>
-    <string name="config_section_bot_clicks">CLICS DEL BOT</string>
     <string name="config_click_mode_label">Modo de intervalo</string>
     <string name="config_click_mode_basic">Fijo</string>
     <string name="config_click_mode_smart">Aleatorio</string>
-    <string name="config_basic_interval_label">Basic click — intervalo (segundos)</string>
     <string name="config_click_basic_short">Intervalo (s)</string>
     <string name="config_click_basic_legend">Seg. fijos entre ciclos Basic</string>
-    <string name="config_smart_click_range_label">Smart click — espera aleatoria (segundos mín. y máx.)</string>
     <string name="config_click_smart_short">Smart (s)</string>
     <string name="config_click_smart_legend_min">Mín. seg. entre ciclos Smart</string>
     <string name="config_click_smart_legend_max">Máx. seg. entre ciclos Smart</string>
@@ -318,10 +264,8 @@
     <string name="config_offer_pick_hint">Primera válida: la primera fila que cumpla reglas. Mejor de pantalla: elige la de mayor $/h, pago de bloque, duración o la que empiece antes (según criterio).</string>
     <string name="config_flex_foreground_title">Solo con Flex en primer plano</string>
     <string name="config_flex_foreground_hint">Activo (recomendado): grabber, scroll, Refresh y Return 2 solo con Flex al frente. Detecta por ventana activa, ventanas del sistema, eventos de contenido/foco y marcadores de pantalla Flex (lista, Refresh, offer_pay).</string>
-    <string name="config_screen_match_motor_note">Contiene/Exacto y mayúsculas en esta sección: el motor de clics usa siempre Contiene e ignora mayúsculas. Los toggles aplican a alertas y Pause by over clicks.</string>
     <string name="config_text_match_mode_label">Tipo de coincidencia</string>
     <string name="config_screen_match_mode_label">Pantalla de ofertas — tipo de coincidencia</string>
-    <string name="config_screen_case_hint">Por defecto distingue mayúsculas (Offers ≠ offers). Activa «Ignorar mayúsculas» solo si lo necesitas.</string>
     <string name="config_screen_match_hint">Por defecto distingue mayúsculas (Offers ≠ offers). Activa «Ignorar mayúsculas» solo si lo necesitas. Nota: el motor de clics usa siempre Contiene e ignora mayúsculas; estos toggles aplican a alertas y Pause by over clicks.</string>
     <string name="config_ignore_case_label">Ignorar mayúsculas</string>
     <string name="config_screen_match_contains">Parte del texto</string>
@@ -339,11 +283,9 @@
     <string name="home_diag_pack_title">Diagnóstico</string>
     <string name="home_diag_pack_hint">Exporta un ZIP con logs, ofertas y reglas para analizar el comportamiento del bot.</string>
     <string name="home_diag_pack_share">Compartir pack</string>
-    <string name="config_refresh_button_text_label">Nombre exacto del botón a pulsar</string>
     <string name="config_refresh_button_short">Botón Refresh</string>
     <string name="config_refresh_button_hint">Texto visible en el botón Refresh de Flex que debe pulsar el bot (si «Pulsar Refresh» está activo). Ej.: Refresh.</string>
     <string name="config_refresh_match_hint">Cómo comparar el texto del botón: Contiene = aparece en el nodo; Exacto = coincide al completo. «Ignorar mayúsculas» solo si lo necesitas.</string>
-    <string name="config_click_screen_text_label">Texto que debe mostrar la pantalla</string>
     <string name="config_click_screen_short">Texto pantalla</string>
     <string name="config_click_screen_hint">Si no está vacío, el ciclo solo actúa cuando la pantalla muestra este texto (ej. Offers). Vacío = cualquier pantalla.</string>
     <string name="config_click_screen_text_hint">ej: Offers, ofertas (vacío = cualquier pantalla)</string>
@@ -363,36 +305,7 @@
     <string name="config_offer_rank_dur_min">Duración ↓</string>
     <string name="config_offer_rank_start">Empieza antes</string>
 
-    <string name="config_section_monitor_packages">APPS VIGILADAS (AVANZADO)</string>
-    <string name="config_monitor_csv_hint">Paquete(s) Android — se guarda al pulsar Guardar</string>
-    <string name="config_monitor_csv_helper">Ej: com.walmart.sparkdriver (uno o varios separados por coma). Si está vacío, se usa monitor_packages.txt. Sin valor por defecto en la app.</string>
-    <string name="config_monitor_privacy_note">El paquete configurado es privado de PichiX. Debes guardarlo en Config antes de activar el bot.</string>
-    <string name="config_monitor_saved_reload">Paquetes guardados. Si el bot ya estaba activo, la lista se actualiza al instante.</string>
-    <string name="config_btn_copy_monitor_path">Copiar ruta</string>
-    <string name="config_btn_create_monitor_file">Crear archivo de ejemplo</string>
-    <string name="config_monitor_path_copied">Ruta copiada</string>
-    <string name="config_monitor_file_created">Archivo de ejemplo creado</string>
-    <string name="config_monitor_url_hint">URL lista de paquetes (opcional)</string>
-    <string name="config_monitor_url_helper">GET: texto con paquetes separados por coma o línea. Se aplica al guardar o al pulsar Actualizar.</string>
-    <string name="config_monitor_file_label">Archivo local</string>
-    <string name="config_btn_refresh_packages">Actualizar desde URL</string>
-    <string name="config_packages_refreshed">Lista de paquetes actualizada</string>
-    <string name="config_packages_refresh_failed">No se pudo cargar la URL</string>
 
-    <string-array name="default_tab_entries">
-        <item>No cambiar (quedarse aquí)</item>
-        <item>Home</item>
-        <item>Config</item>
-        <item>Tarifas</item>
-        <item>Alertas</item>
-        <item>Historial</item>
-        <item>Calendario</item>
-        <item>Estadísticas</item>
-        <item>Análisis</item>
-        <item>Log bot</item>
-        <item>Simulador</item>
-        <item>Revisión</item>
-    </string-array>
 
     <string name="bot_log_title">Log del bot</string>
     <string name="bot_log_hint">Tiempo real · ráfaga expandible · filtro por tipo · toque cabecera tabla stats para ordenar</string>
@@ -430,7 +343,6 @@
     <string name="offer_stats_hourly_header">Mejores franjas horarias</string>
     <string name="offer_stats_weekday_header">Por día de la semana</string>
     <string name="offer_stats_stations_header">Estaciones (código)</string>
-    <string name="offer_stats_table_sort_hint">Toca una columna para ordenar</string>
     <string name="offer_stats_rate_header">Ofertas por $/h (redondeado)</string>
     <string name="offer_stats_export_all">Exportar</string>
     <string name="offer_stats_clear_today">Hoy</string>
