@@ -748,6 +748,48 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             sectionKey = "update",
             startExpanded = false,
         )
+        setupSectionChips(view, scrollHost)
+    }
+
+    /** Fila de atajos arriba: expande la sección elegida y se desplaza hasta ella. */
+    private fun setupSectionChips(view: View, scrollHost: ScrollView) {
+        val row = view.findViewById<LinearLayout>(R.id.configChipsRow) ?: return
+        row.removeAllViews()
+        val sections = listOf(
+            Triple(R.id.headerSectionPermisos, R.id.sectionPermisos, "permisos"),
+            Triple(R.id.headerSectionAmazon, R.id.sectionAmazon, "amazon"),
+            Triple(R.id.headerSectionOverlay, R.id.sectionOverlay, "overlay"),
+            Triple(R.id.headerSectionClickRhythm, R.id.sectionClickRhythm, "click_rhythm"),
+            Triple(R.id.headerSectionAuto, R.id.sectionAuto, "flex_behavior"),
+            Triple(R.id.headerSectionClickScreen, R.id.sectionClickScreen, "click_screen"),
+            Triple(R.id.headerSectionPause, R.id.sectionPause, "pause"),
+            Triple(R.id.headerSectionBackup, R.id.sectionBackup, "backup"),
+            Triple(R.id.headerSectionLog, R.id.sectionLog, "log"),
+            Triple(R.id.headerSectionUi, R.id.sectionUi, "ui"),
+            Triple(R.id.headerSectionUpdate, R.id.sectionUpdate, "update"),
+            Triple(R.id.headerSectionDashboard, R.id.sectionDashboard, "dashboard"),
+        )
+        for ((headerId, contentId, key) in sections) {
+            val header = view.findViewById<TextView>(headerId) ?: continue
+            val content = view.findViewById<View>(contentId) ?: continue
+            val chip = layoutInflater.inflate(R.layout.item_config_chip, row, false) as com.google.android.material.chip.Chip
+            chip.text = header.text
+            chip.setOnClickListener {
+                ConfigSectionBinder.ensureExpanded(header, content, scrollHost, key)
+                scrollHost.post { scrollHost.smoothScrollTo(0, topInScroll(header, scrollHost)) }
+            }
+            row.addView(chip)
+        }
+    }
+
+    private fun topInScroll(v: View, scroll: ScrollView): Int {
+        var y = 0
+        var cur: View = v
+        while (cur !== scroll) {
+            y += cur.top
+            cur = cur.parent as? View ?: break
+        }
+        return y
     }
 
     private fun setupConfigSearch(view: View) {

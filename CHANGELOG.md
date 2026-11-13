@@ -8,6 +8,23 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.48 (Noviembre 2026)
+
+### Actualizado
+- **Navegación**: el sidebar de 9 iconos de 8 sp se sustituye por una **barra inferior de 5 destinos** — Inicio, Reglas (Tarifas · Alertas), Actividad (Historial · Calendario · Log bot), Análisis (Estadísticas · No tomadas) y Ajustes — con sub-pestañas cuando el destino tiene varias páginas. Las 9 páginas y sus índices no cambian (`navigateToTab`, avisos de cambios sin guardar), solo el «cascarón». Los cambios sin guardar de Ajustes se marcan con un punto en la barra y « •» en la sub-pestaña. La opción «Mostrar nombres» ahora aplica a la barra inferior. La **Ayuda** pasa a un botón `?` en la cabecera.
+- **Inicio**: estado del bot con tipografía mayor, **lista previa** que solo aparece si falta algo (accesibilidad, paquete de Flex; recomendados: acceso a notificaciones y exclusión de ahorro de batería) con un botón para arreglarlo, y **resumen de hoy** (vistas, aceptadas, perdidas, ganado) con la última oferta y hace cuánto. Las estadísticas se leen en segundo plano.
+- **Ajustes**: fila de **atajos a secciones** arriba (expanden la sección y se desplazan hasta ella).
+- Pestaña «Análisis» renombrada «No tomadas» (es lo que muestra); «Home» → «Inicio», «Config» → «Ajustes».
+
+### Corregido
+- Búsqueda de Config en Android 8.x (API 26-27): `TextView.isAllCaps` exige API 28 y podía cerrar la app; ahora tiene alternativa compatible.
+- Lint: `android:tint` → `app:tint` en la pantalla de Conexión con PC.
+
+### Eliminado
+- Sidebar y `CategoryUiHelper.applySidebarCategoryUi`, y 6 drawables que solo usaba el sidebar.
+
+---
+
 ## v0.2.47 (Noviembre 2026)
 
 ### Eliminado

@@ -44,6 +44,24 @@
         android:textColor="@color/text_secondary"
         android:visibility="gone" />
 
+    <HorizontalScrollView
+        android:id="@+id/configChipsScroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clipToPadding="false"
+        android:paddingStart="14dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="14dp"
+        android:paddingBottom="2dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/configChipsRow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+    </HorizontalScrollView>
+
     <ScrollView
         android:id="@+id/configScroll"
         android:layout_width="match_parent"
@@ -2951,7 +2969,7 @@
             <LinearLayout style="@style/Row">
                 <TextView
                     style="@style/RowLabel"
-                    android:text="Mostrar nombres en la barra lateral" />
+                    android:text="Mostrar nombres en la barra inferior" />
                 <com.google.android.material.switchmaterial.SwitchMaterial
                     android:id="@+id/switchShowCategoryNames"
                     android:layout_width="wrap_content"

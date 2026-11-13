@@ -14,7 +14,7 @@ fun Activity.setupPichiXWindowInsets() {
     ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
         val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
         findViewById<View>(R.id.viewHeader)?.updatePadding(top = bars.top)
-        findViewById<View>(R.id.mainBody)?.updatePadding(bottom = bars.bottom)
+        findViewById<View>(R.id.bottomBar)?.updatePadding(bottom = bars.bottom)
         insets
     }
     ViewCompat.requestApplyInsets(root)

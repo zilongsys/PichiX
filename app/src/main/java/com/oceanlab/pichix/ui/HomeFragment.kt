@@ -47,6 +47,8 @@ class HomeFragment : Fragment() {
     private var tvPcConnectionStatus: TextView? = null
     private var suppressPcConnectionSync = false
 
+    private val dashboard = HomeDashboard(this)
+
     private var syncing = false
     private var suppressThemeToggle = false
     private var suppressReturn2Sync = false
@@ -126,6 +128,7 @@ class HomeFragment : Fragment() {
         view.setupFormFocus()
         val activity = requireActivity() as MainActivity
 
+        dashboard.bind(view)
         tvStatus = view.findViewById(R.id.homeBotStatus)
         tvSubtitle = view.findViewById(R.id.homeBotSubtitle)
         statusBar = view.findViewById(R.id.homeStatusBar)
@@ -374,6 +377,7 @@ class HomeFragment : Fragment() {
             addAction(MainActivity.RETURN2_SETTING_CHANGED)
             addAction(MainActivity.AUTO_ACCEPT_SETTING_CHANGED)
             addAction(MainActivity.CONFIG_IMPORTED)
+            addAction(com.oceanlab.pichix.data.OfferLogger.ACTION_OFFER_LOGGED)
         }
         LocalBroadcastManager.getInstance(requireContext()).apply {
             registerReceiver(botStateReceiver, filter)
@@ -382,6 +386,11 @@ class HomeFragment : Fragment() {
         }
         refreshStatus()
         refreshPcConnectionUi()
+    }
+
+    override fun onDestroyView() {
+        dashboard.release()
+        super.onDestroyView()
     }
 
     override fun onPause() {
@@ -491,6 +500,7 @@ class HomeFragment : Fragment() {
             )
         }
 
+        dashboard.refresh()
         tvStatus?.text = statusText
         tvStatus?.setTextColor(statusColor)
         tvSubtitle?.text = subtitleText

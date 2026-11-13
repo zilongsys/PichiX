@@ -419,4 +419,37 @@
     <string name="update_exported">APK guardado.</string>
     <string name="update_export_failed">No se pudo guardar el APK.</string>
     <string name="update_share_title">Compartir APK</string>
+    <!-- Navegación inferior -->
+    <string name="nav_home">Inicio</string>
+    <string name="nav_rules">Reglas</string>
+    <string name="nav_activity">Actividad</string>
+    <string name="nav_analysis">Análisis</string>
+    <string name="nav_settings">Ajustes</string>
+    <string name="nav_help">Ayuda</string>
+
+    <!-- Inicio: lista previa y resumen del día -->
+    <string name="home_pf_title_required">Falta configurar</string>
+    <string name="home_pf_title_recommended">Recomendado</string>
+    <string name="home_pf_accessibility">Servicio de accesibilidad desactivado</string>
+    <string name="home_pf_package">Falta el paquete de Amazon Flex</string>
+    <string name="home_pf_notifications">Acceso a notificaciones desactivado (alertas Flex)</string>
+    <string name="home_pf_battery">Ahorro de batería activo: Android puede detener el bot</string>
+    <string name="home_pf_fix_activate">Activar</string>
+    <string name="home_pf_fix_configure">Configurar</string>
+    <string name="home_pf_fix_adjust">Ajustar</string>
+    <string name="home_section_today">Hoy</string>
+    <string name="home_stat_seen">Vistas</string>
+    <string name="home_stat_accepted">Aceptadas</string>
+    <string name="home_stat_missed">Perdidas</string>
+    <string name="home_stat_earned">Ganado</string>
+    <string name="home_last_offer_none">Aún no hay ofertas hoy</string>
+    <string name="home_last_offer">Última oferta: %1$s · %2$s · %3$s · %4$s</string>
+    <string name="home_last_status_accepted">aceptada</string>
+    <string name="home_last_status_rejected">rechazada</string>
+    <string name="home_last_status_missed">perdida</string>
+    <string name="home_last_status_seen">vista</string>
+    <string name="home_last_status_other">registrada</string>
+    <string name="home_ago_now">ahora</string>
+    <string name="home_ago_minutes">hace %1$d min</string>
+    <string name="home_ago_hours">hace %1$d h</string>
 </resources>

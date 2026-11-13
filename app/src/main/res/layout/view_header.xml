@@ -78,6 +78,20 @@
             android:singleLine="true"
             android:ellipsize="end"/>
 
+        <ImageView
+            android:id="@+id/btnHeaderHelp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="2dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:contentDescription="@string/nav_help"
+            android:focusable="true"
+            android:padding="9dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_sidebar_help"
+            app:tint="@color/text_hint" />
+
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/switchMain"
             android:layout_width="wrap_content"

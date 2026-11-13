@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.res.ColorStateList
 import android.os.Bundle
 import android.provider.Settings
 import android.text.SpannableString
@@ -12,21 +11,19 @@ import android.text.Spanned
 import android.text.TextUtils
 import android.text.style.ForegroundColorSpan
 import android.view.View
-import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.core.widget.ImageViewCompat
 import androidx.fragment.app.Fragment
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.navigation.NavigationBarView
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.tabs.TabLayout
-import com.google.android.material.tabs.TabLayoutMediator
 import com.oceanlab.pichix.BuildConfig
 import com.oceanlab.pichix.R
 import com.oceanlab.pichix.data.AppSettings
@@ -47,45 +44,32 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvTotalMiles: TextView
     lateinit var tabLayout: TabLayout
 
+    /** Nombre de cada página del ViewPager (índices estables: 0 Inicio, 1 Ajustes, 2 Tarifas, 3 Alertas, 4 Historial, 5 Calendario, 6 Estadísticas, 7 No tomadas, 8 Log). */
     private val tabNames = arrayOf(
-        "Home", "Config", "Tarifas", "Alertas", "Historial", "Calendario",
-        "Estadísticas", "Análisis", "Log bot",
+        "Inicio", "Ajustes", "Tarifas", "Alertas", "Historial", "Calendario",
+        "Estadísticas", "No tomadas", "Log bot",
     )
     private val dirtyTabs = mutableSetOf<Int>()
     private var isInternalSwitchUpdate = false
     private var currentTab = 0
 
-    private val sidebarContainers = arrayOfNulls<LinearLayout>(TAB_COUNT)
-    private val sidebarIcons = arrayOfNulls<ImageView>(TAB_COUNT)
-    private val sidebarLabels = arrayOfNulls<TextView>(TAB_COUNT)
-    private var sidebarHelpContainer: LinearLayout? = null
-    private var sidebarHelpIcon: ImageView? = null
-    private var sidebarHelpLabel: TextView? = null
     private lateinit var viewPager: ViewPager2
-    private lateinit var sidebarRoot: LinearLayout
+    private lateinit var bottomNav: BottomNavigationView
+    private var isInternalNavUpdate = false
 
-    private val sidebarIconOutline = intArrayOf(
-        R.drawable.ic_sidebar_home,
-        R.drawable.ic_sidebar_config,
-        R.drawable.ic_sidebar_tarifas,
-        R.drawable.ic_alert_notifications,
-        R.drawable.ic_sidebar_historial,
-        R.drawable.ic_sidebar_calendario,
-        R.drawable.ic_hist_calendar,
-        R.drawable.ic_sidebar_analisis,
-        R.drawable.ic_hist_txt,
+    /** Páginas del ViewPager que agrupa cada destino de la barra inferior (mismo orden que el menú). */
+    private val destPages = arrayOf(
+        intArrayOf(0),
+        intArrayOf(2, 3),
+        intArrayOf(4, 5, 8),
+        intArrayOf(6, 7),
+        intArrayOf(1),
     )
-    private val sidebarIconFilled = intArrayOf(
-        R.drawable.ic_sidebar_home_filled,
-        R.drawable.ic_sidebar_config_filled,
-        R.drawable.ic_sidebar_tarifas_filled,
-        R.drawable.ic_alert_notifications,
-        R.drawable.ic_sidebar_historial_filled,
-        R.drawable.ic_sidebar_calendario_filled,
-        R.drawable.ic_hist_calendar,
-        R.drawable.ic_sidebar_analisis,
-        R.drawable.ic_hist_txt,
+    private val destMenuIds = intArrayOf(
+        R.id.nav_home, R.id.nav_rules, R.id.nav_activity, R.id.nav_analysis, R.id.nav_settings,
     )
+    private val lastPageOfDest = IntArray(destPages.size) { destPages[it][0] }
+    private var shownDest = -1
 
     private val botPausedReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) { updateHeader() }
@@ -137,7 +121,7 @@ class MainActivity : AppCompatActivity() {
                 switchMain.isChecked = false
                 isInternalSwitchUpdate = false
                 Toast.makeText(this, getString(R.string.config_monitor_not_configured), Toast.LENGTH_LONG).show()
-                selectSidebarItem(1)
+                selectPage(1)
                 return@setOnCheckedChangeRetainingFocus
             }
             if (checked) {
@@ -181,11 +165,10 @@ class MainActivity : AppCompatActivity() {
                 else -> HomeFragment()
             }
         }
-        TabLayoutMediator(tabLayout, viewPager) { tab, pos -> tab.text = tabNames[pos] }.attach()
         viewPager.isUserInputEnabled = false
         viewPager.offscreenPageLimit = 1
 
-        setupSidebar()
+        setupNavigation()
         updateHeader()
         window.decorView.post { BotServiceCoordinator.syncForegroundService(this) }
     }
@@ -217,60 +200,46 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupSidebar() {
-        val containerIds = intArrayOf(
-            R.id.sidebarHome, R.id.sidebarConfig, R.id.sidebarTarifas,
-            R.id.sidebarAlertas, R.id.sidebarHistorial, R.id.sidebarCalendario,
-            R.id.sidebarEstadisticas, R.id.sidebarAnalisis, R.id.sidebarBotLog,
-        )
-        val iconIds = intArrayOf(
-            R.id.sidebarIconHome, R.id.sidebarIconConfig, R.id.sidebarIconTarifas,
-            R.id.sidebarIconAlertas, R.id.sidebarIconHistorial, R.id.sidebarIconCalendario,
-            R.id.sidebarIconEstadisticas, R.id.sidebarIconAnalisis, R.id.sidebarIconBotLog,
-        )
-        val labelIds = intArrayOf(
-            R.id.sidebarLabelHome, R.id.sidebarLabelConfig, R.id.sidebarLabelTarifas,
-            R.id.sidebarLabelAlertas, R.id.sidebarLabelHistorial, R.id.sidebarLabelCalendario,
-            R.id.sidebarLabelEstadisticas, R.id.sidebarLabelAnalisis, R.id.sidebarLabelBotLog,
-        )
+    private fun destOfPage(page: Int): Int = destPages.indexOfFirst { page in it }.coerceAtLeast(0)
 
-        for (i in 0 until TAB_COUNT) {
-            sidebarContainers[i] = findViewById(containerIds[i])
-            sidebarIcons[i] = findViewById(iconIds[i])
-            sidebarLabels[i] = findViewById(labelIds[i])
-            val idx = i
-            sidebarContainers[i]?.setOnClickListener { selectSidebarItem(idx) }
+    private fun setupNavigation() {
+        bottomNav = findViewById(R.id.bottomNav)
+        bottomNav.setOnItemSelectedListener { item ->
+            if (isInternalNavUpdate) return@setOnItemSelectedListener true
+            val dest = destMenuIds.indexOf(item.itemId)
+            if (dest < 0) return@setOnItemSelectedListener false
+            selectPage(lastPageOfDest[dest])
+            true
         }
+        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                if (isInternalNavUpdate) return
+                val pages = destPages[shownDest.coerceAtLeast(0)]
+                pages.getOrNull(tab.position)?.let { selectPage(it) }
+            }
 
-        sidebarRoot = findViewById(R.id.sidebar)
-        sidebarHelpContainer = findViewById(R.id.sidebarHelp)
-        sidebarHelpIcon = findViewById(R.id.sidebarIconHelp)
-        sidebarHelpLabel = findViewById(R.id.sidebarLabelHelp)
-        sidebarHelpContainer?.setOnClickListener {
+            override fun onTabUnselected(tab: TabLayout.Tab) = Unit
+            override fun onTabReselected(tab: TabLayout.Tab) = Unit
+        })
+        findViewById<View>(R.id.btnHeaderHelp)?.setOnClickListener {
             startActivity(Intent(this, HelpActivity::class.java))
         }
-
         applyCategoryUi()
-        selectSidebarItem(0)
+        selectPage(0)
     }
 
+    /** Muestra u oculta los nombres bajo los iconos según «Mostrar nombres en la barra inferior». */
     fun applyCategoryUi() {
-        CategoryUiHelper.applySidebarCategoryUi(
-            sidebar = sidebarRoot,
-            containers = sidebarContainers,
-            icons = sidebarIcons,
-            labels = sidebarLabels,
-            helpContainer = sidebarHelpContainer,
-            helpIcon = sidebarHelpIcon,
-            helpLabel = sidebarHelpLabel,
-            showNames = settings.showCategoryNames
-        )
-        selectSidebarItem(currentTab)
+        if (!::bottomNav.isInitialized) return
+        bottomNav.labelVisibilityMode =
+            if (settings.showCategoryNames) NavigationBarView.LABEL_VISIBILITY_LABELED
+            else NavigationBarView.LABEL_VISIBILITY_UNLABELED
+        selectPage(currentTab)
     }
 
-    fun navigateToTab(index: Int) = selectSidebarItem(index)
+    fun navigateToTab(index: Int) = selectPage(index)
 
-    private fun selectSidebarItem(index: Int) {
+    private fun selectPage(index: Int) {
         if (index !in 0 until TAB_COUNT) return
         if (index != currentTab && dirtyTabs.contains(currentTab)) {
             Toast.makeText(
@@ -282,30 +251,28 @@ class MainActivity : AppCompatActivity() {
         currentTab = index
         viewPager.setCurrentItem(index, false)
 
-        val activeColor = ContextCompat.getColor(this, R.color.accent_teal)
-        val mutedColor = ContextCompat.getColor(this, R.color.text_hint)
-
-        for (i in 0 until TAB_COUNT) {
-            val isActive = i == index
-            sidebarIcons[i]?.setBackgroundResource(
-                if (isActive) R.drawable.sidebar_icon_active else R.drawable.sidebar_icon_inactive
-            )
-            sidebarIcons[i]?.let { icon ->
-                try {
-                    icon.setImageResource(if (isActive) sidebarIconFilled[i] else sidebarIconOutline[i])
-                } catch (_: Exception) {
-                    icon.setImageResource(R.drawable.ic_sidebar_home)
-                }
-                ImageViewCompat.setImageTintList(
-                    icon,
-                    ColorStateList.valueOf(if (isActive) activeColor else mutedColor)
-                )
+        val dest = destOfPage(index)
+        lastPageOfDest[dest] = index
+        isInternalNavUpdate = true
+        try {
+            bottomNav.menu.findItem(destMenuIds[dest])?.isChecked = true
+            if (shownDest != dest) {
+                rebuildSubTabs(dest)
+                shownDest = dest
             }
-            sidebarLabels[i]?.apply {
-                text = tabNames[i] + if (dirtyTabs.contains(i)) " •" else ""
-                setTextColor(if (isActive) activeColor else mutedColor)
-            }
+            val pos = destPages[dest].indexOf(index)
+            if (pos >= 0 && tabLayout.selectedTabPosition != pos) tabLayout.getTabAt(pos)?.select()
+        } finally {
+            isInternalNavUpdate = false
         }
+        refreshDirtyIndicators()
+    }
+
+    private fun rebuildSubTabs(dest: Int) {
+        tabLayout.removeAllTabs()
+        val pages = destPages[dest]
+        pages.forEach { p -> tabLayout.addTab(tabLayout.newTab().setText(tabNames[p]), false) }
+        tabLayout.visibility = if (pages.size > 1) View.VISIBLE else View.GONE
     }
 
     override fun onResume() {
@@ -431,16 +398,18 @@ class MainActivity : AppCompatActivity() {
 
     fun isTabDirty(tabIndex: Int): Boolean = dirtyTabs.contains(tabIndex)
 
+    /** Punto en el destino y « •» en la sub-pestaña de las páginas con cambios sin guardar. */
     private fun refreshDirtyIndicators() {
-        val activeColor = ContextCompat.getColor(this, R.color.accent_teal)
-        val mutedColor = ContextCompat.getColor(this, R.color.text_hint)
-        val safeCurrent = currentTab.coerceIn(tabNames.indices)
-        for (i in tabNames.indices) {
-            val isActive = i == safeCurrent
-            sidebarLabels[i]?.apply {
-                text = tabNames[i] + if (dirtyTabs.contains(i)) " •" else ""
-                setTextColor(if (isActive) activeColor else mutedColor)
-            }
+        if (!::bottomNav.isInitialized) return
+        for (d in destPages.indices) {
+            val dirty = destPages[d].any { dirtyTabs.contains(it) }
+            if (dirty) bottomNav.getOrCreateBadge(destMenuIds[d])
+            else bottomNav.removeBadge(destMenuIds[d])
+        }
+        if (shownDest < 0) return
+        val pages = destPages[shownDest]
+        for (i in pages.indices) {
+            tabLayout.getTabAt(i)?.text = tabNames[pages[i]] + if (dirtyTabs.contains(pages[i])) " •" else ""
         }
     }
 

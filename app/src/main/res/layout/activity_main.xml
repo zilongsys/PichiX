@@ -4,400 +4,62 @@
     android:id="@+id/mainRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/bg_page">
+    android:background="@color/bg_page"
+    android:orientation="vertical">
 
     <include
         android:id="@+id/viewHeader"
         layout="@layout/view_header" />
 
-    <!-- BODY: Sidebar + Content -->
-    <LinearLayout
-        android:id="@+id/mainBody"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="horizontal">
-
-        <!-- ══ SIDEBAR ══ -->
-        <LinearLayout
-            android:id="@+id/sidebar"
-            android:layout_width="62dp"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:background="@color/bg_card"
-            android:paddingTop="6dp"
-            android:paddingBottom="6dp">
-
-            <ScrollView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:fillViewport="true"
-                android:scrollbars="none"
-                android:clipToPadding="false">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-            <!-- HOME (🏠 → ⌂ unicode estándar) -->
-            <LinearLayout
-                android:id="@+id/sidebarHome"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-        android:minHeight="58dp"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/sidebar_icon_ripple">
-                <ImageView
-                    android:id="@+id/sidebarIconHome"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:padding="7dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/ic_sidebar_home"
-                    android:contentDescription="Home"
-                    android:background="@drawable/sidebar_icon_active"
-                    app:tint="@color/accent_teal"/>
-                <TextView
-                    android:id="@+id/sidebarLabelHome"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Home"
-                    android:textSize="8sp"
-                    android:textColor="@color/accent_teal"
-                    android:layout_marginTop="2dp"
-                    android:fontFamily="monospace"/>
-            </LinearLayout>
-
-            <!-- CONFIG (⚙ engranaje) -->
-            <LinearLayout
-                android:id="@+id/sidebarConfig"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-        android:minHeight="58dp"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/sidebar_icon_ripple">
-                <ImageView
-                    android:id="@+id/sidebarIconConfig"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:padding="7dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/ic_sidebar_config"
-                    android:contentDescription="Configuración"
-                    android:background="@drawable/sidebar_icon_inactive"
-                    app:tint="@color/text_hint"/>
-                <TextView
-                    android:id="@+id/sidebarLabelConfig"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Config"
-                    android:textSize="8sp"
-                    android:textColor="@color/text_hint"
-                    android:layout_marginTop="2dp"
-                    android:fontFamily="monospace"/>
-            </LinearLayout>
-
-            <!-- TARIFAS ($ símbolo dólar) -->
-            <LinearLayout
-                android:id="@+id/sidebarTarifas"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-        android:minHeight="58dp"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/sidebar_icon_ripple">
-                <ImageView
-                    android:id="@+id/sidebarIconTarifas"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:padding="7dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/ic_sidebar_tarifas"
-                    android:contentDescription="Tarifas"
-                    android:background="@drawable/sidebar_icon_inactive"
-                    app:tint="@color/text_hint"/>
-                <TextView
-                    android:id="@+id/sidebarLabelTarifas"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Tarifas"
-                    android:textSize="8sp"
-                    android:textColor="@color/text_hint"
-                    android:layout_marginTop="2dp"
-                    android:fontFamily="monospace"/>
-            </LinearLayout>
-
-            <!-- ALERTAS (notificaciones Flex) -->
-            <LinearLayout
-                android:id="@+id/sidebarAlertas"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-        android:minHeight="58dp"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/sidebar_icon_ripple">
-                <ImageView
-                    android:id="@+id/sidebarIconAlertas"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:padding="7dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/ic_alert_notifications"
-                    android:contentDescription="Alertas"
-                    android:background="@drawable/sidebar_icon_inactive"
-                    app:tint="@color/text_hint"/>
-                <TextView
-                    android:id="@+id/sidebarLabelAlertas"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Alertas"
-                    android:textSize="8sp"
-                    android:textColor="@color/text_hint"
-                    android:layout_marginTop="2dp"
-                    android:fontFamily="monospace"/>
-            </LinearLayout>
-
-            <!-- HISTORIAL (☰ con reloj → ◷) -->
-            <LinearLayout
-                android:id="@+id/sidebarHistorial"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-        android:minHeight="58dp"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/sidebar_icon_ripple">
-                <ImageView
-                    android:id="@+id/sidebarIconHistorial"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:padding="7dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/ic_sidebar_historial"
-                    android:contentDescription="Historial"
-                    android:background="@drawable/sidebar_icon_inactive"
-                    app:tint="@color/text_hint"/>
-                <TextView
-                    android:id="@+id/sidebarLabelHistorial"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Historial"
-                    android:textSize="8sp"
-                    android:textColor="@color/text_hint"
-                    android:layout_marginTop="2dp"
-                    android:fontFamily="monospace"/>
-            </LinearLayout>
-
-            <!-- CALENDARIO -->
-            <LinearLayout
-                android:id="@+id/sidebarCalendario"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-        android:minHeight="58dp"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/sidebar_icon_ripple">
-                <ImageView
-                    android:id="@+id/sidebarIconCalendario"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:padding="7dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/ic_sidebar_calendario"
-                    android:contentDescription="Calendario"
-                    android:background="@drawable/sidebar_icon_inactive"
-                    app:tint="@color/text_hint"/>
-                <TextView
-                    android:id="@+id/sidebarLabelCalendario"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Calendario"
-                    android:textSize="8sp"
-                    android:textColor="@color/text_hint"
-                    android:layout_marginTop="2dp"
-                    android:fontFamily="monospace"/>
-            </LinearLayout>
-
-            <!-- ESTADÍSTICAS -->
-            <LinearLayout
-                android:id="@+id/sidebarEstadisticas"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-        android:minHeight="58dp"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/sidebar_icon_ripple">
-                <ImageView
-                    android:id="@+id/sidebarIconEstadisticas"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:padding="7dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/ic_hist_calendar"
-                    android:contentDescription="Estadísticas"
-                    android:background="@drawable/sidebar_icon_inactive"
-                    app:tint="@color/text_hint"/>
-                <TextView
-                    android:id="@+id/sidebarLabelEstadisticas"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Stats"
-                    android:textSize="8sp"
-                    android:textColor="@color/text_hint"
-                    android:layout_marginTop="2dp"
-                    android:fontFamily="monospace"/>
-            </LinearLayout>
-
-            <!-- ANÁLISIS -->
-            <LinearLayout
-                android:id="@+id/sidebarAnalisis"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-        android:minHeight="58dp"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/sidebar_icon_ripple">
-                <ImageView
-                    android:id="@+id/sidebarIconAnalisis"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:padding="7dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/ic_sidebar_analisis"
-                    android:contentDescription="Análisis"
-                    android:background="@drawable/sidebar_icon_inactive"
-                    app:tint="@color/text_hint"/>
-                <TextView
-                    android:id="@+id/sidebarLabelAnalisis"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Análisis"
-                    android:textSize="8sp"
-                    android:textColor="@color/text_hint"
-                    android:layout_marginTop="2dp"
-                    android:fontFamily="monospace"/>
-            </LinearLayout>
-
-            <!-- LOG BOT -->
-            <LinearLayout
-                android:id="@+id/sidebarBotLog"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-        android:minHeight="58dp"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/sidebar_icon_ripple">
-                <ImageView
-                    android:id="@+id/sidebarIconBotLog"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:padding="7dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/ic_hist_txt"
-                    android:contentDescription="Log del bot"
-                    android:background="@drawable/sidebar_icon_inactive"
-                    app:tint="@color/text_hint"/>
-                <TextView
-                    android:id="@+id/sidebarLabelBotLog"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Log"
-                    android:textSize="8sp"
-                    android:textColor="@color/text_hint"
-                    android:layout_marginTop="2dp"
-                    android:fontFamily="monospace"/>
-            </LinearLayout>
-
-            <!-- Spacer eliminado: sidebar scrolleable -->
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="4dp"
-                android:background="@drawable/sidebar_divider"/>
-
-            <!-- AYUDA (? círculo) -->
-            <LinearLayout
-                android:id="@+id/sidebarHelp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-        android:minHeight="58dp"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/sidebar_icon_ripple">
-                <ImageView
-                    android:id="@+id/sidebarIconHelp"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:padding="7dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/ic_sidebar_help"
-                    android:contentDescription="Ayuda"
-                    android:background="@drawable/sidebar_icon_inactive"
-                    app:tint="@color/text_hint"/>
-                <TextView
-                    android:id="@+id/sidebarLabelHelp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Ayuda"
-                    android:textSize="8sp"
-                    android:textColor="@color/text_hint"
-                    android:layout_marginTop="2dp"
-                    android:fontFamily="monospace"/>
-            </LinearLayout>
-
-            </LinearLayout>
-
-            </ScrollView>
-
-        </LinearLayout>
-
-        <!-- Sidebar border -->
-        <View
-            android:layout_width="1dp"
-            android:layout_height="match_parent"
-            android:background="@color/border_subtle"/>
-
-        <!-- Content -->
-        <androidx.viewpager2.widget.ViewPager2
-            android:id="@+id/viewPager"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"/>
-
-    </LinearLayout>
-
-    <!-- Hidden TabLayout -->
+    <!-- Sub-pestañas del destino actual (visibles solo si el destino tiene más de una página) -->
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabLayout"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/bg_card"
+        android:visibility="gone"
+        app:tabGravity="fill"
+        app:tabIndicatorColor="@color/accent_teal"
+        app:tabIndicatorHeight="3dp"
+        app:tabMode="fixed"
+        app:tabSelectedTextColor="@color/accent_teal"
+        app:tabTextColor="@color/text_hint" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/border_subtle" />
+
+    <!-- Contenido -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPager"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:visibility="gone"/>
+        android:layout_weight="1" />
+
+    <!-- Navegación inferior (el relleno de la barra del sistema se aplica a bottomBar) -->
+    <LinearLayout
+        android:id="@+id/bottomBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/bg_card"
+        android:orientation="vertical">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/border_subtle" />
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottomNav"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/bg_card"
+            app:elevation="0dp"
+            app:itemIconTint="@color/nav_item_color"
+            app:itemTextColor="@color/nav_item_color"
+            app:labelVisibilityMode="labeled"
+            app:menu="@menu/bottom_nav" />
+    </LinearLayout>
 
 </LinearLayout>

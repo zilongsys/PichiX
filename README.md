@@ -27,7 +27,19 @@ Guía para Claude Code: `CLAUDE.md`. Reglas de Cursor: `.cursor/rules/`.
 ./gradlew :app:assembleDebug
 ```
 
-## Pestañas
+## Navegación
+
+Barra inferior con 5 destinos; los que agrupan varias páginas muestran sub-pestañas arriba.
+
+| Destino | Páginas |
+|---------|---------|
+| Inicio | Estado, lista previa, resumen de hoy, accesos rápidos |
+| Reglas | Tarifas · Alertas |
+| Actividad | Historial · Calendario · Log bot |
+| Análisis | Estadísticas · No tomadas |
+| Ajustes | Permisos, ritmo de clic, pausas, respaldo, actualización… (con atajos a cada sección) |
+
+## Páginas
 
 | Pestaña | Función |
 |---------|---------|

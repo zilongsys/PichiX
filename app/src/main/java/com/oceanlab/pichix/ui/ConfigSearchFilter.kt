@@ -168,11 +168,16 @@ object ConfigSearchFilter {
         return false
     }
 
+    /** `TextView.isAllCaps` solo existe desde API 28; antes se detecta por el método de transformación. */
+    private fun isAllCapsCompat(tv: TextView): Boolean =
+        if (android.os.Build.VERSION.SDK_INT >= 28) tv.isAllCaps
+        else tv.transformationMethod?.javaClass?.simpleName?.contains("AllCaps") == true
+
     private fun isLikelyHintText(tv: TextView): Boolean {
         val name = resourceEntryName(tv)
         if (name.contains("hint", ignoreCase = true)) return true
         // Subsección (11sp, all caps) no es hint.
-        if (tv.isAllCaps) return false
+        if (isAllCapsCompat(tv)) return false
         val sp = tv.textSize / tv.resources.displayMetrics.scaledDensity
         return sp <= 12.5f
     }
