@@ -76,7 +76,7 @@ class HomeDashboard(private val fragment: Fragment) {
             },
             Check(true, MonitorPackages.isConfigured(ctx),
                 R.string.home_pf_package, R.string.home_pf_fix_configure) {
-                (fragment.activity as? MainActivity)?.navigateToTab(1)
+                ConfigSectionActivity.open(fragment.requireContext(), "amazon", fragment.getString(R.string.ajustes_amazon))
             },
             Check(false, PermissionStatusHelper.isNotificationListenerEnabled(ctx),
                 R.string.home_pf_notifications, R.string.home_pf_fix_activate) {

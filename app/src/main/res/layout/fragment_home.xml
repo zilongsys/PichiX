@@ -64,8 +64,25 @@
                     android:layout_height="wrap_content"
                     android:text="Activa el switch del header para comenzar"
                     android:textColor="@color/text_hint"
-                    android:textSize="11sp"
+                    android:textSize="12sp"
                     android:layout_marginTop="4dp"/>
+                <TextView
+                    android:id="@+id/homeLastCycle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/text_hint"
+                    android:textSize="11sp"
+                    android:visibility="gone"/>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/homeBtnToggleBot"
+                    style="@style/SparkButtonPrimary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:minHeight="52dp"
+                    android:text="@string/home_btn_start"
+                    android:textSize="15sp"/>
             </LinearLayout>
 
         </LinearLayout>

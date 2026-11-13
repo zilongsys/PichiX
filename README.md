@@ -37,7 +37,7 @@ Barra inferior con 5 destinos; los que agrupan varias páginas muestran sub-pest
 | Reglas | Tarifas · Alertas |
 | Actividad | Historial · Calendario · Log bot |
 | Análisis | Estadísticas · No tomadas |
-| Ajustes | Permisos, ritmo de clic, pausas, respaldo, actualización… (con atajos a cada sección) |
+| Ajustes | Índice de 12 secciones con resumen; cada una se abre a pantalla completa. «Todos los ajustes» = vista completa con buscador |
 
 ## Páginas
 

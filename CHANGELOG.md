@@ -8,6 +8,15 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.50 (Noviembre 2026)
+
+### Actualizado
+- **Inicio como centro de mando**: botón grande **Activar bot / Pausar bot** en la tarjeta de estado (misma lógica y comprobaciones que el interruptor de la cabecera), motivo de la pausa en el subtítulo (bloque tomado, navegación manual, «Esperando franja: próxima a las HH:mm» cuando «Clic solo en horas buenas» está esperando) y «Último ciclo: hace N s» del observador, refrescado cada 5 s mientras Inicio está visible.
+- **Ajustes partido en pantallas**: la pestaña Ajustes es ahora un **índice** en 4 grupos (Básico, Motor, Datos, Aplicación) con 12 secciones y un resumen de una línea de su valor actual (permisos OK/falta, paquete Flex, intervalo de clic, aceptar automático, pausas, tema, versión…). Cada fila abre **solo esa sección** a pantalla completa (`ConfigSectionActivity`), con su botón Guardar; al salir con cambios sin guardar pregunta Guardar / Descartar / Cancelar. «Todos los ajustes» abre la vista completa con buscador y atajos, como antes. Mismo formulario y mismo guardado por debajo (`FlexConfigFragment` en modo sección).
+- «Configurar» en la lista previa de Inicio y el aviso de «paquete Flex sin configurar» abren directamente la sección Amazon Flex.
+
+---
+
 ## v0.2.49 (Noviembre 2026)
 
 ### Corregido

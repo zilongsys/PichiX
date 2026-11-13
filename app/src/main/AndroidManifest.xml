@@ -51,6 +51,12 @@
             android:label="Conexión con PC" />
 
         <activity
+            android:name=".ui.ConfigSectionActivity"
+            android:exported="false"
+            android:label="@string/nav_settings"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
             android:name=".ui.DayLogActivity"
             android:exported="false"
             android:label="Log del día"

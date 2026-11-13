@@ -59,6 +59,23 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
 
     private val updateSection = UpdateSection(this)
 
+    /** Cambios del formulario aún no guardados (también lo consulta [ConfigSectionActivity]). */
+    var hasUnsavedChanges: Boolean = false
+        private set
+
+    /** Sección única a mostrar (modo pantalla); null = todas con buscador. */
+    private val sectionArg: String? get() = arguments?.getString(ARG_SECTION)
+
+    private fun hostMarkDirty() {
+        hasUnsavedChanges = true
+        hostMarkDirty()
+    }
+
+    private fun hostClearDirty() {
+        hasUnsavedChanges = false
+        hostClearDirty()
+    }
+
     private lateinit var settings: AppSettings
     private var returnTriggers: MutableList<FlexReturnScreenTrigger> = mutableListOf()
     private var returnTriggersAdapter: FlexReturnTriggersAdapter? = null
@@ -138,7 +155,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             swCall.isChecked = true
             settings.callOnBlockEnabled = true
             updateCallOnBlockVisibility(view, true)
-            (activity as? MainActivity)?.markDirty(1)
+            hostMarkDirty()
         } else {
             Toast.makeText(
                 requireContext(),
@@ -179,7 +196,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             if (intent.action != MainActivity.CONFIG_IMPORTED) return
             if (!isAdded || configRootView == null) return
             reloadConfigFieldsFromSettings()
-            (activity as? MainActivity)?.clearDirty(1)
+            hostClearDirty()
         }
     }
 
@@ -211,7 +228,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         } else {
             refreshMismatchSoundLabel(view)
         }
-        (activity as? MainActivity)?.markDirty(1)
+        hostMarkDirty()
     }
 
     private fun onOfferClickSoundPicked() {
@@ -221,7 +238,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         } else {
             refreshOfferClickSoundLabel(view)
         }
-        (activity as? MainActivity)?.markDirty(1)
+        hostMarkDirty()
     }
 
     private fun onPauseOrResumeSoundPicked() {
@@ -231,7 +248,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         } else {
             refreshSoundLabels(view)
         }
-        (activity as? MainActivity)?.markDirty(1)
+        hostMarkDirty()
     }
 
     override fun onCreateView(
@@ -252,6 +269,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         configScroll.setupFormFocus()
         setupExpandableSections(view, configScroll)
         setupConfigSearch(view)
+        applySectionMode(view, configScroll)
         setupPermissionBanner(view, configScroll)
         setupConfigFooterNote(view, configScroll)
         setupAmazonHint(view, configScroll)
@@ -409,7 +427,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         }
         val markDirty: () -> Unit = {
             if (!suppressUiEvents) {
-                (activity as? MainActivity)?.markDirty(1)
+                hostMarkDirty()
                 refreshSaveFooter()
             }
         }
@@ -479,17 +497,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         }
 
         btnSave.setOnClickListener {
-            configScroll.runRetainingScrollAndFocus {
-                if (!saveAllFieldsToSettings()) return@runRetainingScrollAndFocus
-                (requireActivity() as MainActivity).apply {
-                    applyCategoryUi()
-                    clearDirty(1)
-                }
-                refreshSaveFooter()
-                LocalBroadcastManager.getInstance(requireContext())
-                    .sendBroadcast(Intent(CategoryUiHelper.ACTION_CATEGORY_UI_CHANGED))
-                Toast.makeText(requireContext(), "Configuración guardada", Toast.LENGTH_SHORT).show()
-            }
+            configScroll.runRetainingScrollAndFocus { requestSave() }
         }
 
         etPackage.onUserTextChanged(onDirty = { markDirty() })
@@ -622,7 +630,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
                     returnTriggers[idx] = trigger.copy(enabled = enabled)
                     FlexReturnTriggersStore.save(settings, returnTriggers)
                     PichixAccessibilityService.syncEngine(requireContext())
-                    (requireActivity() as MainActivity).markDirty(1)
+                    hostMarkDirty()
                 }
 
                 override fun onEdit(trigger: FlexReturnScreenTrigger) {
@@ -651,7 +659,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         FlexReturnTriggersStore.save(settings, returnTriggers)
         returnTriggersAdapter?.submit(returnTriggers.toList())
         PichixAccessibilityService.syncEngine(requireContext())
-        (requireActivity() as MainActivity).markDirty(1)
+        hostMarkDirty()
     }
 
     override fun onTriggersChanged() {
@@ -659,7 +667,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             returnTriggers = FlexReturnTriggersStore.load(settings).toMutableList()
             returnTriggersAdapter?.submit(returnTriggers.toList())
             PichixAccessibilityService.syncEngine(requireContext())
-            (requireActivity() as MainActivity).markDirty(1)
+            hostMarkDirty()
         }
     }
 
@@ -751,25 +759,49 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         setupSectionChips(view, scrollHost)
     }
 
+    /** (cabecera, contenido, clave) de cada sección, en orden de pantalla. */
+    private fun configSections(): List<Triple<Int, Int, String>> = listOf(
+        Triple(R.id.headerSectionPermisos, R.id.sectionPermisos, "permisos"),
+        Triple(R.id.headerSectionAmazon, R.id.sectionAmazon, "amazon"),
+        Triple(R.id.headerSectionOverlay, R.id.sectionOverlay, "overlay"),
+        Triple(R.id.headerSectionClickRhythm, R.id.sectionClickRhythm, "click_rhythm"),
+        Triple(R.id.headerSectionAuto, R.id.sectionAuto, "flex_behavior"),
+        Triple(R.id.headerSectionClickScreen, R.id.sectionClickScreen, "click_screen"),
+        Triple(R.id.headerSectionPause, R.id.sectionPause, "pause"),
+        Triple(R.id.headerSectionBackup, R.id.sectionBackup, "backup"),
+        Triple(R.id.headerSectionLog, R.id.sectionLog, "log"),
+        Triple(R.id.headerSectionUi, R.id.sectionUi, "ui"),
+        Triple(R.id.headerSectionUpdate, R.id.sectionUpdate, "update"),
+        Triple(R.id.headerSectionDashboard, R.id.sectionDashboard, "dashboard"),
+    )
+
+    /**
+     * Modo pantalla (desde el índice de Ajustes): oculta buscador, atajos y las demás secciones;
+     * la elegida queda expandida y sin cabecera plegable (el título ya lo pone la actividad).
+     */
+    private fun applySectionMode(view: View, scrollHost: ScrollView) {
+        val key = sectionArg ?: return
+        view.findViewById<View>(R.id.tilConfigSearch)?.visibility = View.GONE
+        view.findViewById<View>(R.id.configChipsScroll)?.visibility = View.GONE
+        view.findViewById<View>(R.id.tvConfigSearchEmpty)?.visibility = View.GONE
+        for ((headerId, contentId, k) in configSections()) {
+            val header = view.findViewById<TextView>(headerId) ?: continue
+            val content = view.findViewById<View>(contentId) ?: continue
+            if (k == key) {
+                ConfigSectionBinder.ensureExpanded(header, content, scrollHost, k)
+                header.visibility = View.GONE
+            } else {
+                header.visibility = View.GONE
+                content.visibility = View.GONE
+            }
+        }
+    }
+
     /** Fila de atajos arriba: expande la sección elegida y se desplaza hasta ella. */
     private fun setupSectionChips(view: View, scrollHost: ScrollView) {
         val row = view.findViewById<LinearLayout>(R.id.configChipsRow) ?: return
         row.removeAllViews()
-        val sections = listOf(
-            Triple(R.id.headerSectionPermisos, R.id.sectionPermisos, "permisos"),
-            Triple(R.id.headerSectionAmazon, R.id.sectionAmazon, "amazon"),
-            Triple(R.id.headerSectionOverlay, R.id.sectionOverlay, "overlay"),
-            Triple(R.id.headerSectionClickRhythm, R.id.sectionClickRhythm, "click_rhythm"),
-            Triple(R.id.headerSectionAuto, R.id.sectionAuto, "flex_behavior"),
-            Triple(R.id.headerSectionClickScreen, R.id.sectionClickScreen, "click_screen"),
-            Triple(R.id.headerSectionPause, R.id.sectionPause, "pause"),
-            Triple(R.id.headerSectionBackup, R.id.sectionBackup, "backup"),
-            Triple(R.id.headerSectionLog, R.id.sectionLog, "log"),
-            Triple(R.id.headerSectionUi, R.id.sectionUi, "ui"),
-            Triple(R.id.headerSectionUpdate, R.id.sectionUpdate, "update"),
-            Triple(R.id.headerSectionDashboard, R.id.sectionDashboard, "dashboard"),
-        )
-        for ((headerId, contentId, key) in sections) {
+        for ((headerId, contentId, key) in configSections()) {
             val header = view.findViewById<TextView>(headerId) ?: continue
             val content = view.findViewById<View>(contentId) ?: continue
             val chip = layoutInflater.inflate(R.layout.item_config_chip, row, false) as com.google.android.material.chip.Chip
@@ -1651,8 +1683,20 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
     private fun applyAfterFullImport() {
         if (!isAdded) return
         settings = AppSettings(requireContext())
-        val activity = requireActivity() as MainActivity
-        activity.notifyConfigImported()
+        val main = activity as? MainActivity
+        if (main != null) {
+            main.notifyConfigImported()
+        } else {
+            // Pantalla de sección: recargar campos y avisar al resto de la app
+            try { reloadConfigFieldsFromSettings() } catch (_: Exception) { }
+            hostClearDirty()
+            AppSettings.clearPendingConfigUiReload()
+            LocalBroadcastManager.getInstance(requireContext()).apply {
+                sendBroadcast(Intent(MainActivity.CONFIG_IMPORTED))
+                sendBroadcast(Intent(MainActivity.BOT_STATE_CHANGED))
+                sendBroadcast(Intent(CategoryUiHelper.ACTION_CATEGORY_UI_CHANGED))
+            }
+        }
     }
 
     private fun shareDiagnosticPack() {
@@ -1861,9 +1905,20 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
     }
 
     private fun refreshSaveFooter() {
-        val activity = activity as? MainActivity ?: return
-        tvSaveDirty?.visibility =
-            if (activity.isTabDirty(1)) View.VISIBLE else View.GONE
+        tvSaveDirty?.visibility = if (hasUnsavedChanges) View.VISIBLE else View.GONE
+    }
+
+    /** Guarda el formulario. Devuelve false si algún campo es inválido (ya avisado al usuario). */
+    fun requestSave(): Boolean {
+        if (!isAdded) return false
+        if (!saveAllFieldsToSettings()) return false
+        hostClearDirty()
+        (activity as? MainActivity)?.applyCategoryUi()
+        refreshSaveFooter()
+        LocalBroadcastManager.getInstance(requireContext())
+            .sendBroadcast(Intent(CategoryUiHelper.ACTION_CATEGORY_UI_CHANGED))
+        Toast.makeText(requireContext(), "Configuración guardada", Toast.LENGTH_SHORT).show()
+        return true
     }
 
     private fun applyPermissionStatus(label: TextView?, enabled: Boolean) {
@@ -2097,7 +2152,7 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
         val mustReload = !formBoundFromDisk || AppSettings.isPendingConfigUiReload()
         if (mustReload) {
             reloadConfigFieldsFromSettings()
-            (activity as? MainActivity)?.clearDirty(1)
+            hostClearDirty()
             if (AppSettings.isPendingConfigUiReload()) {
                 AppSettings.clearPendingConfigUiReload()
             }
@@ -2140,5 +2195,14 @@ class FlexConfigFragment : Fragment(), FlexReturnTriggerEditBottomSheet.Listener
             lbm.unregisterReceiver(configImportedReceiver)
         } catch (_: Exception) {
         }
+    }
+
+    companion object {
+        const val ARG_SECTION = "section"
+
+        fun newInstance(section: String?): FlexConfigFragment =
+            FlexConfigFragment().apply {
+                if (section != null) arguments = Bundle().apply { putString(ARG_SECTION, section) }
+            }
     }
 }

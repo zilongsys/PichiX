@@ -6,6 +6,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
 import android.os.Bundle
+import android.os.Looper
+import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -48,6 +50,16 @@ class HomeFragment : Fragment() {
     private var suppressPcConnectionSync = false
 
     private val dashboard = HomeDashboard(this)
+    private var btnToggleBot: MaterialButton? = null
+    private var tvLastCycle: TextView? = null
+    private val tickHandler = Handler(Looper.getMainLooper())
+    private val tickRunnable = object : Runnable {
+        override fun run() {
+            if (!isAdded) return
+            refreshLastCycle()
+            tickHandler.postDelayed(this, 5_000L)
+        }
+    }
 
     private var syncing = false
     private var suppressThemeToggle = false
@@ -133,6 +145,16 @@ class HomeFragment : Fragment() {
         val activity = requireActivity() as MainActivity
 
         dashboard.bind(view)
+        btnToggleBot = view.findViewById(R.id.homeBtnToggleBot)
+        tvLastCycle = view.findViewById(R.id.homeLastCycle)
+        btnToggleBot?.setOnClickListener {
+            val main = this.activity as? MainActivity ?: return@setOnClickListener
+            val activeNow = settings.isBotEnabled &&
+                !PichixAccessibilityService.pausedAfterAccept &&
+                !PichixAccessibilityService.motorPausedForNavigation
+            main.setBotEnabledFromUi(!activeNow)
+            refreshStatus()
+        }
         tvStatus = view.findViewById(R.id.homeBotStatus)
         tvSubtitle = view.findViewById(R.id.homeBotSubtitle)
         statusBar = view.findViewById(R.id.homeStatusBar)
@@ -390,15 +412,34 @@ class HomeFragment : Fragment() {
         }
         refreshStatus()
         refreshPcConnectionUi()
+        tickHandler.removeCallbacks(tickRunnable)
+        tickHandler.post(tickRunnable)
     }
 
     override fun onDestroyView() {
+        tickHandler.removeCallbacks(tickRunnable)
         dashboard.release()
         super.onDestroyView()
     }
 
+    private fun refreshLastCycle() {
+        val tv = tvLastCycle ?: return
+        val last = com.oceanlab.pichix.service.ObserverTiming.lastCycleAtMs
+        if (!settings.isBotEnabled || last == 0L) {
+            tv.visibility = View.GONE
+            return
+        }
+        val sec = ((System.currentTimeMillis() - last) / 1000L).coerceAtLeast(0)
+        tv.text = when {
+            sec < 60 -> getString(R.string.home_last_cycle_sec, sec)
+            else -> getString(R.string.home_last_cycle_min, sec / 60)
+        }
+        tv.visibility = View.VISIBLE
+    }
+
     override fun onPause() {
         super.onPause()
+        tickHandler.removeCallbacks(tickRunnable)
         val lbm = LocalBroadcastManager.getInstance(requireContext())
         try {
             lbm.unregisterReceiver(botStateReceiver)
@@ -476,20 +517,26 @@ class HomeFragment : Fragment() {
         val colorAmber = ContextCompat.getColor(ctx, R.color.amber_400)
         val colorMuted = ContextCompat.getColor(ctx, R.color.text_hint)
 
+        val waitLabel = com.oceanlab.pichix.util.ClickHoursGate.waitLabel()
         val (statusText, subtitleText, statusColor) = when {
             !botEnabled -> Triple(
                 "● PichiX inactivo",
-                "Activa el switch del header para comenzar",
+                "Pulsa Activar para empezar a buscar bloques",
                 colorMuted
+            )
+            PichixAccessibilityService.motorPausedForNavigation -> Triple(
+                "⏸ Navegación manual",
+                "Motor en pausa — pulsa ▶ en el flotante o Activar",
+                colorAmber
+            )
+            botEnabled && !paused && waitLabel != null -> Triple(
+                "⏳ Esperando franja",
+                "Clic solo en horas buenas: próxima franja a las $waitLabel",
+                colorAmber
             )
             paused -> Triple(
                 "⏸ PichiX pausado",
                 "Bloque tomado — espera el siguiente",
-                colorAmber
-            )
-            PichixAccessibilityService.motorPausedForNavigation -> Triple(
-                "⏸ Navegación manual",
-                "Motor en pausa — pulsa ▶ en el flotante o reactiva el switch",
                 colorAmber
             )
             dryRun -> Triple(
@@ -505,6 +552,9 @@ class HomeFragment : Fragment() {
         }
 
         dashboard.refresh()
+        val activeNow = botEnabled && !paused && !PichixAccessibilityService.motorPausedForNavigation
+        btnToggleBot?.setText(if (activeNow) R.string.home_btn_pause else R.string.home_btn_start)
+        refreshLastCycle()
         tvStatus?.text = statusText
         tvStatus?.setTextColor(statusColor)
         tvSubtitle?.text = subtitleText

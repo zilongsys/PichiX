@@ -14,6 +14,10 @@ object ObserverTiming {
     private const val SLOW_NS = 150_000_000L           // 150 ms
     private const val WARN_EVERY_MS = 60_000L
 
+    /** Momento del último ciclo del observador (0 = ninguno aún). Lo muestra Inicio. */
+    @Volatile var lastCycleAtMs: Long = 0L
+        private set
+
     private var count = 0L
     private var emaMs = 0.0
     private var maxMs = 0.0
@@ -21,6 +25,7 @@ object ObserverTiming {
 
     @Synchronized
     fun record(context: Context, nanos: Long) {
+        lastCycleAtMs = System.currentTimeMillis()
         if (nanos < MIN_COUNTED_NS) return
         val ms = nanos / 1_000_000.0
         count++

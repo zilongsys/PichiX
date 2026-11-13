@@ -452,4 +452,43 @@
     <string name="home_ago_now">ahora</string>
     <string name="home_ago_minutes">hace %1$d min</string>
     <string name="home_ago_hours">hace %1$d h</string>
+    <!-- Índice de Ajustes y pantalla de sección -->
+    <string name="config_back">Volver</string>
+    <string name="config_unsaved_title">Cambios sin guardar</string>
+    <string name="config_unsaved_msg">Hay cambios en esta sección que no se han guardado.</string>
+    <string name="config_unsaved_discard">Descartar</string>
+    <string name="ajustes_on">activado</string>
+    <string name="ajustes_off">desactivado</string>
+    <string name="ajustes_group_basic">Básico</string>
+    <string name="ajustes_group_engine">Motor</string>
+    <string name="ajustes_group_data">Datos</string>
+    <string name="ajustes_group_app">Aplicación</string>
+    <string name="ajustes_permisos">Permisos</string>
+    <string name="ajustes_permisos_sum">Accesibilidad %1$s · Notificaciones %2$s · Flotante %3$s</string>
+    <string name="ajustes_amazon">Amazon Flex</string>
+    <string name="ajustes_amazon_none">Sin paquete configurado</string>
+    <string name="ajustes_overlay">Botón flotante</string>
+    <string name="ajustes_click_rhythm">Ritmo de clic</string>
+    <string name="ajustes_click_rhythm_sum">Intervalo %1$d ms · Solo horas buenas %2$s</string>
+    <string name="ajustes_behavior">Comportamiento en Flex</string>
+    <string name="ajustes_behavior_sum">Aceptar automático %1$s · Volver a ofertas %2$s</string>
+    <string name="ajustes_click_screen">Clics en pantalla</string>
+    <string name="ajustes_pause">Pausas</string>
+    <string name="ajustes_pause_sum">Tras aceptar %1$s · Por exceso de toques %2$s</string>
+    <string name="ajustes_backup">Respaldo</string>
+    <string name="ajustes_log">Registro y diagnóstico</string>
+    <string name="ajustes_log_sum">Log detallado %1$s</string>
+    <string name="ajustes_ui">Apariencia</string>
+    <string name="ajustes_theme_dark">Tema oscuro</string>
+    <string name="ajustes_theme_light">Tema claro</string>
+    <string name="ajustes_update_sum">v%1$s · %2$d APK en el historial</string>
+    <string name="ajustes_dashboard">Centro de control (PC)</string>
+    <string name="ajustes_all">Todos los ajustes</string>
+    <string name="ajustes_all_sum">Vista completa con buscador</string>
+
+    <!-- Inicio: botón principal y último ciclo -->
+    <string name="home_btn_start">Activar bot</string>
+    <string name="home_btn_pause">Pausar bot</string>
+    <string name="home_last_cycle_sec">Último ciclo: hace %1$d s</string>
+    <string name="home_last_cycle_min">Último ciclo: hace %1$d min</string>
 </resources>

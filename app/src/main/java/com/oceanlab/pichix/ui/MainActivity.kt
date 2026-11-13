@@ -110,52 +110,14 @@ class MainActivity : AppCompatActivity() {
 
         switchMain.setOnCheckedChangeRetainingFocus(window.decorView) { checked ->
             if (isInternalSwitchUpdate) return@setOnCheckedChangeRetainingFocus
-            if (checked && !isAccessibilityEnabled()) {
-                isInternalSwitchUpdate = true
-                switchMain.isChecked = false
-                isInternalSwitchUpdate = false
-                showAccessibilityDialog()
-                return@setOnCheckedChangeRetainingFocus
-            }
-            if (checked && !MonitorPackages.isConfigured(this)) {
-                isInternalSwitchUpdate = true
-                switchMain.isChecked = false
-                isInternalSwitchUpdate = false
-                Toast.makeText(this, getString(R.string.config_monitor_not_configured), Toast.LENGTH_LONG).show()
-                selectPage(1)
-                return@setOnCheckedChangeRetainingFocus
-            }
-            if (checked) {
-                PichixAccessibilityService.pausedAfterAccept = false
-                // Activar el bot debe reanudar el motor: si quedó en «Navegación manual»
-                // (FAB ⏸ o comando PC), el switch parecía no encender y el cartel naranja
-                // seguía bloqueando clics/scroll.
-                PichixAccessibilityService.setMotorPausedForNavigation(false, this)
-            }
-            settings.isBotEnabled = checked
-            BotEventLog.log(
-                this,
-                BotEventLog.CAT_BOT,
-                if (checked) "Bot activado (usuario)" else "Bot desactivado (usuario)",
-            )
-            if (checked) {
-                BotServiceCoordinator.syncForegroundService(this)
-                PichixAccessibilityService.syncEngine(this)
-            } else {
-                PichixAccessibilityService.notifyBotDisabled()
-                PichixForegroundService.stop(this)
-            }
-            updateHeader()
-            LocalBroadcastManager.getInstance(this)
-                .sendBroadcast(Intent(BOT_STATE_CHANGED))
-            if (checked) PichixForegroundService.refreshNotification(this)
+            setBotEnabledFromUi(checked)
         }
 
         viewPager.adapter = object : FragmentStateAdapter(this) {
             override fun getItemCount() = TAB_COUNT
             override fun createFragment(pos: Int): Fragment = when (pos) {
                 0 -> HomeFragment()
-                1 -> FlexConfigFragment()
+                1 -> AjustesIndexFragment()
                 2 -> FlexTarifasFragment()
                 3 -> FlexAlertasFragment()
                 4 -> FlexHistorialFragment()
@@ -190,6 +152,45 @@ class MainActivity : AppCompatActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putInt(STATE_PAGE, currentTab)
+    }
+
+    /** Activa o desactiva el bot desde la UI (interruptor de cabecera o botón de Inicio), con las mismas comprobaciones. */
+    fun setBotEnabledFromUi(checked: Boolean) {
+        if (checked && !isAccessibilityEnabled()) {
+            updateHeader()
+            showAccessibilityDialog()
+            return
+        }
+        if (checked && !MonitorPackages.isConfigured(this)) {
+            updateHeader()
+            Toast.makeText(this, getString(R.string.config_monitor_not_configured), Toast.LENGTH_LONG).show()
+            ConfigSectionActivity.open(this, "amazon", getString(R.string.ajustes_amazon))
+            return
+        }
+        if (checked) {
+            PichixAccessibilityService.pausedAfterAccept = false
+            // Activar el bot debe reanudar el motor: si quedó en «Navegación manual»
+            // (FAB ⏸ o comando PC), el switch parecía no encender y el cartel naranja
+            // seguía bloqueando clics/scroll.
+            PichixAccessibilityService.setMotorPausedForNavigation(false, this)
+        }
+        settings.isBotEnabled = checked
+        BotEventLog.log(
+            this,
+            BotEventLog.CAT_BOT,
+            if (checked) "Bot activado (usuario)" else "Bot desactivado (usuario)",
+        )
+        if (checked) {
+            BotServiceCoordinator.syncForegroundService(this)
+            PichixAccessibilityService.syncEngine(this)
+        } else {
+            PichixAccessibilityService.notifyBotDisabled()
+            PichixForegroundService.stop(this)
+        }
+        updateHeader()
+        LocalBroadcastManager.getInstance(this)
+            .sendBroadcast(Intent(BOT_STATE_CHANGED))
+        if (checked) PichixForegroundService.refreshNotification(this)
     }
 
     private fun applyLogoSpan() {
