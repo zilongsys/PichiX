@@ -214,9 +214,9 @@ class PichixAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
-        settings = AppSettings(this)
-        FlexForegroundGate.onAccessibilityEvent(event, MonitorPackages.resolve(this).toSet())
-        val target = MonitorPackages.primaryTarget(this) ?: return
+        // AppSettings lee SharedPreferences en vivo: basta la instancia creada al conectar.
+        if (!::settings.isInitialized) settings = AppSettings(this)
+        val target = MonitorPackages.resolve(this).firstOrNull() ?: return
         val pkg = event.packageName?.toString().orEmpty()
         if (settings.debugLogEnabled && pkg == target) {
             rootInActiveWindow?.let { root ->
@@ -246,7 +246,11 @@ class PichixAccessibilityService : AccessibilityService() {
         }
     }
 
-    private val observerRunnable = Runnable { runObservers() }
+    private val observerRunnable = Runnable {
+        val t0 = System.nanoTime()
+        runObservers()
+        ObserverTiming.record(this, System.nanoTime() - t0)
+    }
 
     override fun onInterrupt() {
         Log.w(TAG, "onInterrupt")

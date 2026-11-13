@@ -8,6 +8,19 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.46 (Noviembre 2026)
+
+### Actualizado
+- **El APK del Release ahora es de tipo release** (R8, no debuggable) firmado con la misma clave estable: arranca y corre más rápido que el debug anterior y se instala como actualización encima. Sin secretos de firma (PR de forks) el CI sigue compilando debug.
+- **Camino caliente del servicio de accesibilidad**: ya no se crea un `AppSettings` ni se reparsean/convierten a conjunto los paquetes vigilados en cada evento; `MonitorPackages` cachea el resultado mientras no cambie el ajuste; se elimina una llamada sin efecto a `FlexForegroundGate`.
+- Lógica pura de las reglas de tarifa extraída a `TariffMath` (mismo comportamiento) para poder probarla.
+
+### Añadido
+- **Medición de ciclos del observador** (`ObserverTiming`): registra media y máximo del tiempo de cada ciclo en el hilo principal y avisa en el log del bot («Ciclo lento del observador…», máx. 1 vez/min) si uno pasa de 150 ms. Sirve para decidir con datos si hace falta mover el motor a otro hilo.
+- Tests unitarios: `TariffMath` (modos de pago, ventanas que cruzan medianoche, duración, días) y `FlexGrabberEvaluator` (parseo de pago, hora de inicio y duración).
+
+---
+
 ## v0.2.45 (Noviembre 2026)
 
 ### Corregido

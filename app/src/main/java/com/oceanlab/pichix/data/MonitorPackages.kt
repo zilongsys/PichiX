@@ -12,12 +12,20 @@ object MonitorPackages {
 
     const val ACTION_RELOAD = "com.oceanlab.pichix.RELOAD_MONITOR_PACKAGES"
 
+    @Volatile private var cachedCsv: String? = null
+    @Volatile private var cachedList: Array<String> = emptyArray()
+
+    /** Se llama en cada evento de accesibilidad: solo reparsea si cambió el CSV de los ajustes. */
     fun resolve(context: Context): Array<String> {
         val csv = AppSettings(context).monitorPackagesCsv
+        if (csv == cachedCsv) return cachedList
         val list = csv.split(',', '\n', ';')
             .map { it.trim() }
             .filter { it.isNotEmpty() && !it.startsWith("#") }
-        return if (list.isEmpty()) emptyArray() else list.distinct().toTypedArray()
+        val result = if (list.isEmpty()) emptyArray() else list.distinct().toTypedArray()
+        cachedList = result
+        cachedCsv = csv
+        return result
     }
 
     fun isConfigured(context: Context): Boolean = resolve(context).isNotEmpty()

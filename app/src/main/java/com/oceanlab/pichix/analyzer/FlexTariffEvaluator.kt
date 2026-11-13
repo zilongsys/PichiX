@@ -161,35 +161,14 @@ class FlexTariffEvaluator(private val settings: AppSettings) {
             else -> rule.blockType == detected
         }
 
-    private fun matchesPay(pay: Double, hourly: Double, rule: FlexTariffRule): Boolean {
-        return when (rule.payMode) {
-            FlexPayCriteriaMode.BLOCK_PAY -> {
-                if (pay < rule.priceMin) return false
-                if (rule.priceMax != null && pay > rule.priceMax) return false
-                true
-            }
-            // Solo $/h: otras reglas (p. ej. por bloque) se evalúan por orden de prioridad.
-            FlexPayCriteriaMode.HOURLY_PAY -> hourly >= rule.minHourlyRate
-            // Misma regla exige las dos condiciones.
-            FlexPayCriteriaMode.HOURLY_AND_BLOCK -> {
-                if (hourly < rule.minHourlyRate) return false
-                if (pay < rule.priceMin) return false
-                if (rule.priceMax != null && pay > rule.priceMax) return false
-                true
-            }
-            FlexPayCriteriaMode.MANUAL_FIXED ->
-                kotlin.math.abs(pay - rule.priceMin) < 0.51
-            FlexPayCriteriaMode.MANUAL_ANY -> true
-        }
-    }
+    private fun matchesPay(pay: Double, hourly: Double, rule: FlexTariffRule): Boolean =
+        TariffMath.matchesPay(pay, hourly, rule)
 
     private fun matchesBlockStartWindow(timeText: String, rule: FlexTariffRule): Boolean {
         if (!rule.blockStartFilterEnabled) return true
         // Si el filtro está activo y no se puede leer la hora → no tomar (antes se dejaba pasar).
         val startMin = FlexGrabberEvaluator.parseStartMinutesOfDay(timeText) ?: return false
-        val from = rule.blockStartFromMinutes
-        val to = rule.blockStartToMinutes
-        return if (from <= to) startMin in from..to else startMin >= from || startMin <= to
+        return TariffMath.inWindow(rule.blockStartFromMinutes, rule.blockStartToMinutes, startMin)
     }
 
     private fun matchesLeadTime(timeText: String, rule: FlexTariffRule): Boolean {
@@ -198,27 +177,15 @@ class FlexTariffEvaluator(private val settings: AppSettings) {
         return until >= required
     }
 
-    private fun matchesDuration(durationHours: Double?, rule: FlexTariffRule): Boolean {
-        if (durationHours == null) return true
-        rule.minDurationHours?.let { min ->
-            if (durationHours < min) return false
-        }
-        rule.maxDurationHours?.let { max ->
-            if (durationHours > max) return false
-        }
-        return true
-    }
+    private fun matchesDuration(durationHours: Double?, rule: FlexTariffRule): Boolean =
+        TariffMath.matchesDuration(durationHours, rule)
 
-    private fun matchesWeekday(rule: FlexTariffRule): Boolean {
-        if (!rule.weekdaysEnabled || rule.allowedWeekdays.isEmpty()) return true
-        return Calendar.getInstance().get(Calendar.DAY_OF_WEEK) in rule.allowedWeekdays
-    }
+    private fun matchesWeekday(rule: FlexTariffRule): Boolean =
+        TariffMath.weekdayAllowed(rule, Calendar.getInstance().get(Calendar.DAY_OF_WEEK))
 
     private fun matchesPhoneSchedule(nowMinutes: Int, rule: FlexTariffRule): Boolean {
         if (!rule.timeEnabled) return true
-        val start = rule.timeStartMinutes
-        val end = rule.timeEndMinutes
-        return if (start <= end) nowMinutes in start..end else nowMinutes >= start || nowMinutes <= end
+        return TariffMath.inWindow(rule.timeStartMinutes, rule.timeEndMinutes, nowMinutes)
     }
 
     private fun findExcludedKeyword(text: String, keywords: List<String>): String? {

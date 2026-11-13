@@ -69,6 +69,6 @@ En móvil/nube **no** se generan (la entrega es el APK del Release). `dist/` est
 - El bot debe funcionar igual con la PC apagada o la conexión desactivada.
 - Estados de oferta (`OfferStatus`): distinguir ACEPTADA / PERDIDA / RECHAZADA / VISTA como en el CHANGELOG.
 - Vigilar Kotlin: escapar `\$` en strings; no añadir dependencias sin necesidad (`FAIL_ON_PROJECT_REPOS`, solo google+mavenCentral).
-- `proguard-rules.pro` mantiene todo `com.oceanlab.pichix.**`; el CI compila **debug**, release no se usa.
+- `proguard-rules.pro` mantiene todo `com.oceanlab.pichix.**`; el CI publica el APK **release** (R8) firmado con la clave estable; sin secretos compila debug. Como `-keep` conserva todo `com.oceanlab.pichix.**`, R8 solo recorta librerías: si algo falla solo en release, revisa reglas de las libs.
 - `README.md` lista las pestañas: actualizarlo si se añade/quita una.
 - Leer `CHANGELOG.md` (últimas 3–4 versiones) antes de tocar un área: documenta decisiones y regresiones previas.

@@ -66,14 +66,18 @@ jobs:
             echo "::notice::Sin secreto PICHIX_KEYSTORE_BASE64: se firma con una clave debug efímera (el APK no actualiza sobre uno firmado distinto)."
           fi
 
+      # Con la clave estable (secretos) se publica el APK **release** (R8, no debuggable: más rápido).
+      # Sin secretos (PR de forks) se compila debug para no entregar un release sin firmar.
       - name: Compilar APK
         run: |
           chmod +x gradlew
-          ./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon --stacktrace
-
-      - name: Renombrar APK
-        run: |
-          cp app/build/outputs/apk/debug/app-debug.apk "PichiX-v${{ steps.ver.outputs.name }}.apk"
+          if [ -n "${PICHIX_KEYSTORE_FILE:-}" ]; then
+            ./gradlew :app:assembleRelease :app:testDebugUnitTest --no-daemon --stacktrace
+            cp app/build/outputs/apk/release/app-release.apk "PichiX-v${{ steps.ver.outputs.name }}.apk"
+          else
+            ./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon --stacktrace
+            cp app/build/outputs/apk/debug/app-debug.apk "PichiX-v${{ steps.ver.outputs.name }}.apk"
+          fi
 
       - uses: actions/upload-artifact@v4
         with:
