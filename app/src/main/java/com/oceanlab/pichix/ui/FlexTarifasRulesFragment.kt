@@ -131,7 +131,6 @@ class FlexTarifasRulesFragment : Fragment(), FlexTariffRuleEditBottomSheet.Liste
             adapter.updateRule(idx, updated)
             view?.findViewById<TextView>(R.id.tvRulesActiveCount)?.text =
                 "${rules.count { it.enabled }} activas"
-            (activity as? MainActivity)?.markDirty(2)
         }
         PichixAccessibilityService.syncEngine(requireContext())
     }
@@ -144,7 +143,6 @@ class FlexTarifasRulesFragment : Fragment(), FlexTariffRuleEditBottomSheet.Liste
                 v.findViewById(R.id.tvRulesActiveCount),
             )
         }
-        (activity as? MainActivity)?.markDirty(2)
         PichixAccessibilityService.syncEngine(requireContext())
     }
 

@@ -108,6 +108,10 @@ class HomeFragment : Fragment() {
     private val botStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (!isAdded) return
+            if (intent.action == com.oceanlab.pichix.data.OfferLogger.ACTION_OFFER_LOGGED) {
+                dashboard.refresh()
+                return
+            }
             if (intent.action == MainActivity.CONFIG_IMPORTED) {
                 settings = AppSettings(context.applicationContext)
             }

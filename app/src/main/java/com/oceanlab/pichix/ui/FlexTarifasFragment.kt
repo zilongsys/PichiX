@@ -51,7 +51,6 @@ class FlexTarifasFragment : Fragment() {
                     ?.ensureStarterRulesIfEmpty()
             }
             PichixAccessibilityService.syncEngine(requireContext())
-            (activity as? MainActivity)?.markDirty(2)
         }
         updateModeUi(view, showingDetailed)
         applyModeInfoVisibility(tvModeInfo, btnToggleModeInfo, settings.showFlexTariffModeInfo)

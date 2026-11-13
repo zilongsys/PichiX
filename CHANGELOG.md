@@ -8,6 +8,19 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.49 (Noviembre 2026)
+
+### Corregido
+- **Tarifas marcadas «sin guardar» para siempre**: editar una regla detallada o cambiar el modo guardaba al instante pero dejaba la pestaña marcada como pendiente (punto en la barra, « •» y aviso «Cambios sin guardar en Tarifas» al salir). Solo la tarifa rápida (que sí tiene botón Guardar) mantiene esa marca.
+- **Historial de APKs**: ya no calcula el SHA-256 de APKs copiados a mano en el hilo de la interfaz (podía congelar al abrir el historial).
+
+### Actualizado
+- **Botón atrás**: desde cualquier destino vuelve a Inicio; desde Inicio sale de la app.
+- Al recrear la pantalla (cambio de tema, importar respaldo) se conserva la página abierta.
+- Inicio: una oferta nueva solo refresca el resumen del día, no los interruptores.
+
+---
+
 ## v0.2.48 (Noviembre 2026)
 
 ### Actualizado

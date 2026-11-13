@@ -13,6 +13,7 @@ import android.text.style.ForegroundColorSpan
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -169,8 +170,26 @@ class MainActivity : AppCompatActivity() {
         viewPager.offscreenPageLimit = 1
 
         setupNavigation()
+        savedInstanceState?.getInt(STATE_PAGE, -1)?.takeIf { it >= 0 }?.let { selectPage(it) }
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // Atrás desde cualquier destino vuelve a Inicio; desde Inicio sale de la app.
+                if (currentTab != 0) {
+                    selectPage(0)
+                } else {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                    isEnabled = true
+                }
+            }
+        })
         updateHeader()
         window.decorView.post { BotServiceCoordinator.syncForegroundService(this) }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putInt(STATE_PAGE, currentTab)
     }
 
     private fun applyLogoSpan() {
@@ -451,6 +470,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val TAB_COUNT = 9
+        private const val STATE_PAGE = "pichix_page"
         const val BOT_STATE_CHANGED = "com.oceanlab.pichix.BOT_STATE_CHANGED"
         const val BOT_PAUSED = "com.oceanlab.pichix.BOT_PAUSED"
         const val RETURN2_SETTING_CHANGED = "com.oceanlab.pichix.RETURN2_SETTING_CHANGED"

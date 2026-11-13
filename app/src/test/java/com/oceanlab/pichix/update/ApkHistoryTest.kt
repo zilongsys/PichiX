@@ -66,6 +66,7 @@ class ApkHistoryTest {
         assertEquals(listOf("0.2.7"), list.map { it.version })
         assertNull(h.find("0.2.1"))
         assertNotNull(h.find("0.2.7"))
+        assertEquals("", h.find("0.2.7")!!.sha256)
     }
 
     @Test

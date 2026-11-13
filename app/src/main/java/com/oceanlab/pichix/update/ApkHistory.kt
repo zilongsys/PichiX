@@ -37,7 +37,7 @@ class ApkHistory(private val dir: File) {
                     versionCode = 0,
                     downloadedAt = f.lastModified(),
                     size = f.length(),
-                    sha256 = AppUpdater.sha256Hex(f),
+                    sha256 = "", // desconocido: el fichero no lo descargó esta app
                     notes = "",
                     file = f.name,
                 )
