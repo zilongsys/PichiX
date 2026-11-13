@@ -10,11 +10,16 @@ class PichixApplication : Application() {
         PichiFileLog.init(this)
         BotEventLog.init(this)
         com.oceanlab.pichix.dashboardcontrol.PichixDashboard.init(this)
-        try {
-            com.oceanlab.pichix.util.PeakHoursScheduler.reschedule(this)
-        } catch (_: Exception) {
-        }
+        // Lecturas del CSV fuera del hilo principal; de paso se precalienta la caché de parseo.
         Thread {
+            try {
+                com.oceanlab.pichix.data.OfferLogCsvStore(this).readAllEntries()
+            } catch (_: Exception) {
+            }
+            try {
+                com.oceanlab.pichix.util.PeakHoursScheduler.reschedule(this)
+            } catch (_: Exception) {
+            }
             try {
                 com.oceanlab.pichix.util.ClickHoursGate.recompute(this)
             } catch (_: Exception) {

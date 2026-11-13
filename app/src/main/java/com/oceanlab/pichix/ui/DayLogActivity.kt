@@ -22,9 +22,6 @@ import java.util.*
 
 class DayLogActivity : AppCompatActivity() {
 
-    private val csvFile by lazy {
-        File(getExternalFilesDir(null) ?: filesDir, OfferLogCsvStore.FILE_NAME)
-    }
     private val store by lazy { OfferLogCsvStore(this) }
     private val dayFmt = SimpleDateFormat("yyyy-MM-dd", Locale.US)
     private val dispFmt = SimpleDateFormat("dd/MM/yyyy", Locale.US)
@@ -528,9 +525,8 @@ class DayLogActivity : AppCompatActivity() {
     }
 
     private fun parseEntriesForDate(date: String): List<OfferLogEntry> {
-        if (!csvFile.exists()) return emptyList()
         return try {
-            csvFile.readLines().drop(1)
+            store.readAllLines().drop(1)
                 .filter { it.contains(",$date") }
                 .mapNotNull { store.parseLine(it) }
                 .sortedByDescending { it.timestamp }
@@ -541,7 +537,7 @@ class DayLogActivity : AppCompatActivity() {
 
     private fun exportCsv(uri: Uri) {
         try {
-            val lines = csvFile.readLines()
+            val lines = store.readAllLines()
             val header = lines.firstOrNull() ?: return
             val dayLines = lines.drop(1).filter { it.contains(",$currentDate") }
             contentResolver.openOutputStream(uri)?.use { out ->
@@ -565,7 +561,7 @@ class DayLogActivity : AppCompatActivity() {
                 return
             }
             val existingTimestamps = try {
-                csvFile.readLines().drop(1).map { it.substringBefore(",") }.toSet()
+                store.readAllLines().drop(1).map { it.substringBefore(",") }.toSet()
             } catch (_: Exception) {
                 emptySet()
             }
@@ -574,7 +570,7 @@ class DayLogActivity : AppCompatActivity() {
                 Toast.makeText(this, "Todas las entradas ya existen", Toast.LENGTH_SHORT).show()
                 return
             }
-            csvFile.appendText(newLines.joinToString("\n") + "\n")
+            store.appendLines(newLines)
             Toast.makeText(this, "✓ Importadas ${newLines.size} entradas", Toast.LENGTH_SHORT).show()
             val firstDate = newLines.firstOrNull()?.split(",")?.getOrNull(1)?.take(10)
             if (firstDate != null) {

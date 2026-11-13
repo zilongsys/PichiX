@@ -3,6 +3,7 @@ package com.oceanlab.pichix.analyzer
 import com.oceanlab.pichix.data.AppSettings
 import com.oceanlab.pichix.data.FlexTariffRulesStore
 import com.oceanlab.pichix.util.BlockDurationText
+import java.util.Locale
 
 data class FlexBlockOffer(
     val index: Int,
@@ -185,7 +186,7 @@ object FlexGrabberEvaluator {
             ?: return GrabEval.skip("Datos incompletos: sin pago en lista")
         if (pay < settings.flexMinBlockPay) {
             return GrabEval.reject(
-                "Pago \$${"%.2f".format(pay)} < mínimo \$${"%.2f".format(settings.flexMinBlockPay)}",
+                "Pago \$${"%.2f".format(Locale.US, pay)} < mínimo \$${"%.2f".format(Locale.US, settings.flexMinBlockPay)}",
             )
         }
 
@@ -202,11 +203,11 @@ object FlexGrabberEvaluator {
 
         if (hourly < settings.flexMinHourlyRate) {
             return GrabEval.reject(
-                "\$/h ${"%.2f".format(hourly)} < mínimo ${"%.2f".format(settings.flexMinHourlyRate)}",
+                "\$/h ${"%.2f".format(Locale.US, hourly)} < mínimo ${"%.2f".format(Locale.US, settings.flexMinHourlyRate)}",
             )
         }
 
-        val reason = "Clásico: \$${"%.2f".format(pay)} · ${"%.2f".format(hourly)} \$/h"
+        val reason = "Clásico: \$${"%.2f".format(Locale.US, pay)} · ${"%.2f".format(Locale.US, hourly)} \$/h"
         return if (settings.dryRunMode) GrabEval.simulated(reason) else GrabEval.accept(reason)
     }
 
@@ -236,14 +237,14 @@ object FlexGrabberEvaluator {
             ?: return GrabEval.skip("Detalle: sin pago legible")
         if (pay < settings.flexMinBlockPay) {
             return GrabEval.reject(
-                "Detalle pago \$${"%.2f".format(pay)} < mínimo \$${"%.2f".format(settings.flexMinBlockPay)}",
+                "Detalle pago \$${"%.2f".format(Locale.US, pay)} < mínimo \$${"%.2f".format(Locale.US, settings.flexMinBlockPay)}",
             )
         }
         val hourly = hourlyFromPayAndTime(pay, timeWindowText)
             ?: return GrabEval.skip("Detalle: sin \$/h calculable")
         if (hourly < settings.flexMinHourlyRate) {
             return GrabEval.reject(
-                "Detalle \$/h ${"%.2f".format(hourly)} < mínimo ${"%.2f".format(settings.flexMinHourlyRate)}",
+                "Detalle \$/h ${"%.2f".format(Locale.US, hourly)} < mínimo ${"%.2f".format(Locale.US, settings.flexMinHourlyRate)}",
             )
         }
         val startHour = parseStartHour(timeWindowText)
@@ -252,7 +253,7 @@ object FlexGrabberEvaluator {
                 "Detalle inicio ${startHour}:00 < mínimo ${settings.flexMinStartHour}:00",
             )
         }
-        val reason = "Detalle OK: \$${"%.2f".format(pay)} · ${"%.2f".format(hourly)} \$/h"
+        val reason = "Detalle OK: \$${"%.2f".format(Locale.US, pay)} · ${"%.2f".format(Locale.US, hourly)} \$/h"
         return if (settings.dryRunMode) GrabEval.simulated(reason) else GrabEval.accept(reason)
     }
 
@@ -299,7 +300,7 @@ object FlexGrabberEvaluator {
         if (startHour != null && startHour < settings.flexMinStartHour) return primary
 
         val note = buildString {
-            append("Detalle OK (lista): \$${"%.2f".format(listPay)} · ${"%.2f".format(hourly)} \$/h")
+            append("Detalle OK (lista): \$${"%.2f".format(Locale.US, listPay)} · ${"%.2f".format(Locale.US, hourly)} \$/h")
             if (primary.reason.isNotBlank()) {
                 append(" · detalle: ")
                 append(primary.reason)

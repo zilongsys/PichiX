@@ -2,5 +2,8 @@
 <!-- Auto Backup (Android 6-11): el token de actualización y los APK descargados no se respaldan. -->
 <full-backup-content>
     <exclude domain="sharedpref" path="app_update.xml" />
+    <exclude domain="sharedpref" path="dashboardcontrol.xml" />
+    <exclude domain="database" path="dashboardcontrol_outbox.db" />
+    <exclude domain="database" path="dashboardcontrol_outbox.db-journal" />
     <exclude domain="external" path="apk_history/" />
 </full-backup-content>

@@ -8,6 +8,23 @@ La versión vive en `app/version.properties`. Compilar **no** la modifica; usar 
 
 ---
 
+## v0.2.45 (Noviembre 2026)
+
+### Corregido
+- **CSV de ofertas independiente del idioma del móvil**: precio, $/h y duración se escriben siempre con punto decimal (`Locale.US`). En un móvil con coma decimal las columnas se desplazaban y historial, estadísticas, calendario y análisis salían vacíos o erróneos. También en las firmas de deduplicación y en los textos de razón.
+- **Respaldo automático**: se excluyen las prefs y la bandeja del Centro de control (contienen su token) además del token de actualización.
+
+### Actualizado
+- **Registro de ofertas fuera del camino crítico**: `OfferLogCsvStore` encola la línea y un hilo propio la escribe (antes `appendText` en el hilo principal del servicio por cada oferta). Las lecturas vacían la cola antes de leer, así que siempre ven lo último.
+- **Caché de parseo del CSV**: se actualiza de forma incremental al añadir entradas y se invalida si el fichero cambia; ya no se relee ni parsea todo el historial en cada consulta. Cabecera comprobada una vez por proceso (solo la 1.ª línea). Bloqueo único compartido entre instancias (antes cada instancia tenía el suyo).
+- Arranque: la lectura del CSV (avisos de franja pico, horas buenas) y el precalentamiento de la caché pasan a un hilo de fondo.
+- `DayLogActivity` lee, exporta e importa a través del almacén (cola, bloqueo y caché consistentes).
+
+### Añadido
+- Tests unitarios del formato/parseo del CSV bajo locales con coma decimal.
+
+---
+
 ## v0.2.44 (Noviembre 2026)
 
 ### Añadido

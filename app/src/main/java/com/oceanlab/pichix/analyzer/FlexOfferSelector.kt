@@ -1,6 +1,7 @@
 package com.oceanlab.pichix.analyzer
 
 import com.oceanlab.pichix.data.AppSettings
+import java.util.Locale
 
 object FlexOfferSelector {
 
@@ -32,7 +33,7 @@ object FlexOfferSelector {
         val acceptable = evaluated.count {
             it.result == FlexGrabResult.ACCEPT || it.result == FlexGrabResult.SIMULATED_ACCEPT
         }
-        val hourly = winner.hourlyRate?.let { "%.1f".format(it) } ?: "?"
+        val hourly = winner.hourlyRate?.let { "%.1f".format(Locale.US, it) } ?: "?"
         val base = "${winner.stationText} ${winner.payText} ($hourly \$/h)"
         return if (acceptable > 1 && settings.usesBestOfferPick()) {
             "Mejor (${settings.offerRankLabel()}): $base · $acceptable válidas"

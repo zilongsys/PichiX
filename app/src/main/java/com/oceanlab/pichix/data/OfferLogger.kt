@@ -159,8 +159,8 @@ class OfferLogger(private val context: Context) {
         timeWindow: String,
         station: String,
     ): String =
-        "${station.trim().lowercase()}|${"%.2f".format(price)}|${"%.2f".format(hourlyRate)}|" +
-            "${"%.1f".format(durationHours)}|${timeWindow.trim().lowercase()}"
+        "${station.trim().lowercase()}|${"%.2f".format(Locale.US, price)}|${"%.2f".format(Locale.US, hourlyRate)}|" +
+            "${"%.1f".format(Locale.US, durationHours)}|${timeWindow.trim().lowercase()}"
 
     /** Registra cada fila visible en la lista (VISTA), sin repetir la misma oferta dentro de [dedupWindowMs]. */
     fun logVisibleOffers(offers: List<FlexBlockOffer>) {
@@ -410,8 +410,8 @@ class OfferLogger(private val context: Context) {
         sb.appendLine("  Aceptadas:   ${stats.accepted}")
         sb.appendLine("  Rechazadas:  ${stats.rejected}")
         sb.appendLine("  Canceladas:  ${stats.cancelled}")
-        sb.appendLine("  Total ganado: \$${"%.2f".format(stats.totalEarned)}")
-        sb.appendLine("  Mejor bloque: \$${"%.2f".format(stats.bestOffer)}")
+        sb.appendLine("  Total ganado: \$${"%.2f".format(Locale.US, stats.totalEarned)}")
+        sb.appendLine("  Mejor bloque: \$${"%.2f".format(Locale.US, stats.bestOffer)}")
         sb.appendLine()
         sb.appendLine("── ÚLTIMAS $limit ENTRADAS ──")
         sb.appendLine()
@@ -430,8 +430,8 @@ class OfferLogger(private val context: Context) {
             val schedule = OfferLogRowUi.scheduleLabel(e)
             sb.appendLine("   Bloque:   $schedule")
             sb.appendLine(
-                "   Precio: \$${"%.2f".format(e.price)}  |  \$/h: ${"%.2f".format(e.hourlyRate)}  |  " +
-                    "Duración: ${"%.1f".format(e.durationHours)} h",
+                "   Precio: \$${"%.2f".format(Locale.US, e.price)}  |  \$/h: ${"%.2f".format(Locale.US, e.hourlyRate)}  |  " +
+                    "Duración: ${"%.1f".format(Locale.US, e.durationHours)} h",
             )
             sb.appendLine("   Razón:  ${e.reason}")
             sb.appendLine()

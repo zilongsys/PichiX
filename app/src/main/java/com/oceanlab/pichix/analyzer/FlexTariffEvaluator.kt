@@ -6,6 +6,7 @@ import com.oceanlab.pichix.data.FlexPayCriteriaMode
 import com.oceanlab.pichix.data.FlexTariffRule
 import com.oceanlab.pichix.data.FlexTariffRulesStore
 import java.util.Calendar
+import java.util.Locale
 
 class FlexTariffEvaluator(private val settings: AppSettings) {
 
@@ -98,7 +99,7 @@ class FlexTariffEvaluator(private val settings: AppSettings) {
             }
 
             val label = ruleLabel(rule)
-            val reason = "Regla «$label»: \$${"%.2f".format(pay)} · ${"%.2f".format(hourly)} \$/h"
+            val reason = "Regla «$label»: \$${"%.2f".format(Locale.US, pay)} · ${"%.2f".format(Locale.US, hourly)} \$/h"
             return if (settings.dryRunMode) GrabEval.simulated(reason) else GrabEval.accept(reason)
         }
         return GrabEval.reject("Ninguna regla de tarifa coincide")

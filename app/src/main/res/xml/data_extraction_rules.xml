@@ -3,10 +3,16 @@
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="sharedpref" path="app_update.xml" />
+        <exclude domain="sharedpref" path="dashboardcontrol.xml" />
+        <exclude domain="database" path="dashboardcontrol_outbox.db" />
+        <exclude domain="database" path="dashboardcontrol_outbox.db-journal" />
         <exclude domain="external" path="apk_history/" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="sharedpref" path="app_update.xml" />
+        <exclude domain="sharedpref" path="dashboardcontrol.xml" />
+        <exclude domain="database" path="dashboardcontrol_outbox.db" />
+        <exclude domain="database" path="dashboardcontrol_outbox.db-journal" />
         <exclude domain="external" path="apk_history/" />
     </device-transfer>
 </data-extraction-rules>

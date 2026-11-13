@@ -9,7 +9,7 @@ Las reglas originales viven en `.cursor/rules/*.mdc` (Cursor). Este archivo las 
 ## Entorno y compilación
 
 - Paquete `com.oceanlab.pichix`, minSdk 26, compileSdk/targetSdk 34, Kotlin 1.9.25, AGP 8.7.3, Gradle 8.11.1, JDK 17.
-- Un solo módulo `:app`. Sin tests automatizados: la verificación es que **compile** (`./gradlew :app:assembleDebug`).
+- Un solo módulo `:app`. Pocos tests JVM (`app/src/test`); el CI ejecuta `assembleDebug` + `testDebugUnitTest`. Añade tests para la lógica pura nueva.
 - **El APK oficial lo compila GitHub Actions** (`.github/workflows/android.yml`), no el móvil ni la nube:
   - push a `main` → build + **GitHub Release `vX.Y.Z`** con `PichiX-vX.Y.Z.apk` (notas = sección del CHANGELOG).
   - push a otra rama / PR → build + artefacto descargable (sin Release).

@@ -1,5 +1,7 @@
 package com.oceanlab.pichix.analyzer
 
+import java.util.Locale
+
 /**
  * Comprueba que la pantalla de detalle corresponde a la fila de lista que se intentó tomar.
  */
@@ -47,14 +49,14 @@ object OfferListDetailMatcher {
             if (kotlin.math.abs(listPay - detailPay) > payTolerance) {
                 return FieldMismatch(
                     "Pago",
-                    "\$${"%.2f".format(listPay)}",
-                    "\$${"%.2f".format(detailPay)}",
+                    "\$${"%.2f".format(Locale.US, listPay)}",
+                    "\$${"%.2f".format(Locale.US, detailPay)}",
                 )
             }
         } else if (listPay != null && detailPay == null && details["pay_range"].orEmpty().isNotBlank()) {
             return FieldMismatch(
                 "Pago",
-                "\$${"%.2f".format(listPay)}",
+                "\$${"%.2f".format(Locale.US, listPay)}",
                 details["pay_range"].orEmpty().take(40),
             )
         }
